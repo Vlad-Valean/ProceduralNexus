@@ -83,4 +83,4 @@ cd webapp
 npm run dev
 ```
 
-This will start the frontend application, typically on `http://localhost:5173`.
+This will start the frontend application, typically on `http://localhost:80`.
