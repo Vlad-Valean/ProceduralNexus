@@ -1,0 +1,24 @@
+{
+  "name": "ProceduralNexus DevContainer",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "features": {},
+  "workspaceFolder": "/workspaces/pcbe2",
+  "forwardPorts": [8080, 8081, 5173],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "ms-vscode.vscode-node-azure-pack",
+        "dbaeumer.vscode-eslint",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode"
+        "ckolkman.vscode-postgres"
+      ]
+    }
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "postCreateCommand": "mvn --version && node --version && npm install --prefix webapp"
+}
