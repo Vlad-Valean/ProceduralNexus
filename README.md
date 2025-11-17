@@ -1,4 +1,4 @@
-# ProceduralNexus
+gi# ProceduralNexus
 
 ## 1. Project Overview
 
@@ -84,3 +84,20 @@ npm run dev
 ```
 
 This will start the frontend application, typically on `http://localhost:80`.
+
+## 6. Using the Dev Container
+
+To use the Dev Container for ProceduralNexus development:
+
+1. **Open the project in VS Code.**
+2. If prompted, click "Reopen in Container" or use the command palette (`Ctrl+Shift+P`) and select `Dev Containers: Reopen in Container`.
+3. Wait for the container to build and initialize (all dependencies are installed automatically).
+4. All services (backend, frontend, database, Redis) are started via Docker Compose.
+5. Access the services via forwarded ports:
+    - API: http://localhost:8080
+    - Document Analysis: http://localhost:8081
+    - Webapp: http://localhost:80
+    - pgAdmin: http://localhost:5050
+    - Redis UI: http://localhost:8001
+
+You can customize the devcontainer by editing files in `.devcontainer/`.
