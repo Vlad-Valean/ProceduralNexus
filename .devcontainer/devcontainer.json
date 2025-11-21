@@ -12,7 +12,7 @@
         "ms-vscode.vscode-node-azure-pack",
         "dbaeumer.vscode-eslint",
         "eamodio.gitlens",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
         "ckolkman.vscode-postgres"
       ]
     }
@@ -22,3 +22,4 @@
   },
   "postCreateCommand": "mvn --version && node --version && npm install --prefix webapp"
 }
+
