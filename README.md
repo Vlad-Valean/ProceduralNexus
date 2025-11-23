@@ -1,4 +1,4 @@
-gi# ProceduralNexus
+# ProceduralNexus
 
 ## 1. Project Overview
 
@@ -101,3 +101,4 @@ To use the Dev Container for ProceduralNexus development:
     - Redis UI: http://localhost:8001
 
 You can customize the devcontainer by editing files in `.devcontainer/`.
+
