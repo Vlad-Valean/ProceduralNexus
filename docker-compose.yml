@@ -61,7 +61,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/procedural_nexus_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
