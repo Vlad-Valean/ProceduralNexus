@@ -1,0 +1,64 @@
+services:
+  api-service:
+    build:
+      context: ./api-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - proceduralnexus-net
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/procedural_nexus_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  document-analysis-service:
+    build:
+      context: ./document-analysis-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - proceduralnexus-net
+    depends_on:
+      redis-stack:
+        condition: service_healthy
+    environment:
+      - SPRING_DATA_REDIS_HOST=redis-stack
+      - SPRING_DATA_REDIS_PORT=6379
+      - SERVER_PORT=8081
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - proceduralnexus-net
+    depends_on:
+      api-service:
+        condition: service_healthy
+      document-analysis-service:
+        condition: service_healthy
+    restart: on-failure
+
+networks:
+  proceduralnexus-net:
+    external: true
