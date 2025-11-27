@@ -40,9 +40,9 @@ $newFilename = "V${nextVersion}__${MigrationName}.sql"
 
 Write-Host "Updating properties to generate: $newFilename"
 
-# Update the properties file
+# Update the properties file with the correct 'create-target' property
 (Get-Content -Path $PROPERTIES_FILE) | ForEach-Object {
-    $_ -replace 'update-target=.*', "update-target=src/main/resources/db/migration/$newFilename"
+    $_ -replace 'spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=.*', "spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=src/main/resources/db/migration/$newFilename"
 } | Set-Content -Path $PROPERTIES_FILE
 
 Write-Host "Running Spring Boot with 'generate-migration' profile to create the script..."
