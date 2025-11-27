@@ -39,7 +39,7 @@ sed -i.bak "s|update-target=.*|update-target=src/main/resources/db/migration/${N
 
 echo "Running Spring Boot with 'generate-migration' profile to create the script..."
 
-# Run the Maven command by navigating up to the project root first.
-(cd ../../.. && mvn -f api-service/pom.xml spring-boot:run -Dspring-boot.run.profiles=generate-migration)
+# Navigate to the api-service directory and run Maven. It will find the pom.xml automatically.
+(cd ../../.. && mvn spring-boot:run "-Dspring-boot.run.profiles=generate-migration")
 
 echo "Migration script '${NEW_FILENAME}' generated successfully in '${MIGRATION_DIR}'."
