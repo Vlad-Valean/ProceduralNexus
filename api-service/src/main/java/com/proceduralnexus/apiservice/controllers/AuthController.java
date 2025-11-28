@@ -26,6 +26,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+package com.proceduralnexus.api.auth;
+
+import com.proceduralnexus.api.security.JwtUtil;
+import com.proceduralnexus.api.user.User;
+import com.proceduralnexus.api.user.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/auth")
