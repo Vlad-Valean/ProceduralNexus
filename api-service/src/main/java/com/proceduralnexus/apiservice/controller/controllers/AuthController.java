@@ -1,4 +1,4 @@
-package com.proceduralnexus.apiservice.controllers;
+package com.proceduralnexus.apiservice.controller.controllers;
 
 import com.proceduralnexus.apiservice.data.entities.Profile;
 import com.proceduralnexus.apiservice.data.entities.Role;
