@@ -1,15 +1,17 @@
 package com.proceduralnexus.apiservice.business.services;
 
-import com.proceduralnexus.apiservice.data.entities.Profile;
-import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
-import com.proceduralnexus.apiservice.controller.dtos.*;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.proceduralnexus.apiservice.controller.dtos.ProfileResponseDto;
+import com.proceduralnexus.apiservice.controller.dtos.ProfileUpdateDto;
+import com.proceduralnexus.apiservice.data.entities.Profile;
+import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
 
 @Service
 public class ProfileService implements IProfileService {
@@ -64,7 +66,7 @@ public class ProfileService implements IProfileService {
         profileRepository.deleteById(id);
     }
 
-    private ProfileResponseDto toDto(Profile profile) {
+    public ProfileResponseDto toDto(Profile profile) {
         ProfileResponseDto dto = new ProfileResponseDto();
         dto.setId(profile.getId());
         dto.setFirstname(profile.getFirstname());
@@ -73,6 +75,14 @@ public class ProfileService implements IProfileService {
         dto.setEmailVerified(profile.isEmailVerified());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
+        dto.setRoles(profile.getRoles().stream()
+            .map(role -> role.getName().name())
+            .collect(Collectors.toList()));
         return dto;
+    }
+
+    public Profile findByEmail(String email) {
+        return profileRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
     }
 }
