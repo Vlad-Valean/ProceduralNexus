@@ -70,10 +70,8 @@ const ALL_DOCS: UserDocument[] = Array.from({ length: 8 }).map((_, idx) => {
 
 const DOCS_PAGE_SIZE = 3;
 
-// fixed row height
 const ROW_HEIGHT = 30;
 
-// dummy pdf to open in a new tab
 const SAMPLE_DOC_URL =
   "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
@@ -103,7 +101,6 @@ const actionIconSx = {
   },
 } as const;
 
-// shared cell padding so columns are closer together
 const headCellSx = {
   px: 1.25,
   fontWeight: 500,
@@ -137,7 +134,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
 
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
-  // --- filter & sort documents (search only in name + file) ---
   let filteredDocs = documents.filter((doc) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -167,7 +163,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
 
   const emptyRows = hasResults
     ? Math.max(0, DOCS_PAGE_SIZE - docsToShow.length)
-    : Math.max(0, DOCS_PAGE_SIZE - 1); // 1 row reserved for "No results..."
+    : Math.max(0, DOCS_PAGE_SIZE - 1);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -253,7 +249,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         minHeight: 630,
       }}
     >
-      {/* Back to statistics button (top row) */}
       {onBackToStats && (
         <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-start" }}>
           <Button
@@ -336,7 +331,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Button>
       </Box>
 
-      {/* DOCUMENTS SECTION TITLE + SEARCH + SORT */}
       <Box
         sx={{
           mb: 2,
@@ -440,7 +434,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Box>
       </Box>
 
-      {/* TABLE + FOOTER */}
       <Box
         sx={{
           flex: 1,
@@ -451,8 +444,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         <Box sx={{ overflowX: "auto" }}>
           <Table
             sx={{
-              tableLayout: "fixed", // fixed columns
-              width: "100%",        // fit the card width
+              tableLayout: "fixed",               
+              width: "100%",        
               borderCollapse: "collapse",
             }}
           >
@@ -569,7 +562,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                     </TableRow>
                   ))}
 
-                  {/* empty rows so container height stays stable */}
                   {emptyRows > 0 &&
                     Array.from({ length: emptyRows }).map((_, idx) => (
                       <TableRow
@@ -598,7 +590,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                 </>
               ) : (
                 <>
-                  {/* No results row – same height as normal rows */}
                   <TableRow
                     sx={{
                       height: ROW_HEIGHT,
@@ -624,7 +615,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                     </TableCell>
                   </TableRow>
 
-                  {/* filler rows, same height as others */}
                   {emptyRows > 0 &&
                     Array.from({ length: emptyRows }).map((_, idx) => (
                       <TableRow
@@ -656,7 +646,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           </Table>
         </Box>
 
-        {/* Footer under table (text + pagination) */}
         <Box
           sx={{
             display: "flex",
@@ -727,7 +716,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Box>
       </Box>
 
-      {/* ASSIGN NEW DOCUMENT SECTION */}
       <Box sx={{ mt: 0.5 }}>
         <Typography
           variant="h6"
@@ -741,7 +729,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           Assign new document
         </Typography>
 
-        {/* Document name row + error on same line */}
         <Box sx={{ mb: 0.75 }}>
           <Box
             sx={{
@@ -794,7 +781,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           />
         </Box>
 
-        {/* Upload field */}
         <Box sx={{ mb: 1.25 }}>
           <Typography
             variant="body2"
@@ -891,7 +877,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           )}
         </Box>
 
-        {/* Assign button */}
         <Box
           sx={{
             display: "flex",
@@ -926,7 +911,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Box>
       </Box>
 
-      {/* Remove user confirmation dialog */}
       <Dialog
         open={removeDialogOpen}
         onClose={() => setRemoveDialogOpen(false)}
@@ -1041,7 +1025,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for success/info messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}

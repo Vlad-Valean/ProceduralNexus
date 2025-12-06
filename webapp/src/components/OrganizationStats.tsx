@@ -27,6 +27,10 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
+        width: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+        height: "100%",
         minHeight: 630,
       }}
     >
