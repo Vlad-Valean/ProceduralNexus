@@ -75,6 +75,9 @@ const UserTable: React.FC = () => {
   const startIdx = (page - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(page * PAGE_SIZE, totalUsers);
 
+  // how many empty rows we need to keep PAGE_SIZE rows total
+  const emptyRows = Math.max(0, PAGE_SIZE - users.length);
+
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) =>
     setPage(value);
 
@@ -91,10 +94,11 @@ const UserTable: React.FC = () => {
         background: "#fff",
         minHeight: 370,
         boxShadow: "0 2px 16px #bfcbe6",
-        maxWidth: 482,
-        width: "100%",
-        display: "flex",          // ⬅ make the card a flex column
+        width: "100%",          // responsive to parent column
+        minWidth: 0,            // allow shrinking inside grid/flex layouts
+        display: "flex",        // make the card a flex column
         flexDirection: "column",
+        boxSizing: "border-box",
       }}
     >
       {/* Header + Search/Sort Row */}
@@ -131,10 +135,10 @@ const UserTable: React.FC = () => {
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            width: { xs: "100%", sm: 140 },   // smaller
+            width: { xs: "100%", sm: 140 }, // smaller
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              height: 32,                      // smaller height
+              height: 32, // smaller height
               fontSize: "0.8rem",
               "& fieldset": {
                 borderColor: "#dde3f0",
@@ -166,8 +170,8 @@ const UserTable: React.FC = () => {
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            height: 32,                        // smaller height
-            minWidth: 140,                     // slightly smaller width
+            height: 32, // smaller height
+            minWidth: 140, // slightly smaller width
             fontWeight: 500,
             fontSize: "0.8rem",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -221,25 +225,33 @@ const UserTable: React.FC = () => {
       {/* Table area – flex:1 so footer stays at bottom */}
       <Box
         sx={{
-          flex: 1,                 
+          flex: 1,
           minHeight: 0,
           mb: 2,
+          overflowX: "auto", // allow horizontal scroll instead of stretching/overlapping
         }}
       >
-        <Table sx={{ tableLayout: 'fixed' }}>
+        <Table
+          sx={{
+            tableLayout: "fixed",
+            width: "max-content", // always as wide as columns
+            minWidth: "100%", // never shrink below container
+            borderCollapse: "collapse",
+          }}
+        >
           <TableHead>
             <TableRow sx={{ "& th": { py: 1 } }}>
               <TableCell
                 sx={{
                   width: 110,
-                  minWidth: 100, 
+                  minWidth: 100,
                   maxWidth: 110,
                   fontWeight: 500,
-                  color: "#B5B7C0",           
+                  color: "#B5B7C0",
                   borderBottom: "1px solid #e3e8f2",
                   textAlign: "left",
-                  pl: 0,
                   fontSize: "0.8rem",
+                  px: 0,
                 }}
               >
                 First name
@@ -247,7 +259,7 @@ const UserTable: React.FC = () => {
               <TableCell
                 sx={{
                   width: 110,
-                  minWidth: 100, 
+                  minWidth: 100,
                   maxWidth: 110,
                   fontWeight: 500,
                   color: "#B5B7C0",
@@ -273,47 +285,81 @@ const UserTable: React.FC = () => {
           </TableHead>
           <TableBody>
             {users.length > 0 ? (
-              users.map((user, idx) => (
-                <TableRow
-                  key={idx + startIdx}
-                  sx={{ "& td": { py: 0.8 } }}
-                >
-                  <TableCell
-                    sx={{
-                      fontSize: "0.8rem",
-                      borderBottom: "1px solid #e3e8f2",
-                      color: "#222",
-                      fontWeight: 500,
-                      textAlign: "left",
-                      pl: 0,
-                    }}
-                  >
-                    {user.firstName}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontSize: "0.8rem",
-                      borderBottom: "1px solid #e3e8f2",
-                      color: "#222",
-                      fontWeight: 500,
-                      textAlign: "left",
-                    }}
-                  >
-                    {user.lastName}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontSize: "0.8rem",
-                      borderBottom: "1px solid #e3e8f2",
-                      color: "#222",
-                      fontWeight: 500,
-                      textAlign: "left",
-                    }}
-                  >
-                    {user.email}
-                  </TableCell>
-                </TableRow>
-              ))
+              <>
+                {users.map((user, idx) => (
+                  <TableRow key={idx + startIdx} sx={{ "& td": { py: 0.8 } }}>
+                    <TableCell
+                      sx={{
+                        fontSize: "0.8rem",
+                        borderBottom: "1px solid #e3e8f2",
+                        color: "#222",
+                        fontWeight: 500,
+                        textAlign: "left",
+                        px: 0,
+                      }}
+                    >
+                      {user.firstName}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontSize: "0.8rem",
+                        borderBottom: "1px solid #e3e8f2",
+                        color: "#222",
+                        fontWeight: 500,
+                        textAlign: "left",
+                      }}
+                    >
+                      {user.lastName}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontSize: "0.8rem",
+                        borderBottom: "1px solid #e3e8f2",
+                        color: "#222",
+                        fontWeight: 500,
+                        textAlign: "left",
+                      }}
+                    >
+                      {user.email}
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+                {/* Placeholder empty rows to keep constant height */}
+                {emptyRows > 0 &&
+                  Array.from({ length: emptyRows }).map((_, idx) => (
+                    <TableRow key={`empty-${idx}`} sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}>
+                      <TableCell
+                        sx={{
+                          fontSize: "0.8rem",
+                          borderBottom: "none !important",
+                          color: "transparent",
+                          pl: 0,
+                        }}
+                      >
+                        &nbsp;
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontSize: "0.8rem",
+                          borderBottom: "none !important",
+                          color: "transparent",
+                        }}
+                      >
+                        &nbsp;
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontSize: "0.8rem",
+                          borderBottom: "none !important",
+                          color: "transparent",
+                        }}
+                      >
+                        &nbsp;
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </>
             ) : (
               <TableRow>
                 <TableCell colSpan={3} sx={{ border: 0, py: 6, px: 0 }}>
@@ -348,7 +394,7 @@ const UserTable: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mt: "auto",              // ⬅ stays at bottom of the Paper
+          mt: "auto",
           pt: 1.5,
           flexWrap: "wrap",
           width: "100%",
@@ -385,6 +431,22 @@ const UserTable: React.FC = () => {
                 boxShadow: "none !important",
                 borderColor: "#67728A !important",
                 padding: "2px 6px",
+                outline: "none !important",
+              },
+              "& .MuiPaginationItem-root:focus": {
+                boxShadow: "none !important",
+                outline: "none !important",
+                borderColor: "#67728A !important",
+              },
+              "& .MuiPaginationItem-root:active": {
+                boxShadow: "none !important",
+                outline: "none !important",
+                borderColor: "#67728A !important",
+              },
+              "& .MuiPaginationItem-root.Mui-focusVisible": {
+                boxShadow: "none !important",
+                outline: "none !important",
+                borderColor: "#67728A !important",
               },
               "& .Mui-selected": {
                 backgroundColor: "#67728A !important",
