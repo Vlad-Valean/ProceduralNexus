@@ -14,8 +14,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Alert,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { loginApi } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 type FormData = {
   email: string;
@@ -39,6 +42,11 @@ const Login: React.FC = () => {
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetError, setResetError] = useState<string | undefined>();
+
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleChange =
     (field: keyof FormData) =>
@@ -68,9 +76,29 @@ const Login: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    console.log('Login submitted:', formData);
+
+    setApiError(null);
+    setLoading(true);
+
+    try {
+      const jwt = await loginApi({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      localStorage.setItem('token', jwt.token);
+      localStorage.setItem('userEmail', jwt.email);
+      localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
+
+      navigate('/dashboard'); 
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setApiError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTogglePasswordVisibility = () => {
@@ -145,6 +173,12 @@ const Login: React.FC = () => {
           >
             Login
           </Typography>
+
+          {apiError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {apiError}
+            </Alert>
+          )}
 
           <Stack spacing={3}>
             {/* Email */}
@@ -253,7 +287,8 @@ const Login: React.FC = () => {
                 textAlign: 'left',
                 mt: 1,
               }}
-            >Forgot your password?{' '}
+            >
+              Forgot your password?{' '}
               <MuiLink
                 component="button"
                 type="button"
@@ -279,6 +314,7 @@ const Login: React.FC = () => {
               fullWidth
               size="large"
               onClick={handleSubmit}
+              disabled={loading}
               sx={{
                 mt: 1,
                 fontWeight: 600,
@@ -303,7 +339,7 @@ const Login: React.FC = () => {
                 },
               }}
             >
-              Sign in
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <Divider sx={{ my: 1.5, color: '#cbd0dc' }}>or</Divider>
@@ -392,105 +428,101 @@ const Login: React.FC = () => {
       </Box>
 
       {/* Reset password modal */}
-        <Dialog
+      <Dialog
         open={resetOpen}
         onClose={handleCloseReset}
         maxWidth="sm"
         fullWidth
         slotProps={{
-            backdrop: {
+          backdrop: {
             sx: {
-                backgroundColor: 'rgba(15,23,42,0.65)', 
+              backgroundColor: 'rgba(15,23,42,0.65)',
             },
-            },
+          },
         }}
         PaperProps={{
-            sx: {
+          sx: {
             borderRadius: 3,
             p: 2,
-            },
+          },
         }}
-        >
+      >
         <DialogTitle sx={{ fontWeight: 600, fontSize: 20 }}>
-            Reset password
+          Reset password
         </DialogTitle>
 
         <DialogContent sx={{ pt: 1 }}>
-            <Typography
-            variant="body2"
-            sx={{ color: '#4b5563', mb: 2 }}
-            >
-            Enter your account&apos;s email address, and we&apos;ll send you a link
-            to reset your password.
-            </Typography>
+          <Typography variant="body2" sx={{ color: '#4b5563', mb: 2 }}>
+            Enter your account&apos;s email address, and we&apos;ll send you a
+            link to reset your password.
+          </Typography>
 
-            <TextField
+          <TextField
             fullWidth
             type="email"
             placeholder="Email address"
             value={resetEmail}
             onChange={e => {
-                setResetEmail(e.target.value);
-                setResetError(undefined);
+              setResetEmail(e.target.value);
+              setResetError(undefined);
             }}
             error={Boolean(resetError)}
             helperText={resetError}
             sx={{
-                '& .MuiOutlinedInput-root': {
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 3.5,
-                bgcolor: '#f4f6fb',   
+                bgcolor: '#f4f6fb',
                 height: 48,
                 overflow: 'hidden',
                 '& fieldset': {
-                    borderColor: '#dde3f0',  
-                    borderRadius: 3.5,    
+                  borderColor: '#dde3f0',
+                  borderRadius: 3.5,
                 },
                 '&:hover fieldset': {
-                    borderColor: '#dde3f0',      
+                  borderColor: '#dde3f0',
                 },
                 '&.Mui-focused fieldset': {
-                    borderColor: '#dde3f0',      
+                  borderColor: '#dde3f0',
                 },
-                },
-                '& input:-webkit-autofill': {
+              },
+              '& input:-webkit-autofill': {
                 WebkitBoxShadow: '0 0 0 1000px #f4f6fb inset',
                 WebkitTextFillColor: '#111827',
                 borderRadius: 3.5,
-                },
+              },
             }}
-            />
+          />
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2, gap: 1.5 }}>
-            <Button
+          <Button
             onClick={handleCloseReset}
             sx={{
-                textTransform: 'none',
-                color: '#4b5563',
+              textTransform: 'none',
+              color: '#4b5563',
             }}
-            >
+          >
             Cancel
-            </Button>
-            <Button
+          </Button>
+          <Button
             variant="contained"
             onClick={handleResetContinue}
             sx={{
-                textTransform: 'none',
-                borderRadius: 3.25,
-                px: 3,
-                bgcolor: '#111827',
-                boxShadow: 'none',
-                '&:hover': {
+              textTransform: 'none',
+              borderRadius: 3.25,
+              px: 3,
+              bgcolor: '#111827',
+              boxShadow: 'none',
+              '&:hover': {
                 bgcolor: '#020617',
                 boxShadow: 'none',
-                },
+              },
             }}
-            >
+          >
             Continue
-            </Button>
+          </Button>
         </DialogActions>
-        </Dialog>
-
+      </Dialog>
     </>
   );
 };
