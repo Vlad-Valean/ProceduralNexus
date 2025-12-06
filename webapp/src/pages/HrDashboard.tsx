@@ -17,6 +17,7 @@ const HrDashboard: React.FC = () => {
 
   function handleBackToStats(): void {
     setSelectedUser(null);
+    setShowApplications(false);
   }
 
   return (
@@ -58,7 +59,6 @@ const HrDashboard: React.FC = () => {
               <AddUserForm />
             </div>
 
-            {/* Right side: UserDetails if selected, else OrganizationStats or NewApplications */}
             <div style={{ minHeight: 0 }}>
               {selectedUser ? (
                 <UserDetails user={selectedUser} onBackToStats={handleBackToStats}/>
