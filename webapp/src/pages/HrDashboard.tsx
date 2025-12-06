@@ -4,9 +4,20 @@ import UserTable from "../components/UserTable";
 import OrganizationStats from "../components/OrganizationStats";
 import AddUserForm from "../components/AddUserForm";
 import NewApplications from "../components/NewApplications";
+import UserDetails from "../components/UserDetails";
 
 const HrDashboard: React.FC = () => {
   const [showApplications, setShowApplications] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
+
+
+  function handleBackToStats(): void {
+    setSelectedUser(null);
+  }
 
   return (
     <>
@@ -42,18 +53,21 @@ const HrDashboard: React.FC = () => {
               }}
             >
               <div style={{ flex: 1, minHeight: 0 }}>
-                <UserTable />
+                <UserTable onUserSelect={setSelectedUser} />
               </div>
               <AddUserForm />
             </div>
 
-            {!showApplications ? (
-              <OrganizationStats
-                onCheckApplications={() => setShowApplications(true)}
-              />
-            ) : (
-              <NewApplications onBack={() => setShowApplications(false)} />
-            )}
+            {/* Right side: UserDetails if selected, else OrganizationStats or NewApplications */}
+            <div style={{ minHeight: 0 }}>
+              {selectedUser ? (
+                <UserDetails user={selectedUser} onBackToStats={handleBackToStats}/>
+              ) : showApplications ? (
+                <NewApplications onBack={() => setShowApplications(false)} />
+              ) : (
+                <OrganizationStats onCheckApplications={() => setShowApplications(true)} />
+              )}
+            </div>
           </div>
         </div>
       </main>

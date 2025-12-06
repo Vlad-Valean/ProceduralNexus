@@ -35,7 +35,11 @@ const allUsers = Array.from({ length: 215 }, (_, i) => ({
 
 const PAGE_SIZE = 7;
 
-const UserTable: React.FC = () => {
+interface UserTableProps {
+  onUserSelect?: (user: { firstName: string; lastName: string; email: string }) => void;
+}
+
+const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
@@ -116,7 +120,7 @@ const UserTable: React.FC = () => {
             variant="h6"
             sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0.5 }}
           >
-            Users
+            All users
           </Typography>
           <Typography
             variant="subtitle2"
@@ -287,7 +291,18 @@ const UserTable: React.FC = () => {
             {users.length > 0 ? (
               <>
                 {users.map((user, idx) => (
-                  <TableRow key={idx + startIdx} sx={{ "& td": { py: 0.8 } }}>
+                  <TableRow
+                    key={idx + startIdx}
+                    sx={{
+                      "& td": { py: 0.8 },
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      "&:hover": {
+                        backgroundColor: "#F9FBFF",
+                      },
+                    }}
+                    onClick={() => onUserSelect && onUserSelect(user)}
+                  >
                     <TableCell
                       sx={{
                         fontSize: "0.8rem",
