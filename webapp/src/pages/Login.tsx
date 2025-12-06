@@ -93,9 +93,13 @@ const Login: React.FC = () => {
       localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
 
       navigate('/dashboard'); 
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setApiError(err.message || 'Login failed');
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error('Login error:', err);
+          setApiError(err.message || 'Login failed');
+        } else {
+          setApiError('Login failed');
+        }
     } finally {
       setLoading(false);
     }

@@ -123,10 +123,14 @@ const Register: React.FC = () => {
       setTimeout(() => {
         navigate('/login');
       }, 1500);
-    } catch (err: any) {
-      console.error('Register error:', err);
-      setApiError(err.message || 'Registration failed');
-    } finally {
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Register error:', err);
+        setApiError(err.message || 'Registration failed');
+      } else {
+        setApiError('Registration failed');
+      }
+    }  finally {
       setLoading(false);
     }
   };
