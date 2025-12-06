@@ -12,16 +12,23 @@ import {
   Stack,
   IconButton,
   InputAdornment,
+  Alert,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { registerApi } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 type FormData = {
+  firstname: string;
+  lastname: string;
   email: string;
   password: string;
   acceptDataProcessing: boolean;
 };
 
 type FormErrors = {
+  firstname?: string;
+  lastname?: string;
   email?: string;
   password?: string;
   acceptDataProcessing?: string;
@@ -29,6 +36,8 @@ type FormErrors = {
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
+    firstname: '',
+    lastname: '',
     email: '',
     password: '',
     acceptDataProcessing: false,
@@ -36,6 +45,12 @@ const Register: React.FC = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [apiSuccess, setApiSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleChange =
     (field: keyof FormData) =>
@@ -55,6 +70,14 @@ const Register: React.FC = () => {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
+
+    if (!formData.firstname.trim()) {
+      newErrors.firstname = 'First name is required.';
+    }
+
+    if (!formData.lastname.trim()) {
+      newErrors.lastname = 'Last name is required.';
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
@@ -80,9 +103,36 @@ const Register: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    console.log('Form submitted:', formData);
+
+    setApiError(null);
+    setApiSuccess(null);
+    setLoading(true);
+
+    try {
+      const msg = await registerApi({
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      setApiSuccess(msg || 'User registered successfully!');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Register error:', err);
+        setApiError(err.message || 'Registration failed');
+      } else {
+        setApiError('Registration failed');
+      }
+    }  finally {
+      setLoading(false);
+    }
   };
 
   const handleTogglePasswordVisibility = () => {
@@ -102,7 +152,7 @@ const Register: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#cfd6e0', 
+        bgcolor: '#cfd6e0',
         px: 2,
       }}
     >
@@ -110,8 +160,8 @@ const Register: React.FC = () => {
         elevation={3}
         sx={{
           width: '100%',
-          maxWidth: 380,        
-          borderRadius: 6,      
+          maxWidth: 380,
+          borderRadius: 6,
           p: { xs: 4, sm: 6 },
           boxShadow:
             '0 30px 80px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(148, 163, 184, 0.12)',
@@ -132,7 +182,99 @@ const Register: React.FC = () => {
           Register
         </Typography>
 
+        {apiError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {apiError}
+          </Alert>
+        )}
+
+        {apiSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {apiSuccess}
+          </Alert>
+        )}
+
         <Stack spacing={3}>
+          {/* First name */}
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: '#4b5563',
+                mb: 0.75,
+                textAlign: 'left',
+              }}
+            >
+              First name
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="John"
+              size="medium"
+              value={formData.firstname}
+              onChange={handleChange('firstname')}
+              error={Boolean(errors.firstname)}
+              helperText={errors.firstname}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 4,
+                  bgcolor: '#f4f6fb',
+                  height: 52,
+                  '& fieldset': {
+                    borderColor: '#dde3f0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#cfd6e6',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#a5b1c8',
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Last name */}
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: '#4b5563',
+                mb: 0.75,
+                textAlign: 'left',
+              }}
+            >
+              Last name
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Doe"
+              size="medium"
+              value={formData.lastname}
+              onChange={handleChange('lastname')}
+              error={Boolean(errors.lastname)}
+              helperText={errors.lastname}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 4,
+                  bgcolor: '#f4f6fb',
+                  height: 52,
+                  '& fieldset': {
+                    borderColor: '#dde3f0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#cfd6e6',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#a5b1c8',
+                  },
+                },
+              }}
+            />
+          </Box>
+
           {/* Email */}
           <Box>
             <Typography
@@ -157,7 +299,7 @@ const Register: React.FC = () => {
               helperText={errors.email}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,          
+                  borderRadius: 4,
                   bgcolor: '#f4f6fb',
                   height: 52,
                   '& fieldset': {
@@ -273,13 +415,14 @@ const Register: React.FC = () => {
             fullWidth
             size="large"
             onClick={handleSubmit}
+            disabled={loading}
             sx={{
               mt: 1,
               fontWeight: 600,
               textTransform: 'none',
               borderRadius: 4,
               py: 1.4,
-              bgcolor: '#6f7688',  
+              bgcolor: '#6f7688',
               boxShadow: 'none',
               border: '2px solid #6f7688',
               '&:hover': {
@@ -297,7 +440,7 @@ const Register: React.FC = () => {
               },
             }}
           >
-            Sign up
+            {loading ? 'Signing up...' : 'Sign up'}
           </Button>
 
           <Divider sx={{ my: 1.5, color: '#cbd0dc' }}>or</Divider>
@@ -343,14 +486,14 @@ const Register: React.FC = () => {
                 borderColor: '#cfd6e6',
                 boxShadow: 'none',
               },
-                '&:focus': {
-                  border: '2px solid #cfd6e6',
-                  outline: 'none',
-                },
-                '&:active': {
-                  border: '2px solid #cfd6e6',
-                  outline: 'none',
-                },
+              '&:focus': {
+                border: '2px solid #cfd6e6',
+                outline: 'none',
+              },
+              '&:active': {
+                border: '2px solid #cfd6e6',
+                outline: 'none',
+              },
             }}
           >
             Sign up with Google
@@ -374,7 +517,7 @@ const Register: React.FC = () => {
                 transition: 'color 0.2s',
                 '&:hover': {
                   color: '#6b7280',
-                  fontWeight:500
+                  fontWeight: 500,
                 },
               }}
             >
