@@ -10,7 +10,7 @@ const HrDashboard: React.FC = () => {
       <Navbar />
       <main
         style={{
-          padding: "20px 32px 18px",         
+          padding: "10px 32px 10px",         
           minHeight: `calc(100vh - 60px)`,
           boxSizing: "border-box",
           overflowY: "auto",
@@ -26,7 +26,7 @@ const HrDashboard: React.FC = () => {
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)", 
-              gap: 32,
+              gap: 22,
               alignItems: "stretch", 
             }}
           >
@@ -34,14 +34,13 @@ const HrDashboard: React.FC = () => {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 24,
+                gap: 20,
                 minHeight: 0,
               }}
             >
               <div style={{ flex: 1, minHeight: 0 }}>
                 <UserTable />
               </div>
-
               <AddUserForm />
             </div>
 

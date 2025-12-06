@@ -71,6 +71,7 @@ const AddUserForm: React.FC = () => {
         width: "100%",
         minWidth: 0,
         boxSizing: "border-box",
+        mb: 0,
       }}
     >
       <Typography

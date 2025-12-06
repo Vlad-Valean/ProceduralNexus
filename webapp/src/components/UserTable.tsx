@@ -33,7 +33,7 @@ const allUsers = Array.from({ length: 215 }, (_, i) => ({
   ].toLowerCase()}@example.com`,
 }));
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 7;
 
 const UserTable: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -89,16 +89,20 @@ const UserTable: React.FC = () => {
   return (
     <Paper
       sx={{
-        p: { xs: 2, sm: 3 },
+        px: { xs: 2.5, sm: 2.5 },
+        pt: { xs: 2.5, sm: 2.5 },
+        pb: { xs: 1.2, sm: 1.2 },
         borderRadius: 3,
         background: "#fff",
-        minHeight: 370,
+        // minHeight: 370, // Removing fixed height
         boxShadow: "0 2px 16px #bfcbe6",
-        width: "100%",          // responsive to parent column
-        minWidth: 0,            // allow shrinking inside grid/flex layouts
-        display: "flex",        // make the card a flex column
+        width: "100%",
+        minWidth: 0,
+        display: "flex",
         flexDirection: "column",
         boxSizing: "border-box",
+        mb: 0,
+        height: "100%", // NEW: Fill the container height
       }}
     >
       {/* Header + Search/Sort Row */}
@@ -106,17 +110,17 @@ const UserTable: React.FC = () => {
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1.5,
-          mb: 1.5,
+          gap: 2,
+          mb: 2,
           flexWrap: "wrap",
         }}
       >
-        <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Box sx={{ flex: 1 }}>
           <Typography
-            variant="h5"
-            sx={{ fontWeight: 700, color: "#222", mb: 0, textAlign: "left" }}
+            variant="h6"
+            sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0.5 }}
           >
-            All Users
+            Users
           </Typography>
           <Typography
             variant="subtitle2"
@@ -222,13 +226,14 @@ const UserTable: React.FC = () => {
         </Select>
       </Box>
 
-      {/* Table area – flex:1 so footer stays at bottom */}
+      {/* Table area – flex:1 so footer stays at bottom, ADDING overflowY */}
       <Box
         sx={{
           flex: 1,
           minHeight: 0,
           mb: 2,
           overflowX: "auto", // allow horizontal scroll instead of stretching/overlapping
+          overflowY: "auto", // NEW: Allow vertical scroll for table rows
         }}
       >
         <Table
@@ -395,7 +400,7 @@ const UserTable: React.FC = () => {
           alignItems: "center",
           justifyContent: "space-between",
           mt: "auto",
-          pt: 1.5,
+          pt: 0.5,
           flexWrap: "wrap",
           width: "100%",
         }}
