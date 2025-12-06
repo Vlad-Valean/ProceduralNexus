@@ -7,23 +7,30 @@ const orbitSpin = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
-const OrganizationStats: React.FC = () => {
+type OrganizationStatsProps = {
+  onCheckApplications?: () => void;
+};
+
+const OrganizationStats: React.FC<OrganizationStatsProps> = ({
+  onCheckApplications,
+}) => {
   return (
     <Paper
       sx={{
-        p: { xs: 3, sm: 4 },
+        px: { xs: 2.5, sm: 2.5 },
+        pt: { xs: 2.5, sm: 2.5 },
+        pb: { xs: 1.2, sm: 1.2 },
         borderRadius: 4,
         background: "#fff",
-        minHeight: 630,
         boxShadow: "0 2px 16px #bfcbe6",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
+        minHeight: 630,
       }}
     >
-      {/* Title */}
-         <Box sx={{ textAlign: "center", mt: 8, mb: 2.5 }}>
+      <Box sx={{ textAlign: "center", mt: 8, mb: 2.5 }}>
         <Typography
           variant="h4"
           sx={{
@@ -42,58 +49,57 @@ const OrganizationStats: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Circles container */}
       <Box
         sx={{
           position: "relative",
           width: { xs: 260, sm: 340, md: 380 },
           height: { xs: 260, sm: 340, md: 380 },
-             mb: 2.5,
+          mb: 2.5,
         }}
       >
-                {/* Button under MEMBERS circle, not lower than USERS circle */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    right: -10,
-                    top: { xs: 245, sm: 285, md: 300 }, // just below the MEMBERS circle, above USERS circle
-                    width: { xs: 160, sm: 200, md: 220 },
-                    height: 40,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: 3,
-                      px: 2,
-                      py: 0.5,
-                      fontSize: "0.95rem",
-                      minWidth: 120,
-                      bgcolor: "#6f7688",
-                      boxShadow: "none",
-                      pointerEvents: 'auto',
-                      "&:hover": {
-                        bgcolor: "#3D3C42",
-                        boxShadow: "none",
-                      },
-                      "&:focus": {
-                        outline: "none",
-                        boxShadow: "none",
-                      },
-                      "&:focus-visible": {
-                        outline: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    Check new applications
-                  </Button>
-                </Box>
-        {/* Big circle – Members */}
+        <Box
+          sx={{
+            position: "absolute",
+            right: -10,
+            top: { xs: 245, sm: 285, md: 300 },
+            width: { xs: 160, sm: 200, md: 220 },
+            height: 40,
+            display: "flex",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={onCheckApplications}
+            sx={{
+              textTransform: "none",
+              borderRadius: 3,
+              px: 2,
+              py: 0.5,
+              fontSize: "0.95rem",
+              minWidth: 120,
+              bgcolor: "#6f7688",
+              boxShadow: "none",
+              pointerEvents: "auto",
+              "&:hover": {
+                bgcolor: "#3D3C42",
+                boxShadow: "none",
+              },
+              "&:focus": {
+                outline: "none",
+                boxShadow: "none",
+              },
+              "&:focus-visible": {
+                outline: "none",
+                boxShadow: "none",
+              },
+            }}
+          >
+            Check new applications
+          </Button>
+        </Box>
+
         <Box
           sx={{
             position: "absolute",
@@ -103,7 +109,6 @@ const OrganizationStats: React.FC = () => {
             height: { xs: 160, sm: 200, md: 220 },
           }}
         >
-          {/* Orbit line */}
           <Box
             sx={{
               position: "absolute",
@@ -115,14 +120,12 @@ const OrganizationStats: React.FC = () => {
               animation: `${orbitSpin} 18s linear infinite`,
             }}
           />
-          {/* Static outline */}
           <Box
             sx={{
               position: "absolute",
               inset: { xs: -4, sm: -6 },
             }}
           />
-          {/* Filled circle */}
           <Box
             sx={{
               position: "absolute",
@@ -157,7 +160,6 @@ const OrganizationStats: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Top-left circle – HR */}
         <Box
           sx={{
             position: "absolute",
@@ -212,12 +214,11 @@ const OrganizationStats: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Bottom-left circle – Users */}
         <Box
           sx={{
             position: "absolute",
             left: -15,
-            bottom: { xs: -30, sm: -40, md: 10 }, // moved lower for Figma match
+            bottom: { xs: -30, sm: -40, md: 10 },
             width: { xs: 150, sm: 170, md: 180 },
             height: { xs: 150, sm: 170, md: 180 },
           }}

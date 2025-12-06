@@ -40,7 +40,6 @@ const UserTable: React.FC = () => {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
 
-  // --- filtering + sorting ---
   let filteredUsers = allUsers.filter((user) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -66,7 +65,7 @@ const UserTable: React.FC = () => {
     );
   } else if (sort === "newest") {
     filteredUsers.reverse();
-  } // "oldest" = original order
+  }
 
   const totalUsers = filteredUsers.length;
   const pageCount = Math.ceil(totalUsers / PAGE_SIZE);
@@ -75,7 +74,6 @@ const UserTable: React.FC = () => {
   const startIdx = (page - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(page * PAGE_SIZE, totalUsers);
 
-  // how many empty rows we need to keep PAGE_SIZE rows total
   const emptyRows = Math.max(0, PAGE_SIZE - users.length);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) =>
@@ -94,7 +92,6 @@ const UserTable: React.FC = () => {
         pb: { xs: 1.2, sm: 1.2 },
         borderRadius: 3,
         background: "#fff",
-        // minHeight: 370, // Removing fixed height
         boxShadow: "0 2px 16px #bfcbe6",
         width: "100%",
         minWidth: 0,
@@ -102,10 +99,9 @@ const UserTable: React.FC = () => {
         flexDirection: "column",
         boxSizing: "border-box",
         mb: 0,
-        height: "100%", // NEW: Fill the container height
+        height: "100%",
       }}
     >
-      {/* Header + Search/Sort Row */}
       <Box
         sx={{
           display: "flex",
@@ -139,10 +135,10 @@ const UserTable: React.FC = () => {
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            width: { xs: "100%", sm: 140 }, // smaller
+            width: { xs: "100%", sm: 140 },
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              height: 32, // smaller height
+              height: 32,
               fontSize: "0.8rem",
               "& fieldset": {
                 borderColor: "#dde3f0",
@@ -174,8 +170,8 @@ const UserTable: React.FC = () => {
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            height: 32, // smaller height
-            minWidth: 140, // slightly smaller width
+            height: 32, 
+            minWidth: 140, 
             fontWeight: 500,
             fontSize: "0.8rem",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -226,21 +222,20 @@ const UserTable: React.FC = () => {
         </Select>
       </Box>
 
-      {/* Table area – flex:1 so footer stays at bottom, ADDING overflowY */}
       <Box
         sx={{
           flex: 1,
           minHeight: 0,
           mb: 2,
-          overflowX: "auto", // allow horizontal scroll instead of stretching/overlapping
-          overflowY: "auto", // NEW: Allow vertical scroll for table rows
+          overflowX: "auto",
+          overflowY: "auto", 
         }}
       >
         <Table
           sx={{
             tableLayout: "fixed",
-            width: "max-content", // always as wide as columns
-            minWidth: "100%", // never shrink below container
+            width: "max-content", 
+            minWidth: "100%", 
             borderCollapse: "collapse",
           }}
         >
@@ -330,7 +325,6 @@ const UserTable: React.FC = () => {
                   </TableRow>
                 ))}
 
-                {/* Placeholder empty rows to keep constant height */}
                 {emptyRows > 0 &&
                   Array.from({ length: emptyRows }).map((_, idx) => (
                     <TableRow key={`empty-${idx}`} sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}>
@@ -393,7 +387,6 @@ const UserTable: React.FC = () => {
         </Table>
       </Box>
 
-      {/* Pagination and Info Row – pushed to bottom by flex layout */}
       <Box
         sx={{
           display: "flex",

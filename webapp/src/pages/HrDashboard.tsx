@@ -1,16 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import UserTable from "../components/UserTable";
 import OrganizationStats from "../components/OrganizationStats";
 import AddUserForm from "../components/AddUserForm";
+import NewApplications from "../components/NewApplications";
 
 const HrDashboard: React.FC = () => {
+  const [showApplications, setShowApplications] = useState(false);
+
   return (
     <>
       <Navbar />
       <main
         style={{
-          padding: "10px 32px 10px",         
+          padding: "10px 32px 10px",
           minHeight: `calc(100vh - 60px)`,
           boxSizing: "border-box",
           overflowY: "auto",
@@ -25,9 +28,9 @@ const HrDashboard: React.FC = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)", 
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)",
               gap: 22,
-              alignItems: "stretch", 
+              alignItems: "stretch",
             }}
           >
             <div
@@ -44,7 +47,13 @@ const HrDashboard: React.FC = () => {
               <AddUserForm />
             </div>
 
-            <OrganizationStats />
+            {!showApplications ? (
+              <OrganizationStats
+                onCheckApplications={() => setShowApplications(true)}
+              />
+            ) : (
+              <NewApplications onBack={() => setShowApplications(false)} />
+            )}
           </div>
         </div>
       </main>

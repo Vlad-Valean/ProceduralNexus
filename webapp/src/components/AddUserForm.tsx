@@ -25,7 +25,6 @@ const AddUserForm: React.FC = () => {
   const handleAddUser = () => {
     let valid = true;
 
-    // validate email
     if (!validateEmail(email)) {
       setEmailError("Invalid email address*");
       valid = false;
@@ -33,7 +32,6 @@ const AddUserForm: React.FC = () => {
       setEmailError("");
     }
 
-    // validate role
     if (!role) {
       setRoleError("Role is required*");
       valid = false;
@@ -43,14 +41,12 @@ const AddUserForm: React.FC = () => {
 
     if (!valid) return;
 
-    // ✅ success path: clear fields + clear errors + show success
     setEmail("");
     setRole("");
     setEmailError("");
     setRoleError("");
     setSuccessOpen(true);
 
-    // here you would also call your API to actually create the user
   };
 
   return (
@@ -82,7 +78,6 @@ const AddUserForm: React.FC = () => {
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-        {/* Email label + error */}
         <Box
           sx={{
             display: "flex",
@@ -108,7 +103,6 @@ const AddUserForm: React.FC = () => {
           )}
         </Box>
 
-        {/* Email input */}
         <TextField
           fullWidth
           type="email"
@@ -138,7 +132,6 @@ const AddUserForm: React.FC = () => {
           }}
         />
 
-        {/* Role label + error */}
         <Box
           sx={{
             display: "flex",
@@ -165,7 +158,6 @@ const AddUserForm: React.FC = () => {
           )}
         </Box>
 
-        {/* Role + button row – responsive via flex-wrap */}
         <Box
           sx={{
             display: "flex",
@@ -175,7 +167,6 @@ const AddUserForm: React.FC = () => {
             alignItems: "flex-end",
           }}
         >
-          {/* Select */}
           <Box sx={{ flex: "1 1 220px", minWidth: 0 }}>
             <FormControl fullWidth variant="outlined" error={!!roleError}>
               <Select
@@ -206,7 +197,6 @@ const AddUserForm: React.FC = () => {
             </FormControl>
           </Box>
 
-          {/* Button */}
           <Box sx={{ flex: "0 0 140px" }}>
             <Button
               type="submit"
