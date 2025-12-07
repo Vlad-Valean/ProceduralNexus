@@ -184,12 +184,6 @@ const Login: React.FC = () => {
             </Alert>
           )}
 
-          {apiError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {apiError}
-            </Alert>
-          )}
-
           <Stack spacing={3}>
             {/* Email */}
             <Box>
@@ -350,7 +344,6 @@ const Login: React.FC = () => {
               }}
             >
               {loading ? 'Signing in...' : 'Sign in'}
-              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <Divider sx={{ my: 1.5, color: '#cbd0dc' }}>or</Divider>
@@ -453,23 +446,16 @@ const Login: React.FC = () => {
         }}
         PaperProps={{
           sx: {
-          sx: {
             borderRadius: 3,
             p: 2,
-          },
           },
         }}
       >
         <DialogTitle sx={{ fontWeight: 600, fontSize: 20 }}>
           Reset password
-          Reset password
         </DialogTitle>
 
         <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" sx={{ color: '#4b5563', mb: 2 }}>
-            Enter your account&apos;s email address, and we&apos;ll send you a
-            link to reset your password.
-          </Typography>
           <Typography variant="body2" sx={{ color: '#4b5563', mb: 2 }}>
             Enter your account&apos;s email address, and we&apos;ll send you a
             link to reset your password.
@@ -483,13 +469,10 @@ const Login: React.FC = () => {
             onChange={e => {
               setResetEmail(e.target.value);
               setResetError(undefined);
-              setResetEmail(e.target.value);
-              setResetError(undefined);
             }}
             error={Boolean(resetError)}
             helperText={resetError}
             sx={{
-
               '& .MuiOutlinedInput-root': {
                 borderRadius: 3.5,
                 bgcolor: '#f4f6fb',
@@ -532,15 +515,6 @@ const Login: React.FC = () => {
               bgcolor: '#111827',
               boxShadow: 'none',
               '&:hover': {
-              textTransform: 'none',
-              borderRadius: 3.25,
-              px: 3,
-              bgcolor: '#111827',
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: '#020617',
-                boxShadow: 'none',
-              },
               },
             }}
           >
