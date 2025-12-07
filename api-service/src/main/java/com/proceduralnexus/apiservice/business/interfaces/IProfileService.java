@@ -1,7 +1,5 @@
-package com.proceduralnexus.apiservice.business.services;
+package com.proceduralnexus.apiservice.business.interfaces;
 import com.proceduralnexus.apiservice.controller.dtos.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
