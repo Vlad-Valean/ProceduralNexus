@@ -2,12 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import navbarLogo from "../assets/navbar_logo.png";
 import profileIcon from "../assets/profile_icon.png";
-// import { useUserProfile } from "../hooks/useUserProfile";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
-  // Get roles from localStorage
   let role = "guest";
   let roles: string[] = [];
   try {
@@ -24,7 +22,6 @@ const Navbar: React.FC = () => {
   else if (roles.includes("HR")) role = "hr";
   else if (roles.includes("USER")) {
     role = "user";
-    // Check if organization info is present in localStorage
     const org = localStorage.getItem("userOrganization");
     hasOrg = !!org && org !== "null" && org !== "undefined" && org !== "";
   }
