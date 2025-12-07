@@ -3,6 +3,7 @@ package com.proceduralnexus.apiservice.controller.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,6 +28,7 @@ import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
+@SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/profiles")
 @Tag(name = "Profiles", description = "Endpoints for managing user profiles")
 public class ProfileController {
