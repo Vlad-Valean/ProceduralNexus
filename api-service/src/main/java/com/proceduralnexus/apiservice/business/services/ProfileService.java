@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.proceduralnexus.apiservice.business.interfaces.IProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.proceduralnexus.apiservice.business.interfaces.IProfileService;
 import com.proceduralnexus.apiservice.controller.dtos.ProfileResponseDto;
 import com.proceduralnexus.apiservice.controller.dtos.ProfileUpdateDto;
 import com.proceduralnexus.apiservice.data.entities.Profile;

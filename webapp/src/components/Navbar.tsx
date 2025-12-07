@@ -2,17 +2,28 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import navbarLogo from "../assets/navbar_logo.png";
 import profileIcon from "../assets/profile_icon.png";
-import { useUserProfile } from "../hooks/useUserProfile";
 
 const Navbar: React.FC = () => {
-  const { profile } = useUserProfile();
   const navigate = useNavigate();
 
   let role = "guest";
-  if (profile?.roles) {
-    if (profile.roles.includes("ADMIN")) role = "admin";
-    else if (profile.roles.includes("HR")) role = "hr";
-    else if (profile.roles.includes("USER")) role = profile.organization ? "user_with_org" : "user_without_org";
+  let roles: string[] = [];
+  try {
+    const storedRoles = localStorage.getItem("userRoles");
+    if (storedRoles) {
+      roles = JSON.parse(storedRoles);
+    }
+  } catch {
+    roles = [];
+  }
+
+  let hasOrg = false;
+  if (roles.includes("ADMIN")) role = "admin";
+  else if (roles.includes("HR")) role = "hr";
+  else if (roles.includes("USER")) {
+    role = "user";
+    const org = localStorage.getItem("userOrganization");
+    hasOrg = !!org && org !== "null" && org !== "undefined" && org !== "";
   }
 
   let links: { label: string; path: string }[] = [];
@@ -21,19 +32,15 @@ const Navbar: React.FC = () => {
       { label: "Home", path: "/" },
       { label: "About", path: "/about" },
     ];
-  } else if (role === "user_with_org") {
+  } else if (role === "user") {
     links = [
       { label: "Home", path: "/" },
       { label: "About", path: "/about" },
       { label: "Dashboard", path: "/dashboard" },
     ];
-  } else if (role === "user_without_org") {
-    links = [
-      { label: "Home", path: "/" },
-      { label: "About", path: "/about" },
-      { label: "Market", path: "/market" },
-      { label: "Dashboard", path: "/dashboard" },
-    ];
+    if (!hasOrg) {
+      links.push({ label: "Market", path: "/market" });
+    }
   } else if (role === "hr") {
     links = [
       { label: "Home", path: "/" },
