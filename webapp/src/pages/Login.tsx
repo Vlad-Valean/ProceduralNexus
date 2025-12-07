@@ -92,7 +92,7 @@ const Login: React.FC = () => {
       localStorage.setItem('userEmail', jwt.email);
       localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
 
-      navigate('/dashboard'); 
+      navigate('/'); 
     } catch (err: unknown) {
         if (err instanceof Error) {
           console.error('Login error:', err);
