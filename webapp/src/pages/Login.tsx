@@ -490,9 +490,6 @@ const Login: React.FC = () => {
                 },
               },
               '& input:-webkit-autofill': {
-                WebkitBoxShadow: '0 0 0 1000px #f4f6fb inset',
-                WebkitTextFillColor: '#111827',
-                borderRadius: 3.5,
               },
             }}
           />
@@ -518,8 +515,6 @@ const Login: React.FC = () => {
               bgcolor: '#111827',
               boxShadow: 'none',
               '&:hover': {
-                bgcolor: '#020617',
-                boxShadow: 'none',
               },
             }}
           >
