@@ -19,16 +19,12 @@ import { registerApi } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 
 type FormData = {
-  firstname: string;
-  lastname: string;
   email: string;
   password: string;
   acceptDataProcessing: boolean;
 };
 
 type FormErrors = {
-  firstname?: string;
-  lastname?: string;
   email?: string;
   password?: string;
   acceptDataProcessing?: string;
@@ -36,8 +32,6 @@ type FormErrors = {
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
-    firstname: '',
-    lastname: '',
     email: '',
     password: '',
     acceptDataProcessing: false,
@@ -70,14 +64,6 @@ const Register: React.FC = () => {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-
-    if (!formData.firstname.trim()) {
-      newErrors.firstname = 'First name is required.';
-    }
-
-    if (!formData.lastname.trim()) {
-      newErrors.lastname = 'Last name is required.';
-    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
@@ -112,8 +98,8 @@ const Register: React.FC = () => {
 
     try {
       const msg = await registerApi({
-        firstname: formData.firstname,
-        lastname: formData.lastname,
+        firstname: "",
+        lastname: "",
         email: formData.email,
         password: formData.password,
       });
@@ -195,85 +181,6 @@ const Register: React.FC = () => {
         )}
 
         <Stack spacing={3}>
-          {/* First name */}
-          <Box>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: '#4b5563',
-                mb: 0.75,
-                textAlign: 'left',
-              }}
-            >
-              First name
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="John"
-              size="medium"
-              value={formData.firstname}
-              onChange={handleChange('firstname')}
-              error={Boolean(errors.firstname)}
-              helperText={errors.firstname}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,
-                  bgcolor: '#f4f6fb',
-                  height: 52,
-                  '& fieldset': {
-                    borderColor: '#dde3f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cfd6e6',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#a5b1c8',
-                  },
-                },
-              }}
-            />
-          </Box>
-
-          {/* Last name */}
-          <Box>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: '#4b5563',
-                mb: 0.75,
-                textAlign: 'left',
-              }}
-            >
-              Last name
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="Doe"
-              size="medium"
-              value={formData.lastname}
-              onChange={handleChange('lastname')}
-              error={Boolean(errors.lastname)}
-              helperText={errors.lastname}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,
-                  bgcolor: '#f4f6fb',
-                  height: 52,
-                  '& fieldset': {
-                    borderColor: '#dde3f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cfd6e6',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#a5b1c8',
-                  },
-                },
-              }}
-            />
-          </Box>
 
           {/* Email */}
           <Box>
