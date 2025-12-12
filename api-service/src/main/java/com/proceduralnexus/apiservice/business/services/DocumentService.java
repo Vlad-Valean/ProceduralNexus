@@ -143,4 +143,14 @@ public class DocumentService implements IDocumentService {
 
         return dto;
     }
+    @Override
+    public DocumentResponseDto signDocument(Long id) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
+                );
+        document.setSigned(true);
+        Document saved = documentRepository.save(document);
+        return toDto(saved);
+    }
 }

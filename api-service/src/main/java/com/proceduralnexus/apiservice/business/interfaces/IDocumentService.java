@@ -13,5 +13,6 @@ public interface IDocumentService {
     DocumentResponseDto getDocumentMetadata(Long id);
     Resource loadDocumentFile(Long id);
     void deleteDocument(Long id);
+        DocumentResponseDto signDocument(Long id);
 }
 
