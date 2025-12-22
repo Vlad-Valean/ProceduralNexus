@@ -10,6 +10,31 @@ import UserDashboard from './pages/UserDashboard';
 import Profile from './pages/Profile';
 import './App.css';
 
+function getUserRoles(): string[] {
+  try {
+    const roles = localStorage.getItem("userRoles");
+    return roles ? JSON.parse(roles) : [];
+  } catch {
+    return [];
+  }
+}
+
+function RequireAdmin({ children }: { children: React.ReactElement }) {
+  const roles = getUserRoles();
+  if (!roles.includes("ADMIN")) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+function RequireHR({ children }: { children: React.ReactElement }) {
+  const roles = getUserRoles();
+  if (!roles.includes("HR")) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 function App() {
   
   return (
@@ -21,8 +46,22 @@ function App() {
       <Route path="/market" element={<Market />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/dashboard" element={<UserDashboard />} />
-      <Route path="/hr/dashboard" element={<HrDashboard />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route
+        path="/hr/dashboard"
+        element={
+          <RequireHR>
+            <HrDashboard />
+          </RequireHR>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <RequireAdmin>
+            <AdminDashboard />
+          </RequireAdmin>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
