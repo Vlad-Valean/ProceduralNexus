@@ -343,6 +343,9 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
               </TableCell>
               <TableCell
                 sx={{
+                  width: 60,        // <-- adjust this value
+                  minWidth: 60,     // <-- and this
+                  maxWidth: 60,     // <-- and this
                   fontWeight: 500,
                   color: "#B5B7C0",
                   borderBottom: "1px solid #e3e8f2",

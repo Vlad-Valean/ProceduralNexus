@@ -17,6 +17,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -79,6 +81,8 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
   const [page, setPage] = useState(1);
   const [showLogsPage, setShowLogsPage] = useState(false);
   const [logsTarget, setLogsTarget] = useState<string | null | undefined>(undefined);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState("");
 
   // Generate employees array to match the number in organization.employees
   const employees = React.useMemo(() => {
@@ -398,6 +402,10 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
                               border: "none",
                             },
                           }}
+                          onClick={() => {
+                            setSnackbarMsg(`User ${emp.email} received an email for updating their password`);
+                            setSnackbarOpen(true);
+                          }}
                         >
                           <RestartAltIcon fontSize="small" />
                         </IconButton>
@@ -693,6 +701,21 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity="info"
+          sx={{ width: "100%" }}
+        >
+          {snackbarMsg}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };

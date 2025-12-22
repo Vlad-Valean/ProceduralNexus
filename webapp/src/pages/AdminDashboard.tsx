@@ -21,6 +21,7 @@ const AdminDashboard: React.FC = () => {
   // Handler for row click
   const handleRowClick = (organization: Organization) => {
     setSelectedOrganization(organization);
+    // setShowServerLogs(false); // Ensure logs view is reset when selecting an organization
   };
 
   return (
@@ -68,7 +69,10 @@ const AdminDashboard: React.FC = () => {
               {selectedOrganization ? (
                 <OrganizationDetail
                   organization={selectedOrganization}
-                  onBack={() => setSelectedOrganization(null)}
+                  onBack={() => {
+                    setSelectedOrganization(null);
+                    // setShowServerLogs(true);
+                  }}
                 />
               ) : (
                 <AdminLogs logsTarget={null} onBack={() => {}} />
