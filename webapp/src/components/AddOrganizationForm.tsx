@@ -70,7 +70,6 @@ const AddOrganizationForm: React.FC = () => {
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-        {/* Organization Name Field */}
         <Box
           sx={{
             display: "flex",
@@ -123,7 +122,6 @@ const AddOrganizationForm: React.FC = () => {
             autoComplete: "new-org-name",
           }}
         />
-        {/* Owner Email Field and Add Button on same row */}
         <Box
           sx={{
             display: "flex",

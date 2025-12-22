@@ -17,7 +17,6 @@ import {
 import type { SelectChangeEvent } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-// Mock data generation for organizations
 const orgNames = [
   "TechNova", "GreenLeaf", "AquaSys", "Skyline", "MediCore", "EduPrime", "FinEdge", "Buildify", "HealthSync", "DataNest",
   "BluePeak", "UrbanRoots", "Solaris", "AgriPlus", "Cloudify", "SmartGrid", "BioGen", "LogiTrack", "Foodies", "Travelio",
@@ -37,7 +36,7 @@ function pad2(n: number) {
 const allOrganizations = Array.from({ length: 20 }, (_, i) => {
   const org = orgNames[i % orgNames.length] + (Math.floor(i / orgNames.length) + 1);
   const owner = `${ownerNames[i % ownerNames.length]}${Math.floor(i / ownerNames.length) + 1}@${domains[i % domains.length]}`;
-  const employees = 10 + ((i * 7) % 491); // 10 to 500 employees
+  const employees = 10 + ((i * 7) % 491);
   const date = new Date();
   date.setDate(date.getDate() - i);
   const createdDate = `${pad2(date.getDate())}-${pad2(date.getMonth() + 1)}-${date.getFullYear()}`;
@@ -75,7 +74,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
     );
   });
 
-  // Sorting logic
   filteredOrgs = [...filteredOrgs];
   if (sort === "employees-asc") {
     filteredOrgs.sort((a, b) => a.employees - b.employees);
@@ -83,7 +81,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
     filteredOrgs.sort((a, b) => b.employees - a.employees);
   } else if (sort === "date-asc") {
     filteredOrgs.sort((a, b) => {
-      // Parse dd-mm-yyyy
       const [da, ma, ya] = a.createdDate.split("-").map(Number);
       const [db, mb, yb] = b.createdDate.split("-").map(Number);
       const dateA = new Date(ya, ma - 1, da);
@@ -107,7 +104,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
       b.organization.toLowerCase().localeCompare(a.organization.toLowerCase())
     );
   }
-  // Default is newest (no change needed)
 
   const totalOrgs = filteredOrgs.length;
   const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
@@ -131,7 +127,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
     setPage(1);
   };
 
-  // Helper for sort label
   const getSortLabel = (selected: string) => {
     let label = "";
     switch (selected) {
@@ -191,7 +186,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           flexWrap: "wrap",
         }}
       >
-        {/* Left: Title */}
         <Box sx={{ flex: 1 }}>
           <Typography
             variant="h6"
@@ -207,7 +201,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           </Typography>
         </Box>
 
-        {/* Right: Controls */}
         <TextField
           placeholder="Search"
           size="small"
@@ -217,10 +210,10 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            width: 110, // smaller width
+            width: 110, 
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              height: 28, // smaller height
+              height: 28, 
               fontSize: "0.78rem",
               "& fieldset": {
                 borderColor: "#dde3f0",
@@ -249,8 +242,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            height: 28, // smaller height
-            minWidth: 120, // smaller width
+            height: 28, 
+            minWidth: 120,
             fontWeight: 500,
             fontSize: "0.55rem",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -267,7 +260,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           MenuProps={{
             PaperProps: {
               sx: {
-                fontSize: "0.75rem", // <-- makes dropdown text smaller
+                fontSize: "0.75rem", 
               },
             },
           }}
@@ -343,9 +336,9 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
               </TableCell>
               <TableCell
                 sx={{
-                  width: 60,        // <-- adjust this value
-                  minWidth: 60,     // <-- and this
-                  maxWidth: 60,     // <-- and this
+                  width: 60,        
+                  minWidth: 60,     
+                  maxWidth: 60,     
                   fontWeight: 500,
                   color: "#B5B7C0",
                   borderBottom: "1px solid #e3e8f2",
@@ -357,9 +350,9 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
               </TableCell>
               <TableCell
                 sx={{
-                  width: 80,        // <-- adjust this value
-                  minWidth: 80,     // <-- and this
-                  maxWidth: 80,     // <-- and this
+                  width: 80,        
+                  minWidth: 80,     
+                  maxWidth: 80,     
                   fontWeight: 500,
                   color: "#B5B7C0",
                   borderBottom: "1px solid #e3e8f2",

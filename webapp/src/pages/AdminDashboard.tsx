@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import OrganizationTable from "../components/OrganizationTable";
-// import OrganizationStats from "../components/OrganizationStats";
 import AddOrganizationForm from "../components/AddOrganizationForm";
 import OrganizationDetail from "../components/OrganizationDetail";
 import AdminLogs from "../components/AdminLogs";
 
-// Update the Organization type to match what OrganizationTable expects
 type Organization = {
   organization: string;
   owner: string;
@@ -15,13 +13,36 @@ type Organization = {
 };
 
 const AdminDashboard: React.FC = () => {
-  // Add state for selected organization
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [logsTarget, setLogsTarget] = useState<string | null>(null);
+  const [lastOrganization, setLastOrganization] = useState<Organization | null>(null);
 
-  // Handler for row click
   const handleRowClick = (organization: Organization) => {
     setSelectedOrganization(organization);
-    // setShowServerLogs(false); // Ensure logs view is reset when selecting an organization
+    setLastOrganization(organization);
+    setLogsTarget(null);
+  };
+
+  const handleShowLogs = (target: string | null) => {
+    setLogsTarget(target);
+    setLastOrganization(selectedOrganization);
+    setSelectedOrganization(null);
+  };
+
+  const handleBackFromLogs = () => {
+    if (lastOrganization) {
+      setSelectedOrganization(lastOrganization);
+      setLogsTarget(null);
+    } else {
+      setSelectedOrganization(null);
+      setLogsTarget(null);
+    }
+  };
+
+  const handleBackToLogs = () => {
+    setSelectedOrganization(null);
+    setLastOrganization(null);
+    setLogsTarget(null);
   };
 
   return (
@@ -58,21 +79,19 @@ const AdminDashboard: React.FC = () => {
               }}
             >
               <div style={{ flex: 1, minHeight: 0 }}>
-                {/* Pass the row click handler */}
                 <OrganizationTable onRowClick={handleRowClick} />
               </div>
               <AddOrganizationForm />
             </div>
 
             <div style={{ minHeight: 0 }}>
-              {/* Conditionally render detail or logs */}
-              {selectedOrganization ? (
+              {logsTarget !== null ? (
+                <AdminLogs logsTarget={logsTarget} onBack={handleBackFromLogs} />
+              ) : selectedOrganization ? (
                 <OrganizationDetail
                   organization={selectedOrganization}
-                  onBack={() => {
-                    setSelectedOrganization(null);
-                    // setShowServerLogs(true);
-                  }}
+                  onShowLogs={handleShowLogs}
+                  onBack={handleBackToLogs}
                 />
               ) : (
                 <AdminLogs logsTarget={null} onBack={() => {}} />

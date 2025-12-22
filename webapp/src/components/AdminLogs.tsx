@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
-// Mock log data for demonstration
 const MOCK_LOGS = [
   {
     timestamp: "2024-05-01 10:15:00",
@@ -149,20 +148,17 @@ const LOGS_PAGE_SIZE_OTHER = 7;
 const ROW_HEIGHT = 36;
 
 const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
-  // Timestamp filter states
   const [startDate, setStartDate] = useState<string>("");
   const [startTime, setStartTime] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [page, setPage] = useState(1);
 
-  // Helper to get combined datetime string or undefined
   const getDateTime = (date: string, time: string) => {
     if (!date) return undefined;
     return time ? `${date}T${time}` : `${date}T00:00`;
   };
 
-  // Filter logs by timestamp range
   const filteredLogs = MOCK_LOGS.filter((log) => {
     const logDate = log.timestamp.replace(" ", "T");
     const start = getDateTime(startDate, startTime);
@@ -173,7 +169,6 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
     return true;
   });
 
-  // Use 8 entries per page for "all server logs", otherwise 7
   const pageSize = logsTarget === undefined || logsTarget === null ? LOGS_PAGE_SIZE_ALL : LOGS_PAGE_SIZE_OTHER;
 
   const total = filteredLogs.length;
@@ -213,7 +208,6 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
         minHeight: 630,
       }}
     >
-      {/* Show back button only for user or organization logs, not for all logs */}
       {logsTarget !== undefined && logsTarget !== null && logsTarget !== "" && (
         <Button
           onClick={onBack}
@@ -242,7 +236,7 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
             fontSize: { xs: "1.3rem", sm: "1.5rem" },
             textAlign: "left",
             whiteSpace: "pre-line",
-            mb: logsTarget === undefined || logsTarget === null ? 1.5 : 0, // add space if showing all server logs
+            mb: logsTarget === undefined || logsTarget === null ? 1.5 : 0,
           }}
         >
           {logsTarget === undefined || logsTarget === null
@@ -257,7 +251,6 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
         </Typography>
       </Box>
 
-      {/* Timestamp selector */}
       <Box sx={{ width: "100%", mb: 2, display: "flex", alignItems: "center", flexWrap: "nowrap", gap: 1 }}>
         <Typography sx={{ fontWeight: 500, color: "#67728A", fontSize: "0.85rem" }}>
           From:
@@ -394,12 +387,10 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
           }}
         />
       </Box>
-      {/* Add whitespace after timestamp selector if showing all server logs */}
       {logsTarget === undefined || logsTarget === null ? (
         <Box sx={{ width: "100%", height: 14 }} />
       ) : null}
 
-      {/* Logs table */}
       <Box sx={{ width: "100%", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         <Box sx={{ overflowX: "auto", flex: 1 }}>
           <Table
@@ -466,7 +457,6 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
             </TableBody>
           </Table>
         </Box>
-        {/* Pagination and entry count */}
         <Box
           sx={{
             display: "flex",

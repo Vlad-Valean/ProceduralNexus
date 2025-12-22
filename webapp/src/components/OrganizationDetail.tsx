@@ -25,7 +25,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
-import AdminLogs from "./AdminLogs";
 
 export interface Organization {
   organization: string;
@@ -34,10 +33,16 @@ export interface Organization {
   createdDate: string;
 }
 
-interface OrganizationDetailProps {
-  organization: Organization;
-  onBack: () => void;
-}
+type OrganizationDetailProps = {
+  organization: {
+    organization: string;
+    owner: string;
+    employees: number;
+    createdDate: string;
+  };
+  onShowLogs: (target: string | null) => void;
+  onBack: () => void; 
+};
 
 const MOCK_EMPLOYEES = [
   { email: "alice@example.com", role: "User" },
@@ -50,7 +55,6 @@ const MOCK_EMPLOYEES = [
   { email: "heidi@example.com", role: "User" },
   { email: "ivan@example.com", role: "User" },
   { email: "judy@example.com", role: "User" },
-  // ...add more if needed
 ];
 
 const EMPLOYEES_PAGE_SIZE = 6;
@@ -74,17 +78,15 @@ const bodyCellSx = {
 
 const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
   organization,
+  onShowLogs,
   onBack,
 }) => {
   const [search, setSearch] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [showLogsPage, setShowLogsPage] = useState(false);
-  const [logsTarget, setLogsTarget] = useState<string | null | undefined>(undefined);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
 
-  // Generate employees array to match the number in organization.employees
   const employees = React.useMemo(() => {
     const base = MOCK_EMPLOYEES;
     const count = organization.employees;
@@ -119,26 +121,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
     ? Math.max(0, EMPLOYEES_PAGE_SIZE - employeesToShow.length)
     : Math.max(0, EMPLOYEES_PAGE_SIZE - 1);
 
-  if (showLogsPage) {
-    return (
-      <AdminLogs
-        onBack={() => {
-          // If logsTarget is null, go back to OrganizationStats (parent handles this)
-          // Otherwise, go back to organization detail
-          if (logsTarget === null) {
-            setShowLogsPage(false);
-            setLogsTarget(undefined);
-            onBack();
-          } else {
-            setShowLogsPage(false);
-            setLogsTarget(undefined);
-          }
-        }}
-        logsTarget={logsTarget}
-      />
-    );
-  }
-
   return (
     <Paper
       sx={{
@@ -159,13 +141,9 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         minHeight: 630,
       }}
     >
-      {/* Go back button */}
       <Box sx={{ mb: 1, width: "100%", display: "flex", justifyContent: "flex-start" }}>
         <Button
-          onClick={() => {
-            setShowLogsPage(true);
-            setLogsTarget(null);
-          }}
+          onClick={onBack}
           startIcon={<ArrowBackIosNewIcon sx={{ fontSize: 14 }} />}
           sx={{
             textTransform: "none",
@@ -182,7 +160,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Button>
       </Box>
 
-      {/* Header: Organization name and Delete button */}
       <Box
         sx={{
           width: "100%",
@@ -239,14 +216,12 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Button>
       </Box>
 
-      {/* Check organization logs link under organization name */}
       <Box sx={{ width: "100%", mb: 1, display: "flex", justifyContent: "flex-start" }}>
         <a
           href="#"
           onClick={e => {
             e.preventDefault();
-            setShowLogsPage(true);
-            setLogsTarget(organization.organization);
+            onShowLogs(organization.organization);
           }}
           style={{
             color: "#586AA2",
@@ -263,10 +238,8 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </a>
       </Box>
 
-      {/* Empty row */}
       <Box sx={{ height: 16 }} />
 
-      {/* Details */}
       <Box sx={{ mb: 2, width: "100%" }}>
         <Typography sx={{ fontWeight: 700, color: "#222", mb: 0.5, textAlign: "left", fontSize: "0.95rem" }}>
           Owner:{" "}
@@ -282,7 +255,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Typography>
       </Box>
 
-      {/* Employees table controls */}
       <Box
         sx={{
           width: "100%",
@@ -337,7 +309,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Box>
       </Box>
 
-      {/* Employees table - UserDetails style */}
       <Box
         sx={{
           flex: 1,
@@ -422,10 +393,7 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
                               border: "none",
                             },
                           }}
-                          onClick={() => {
-                            setShowLogsPage(true);
-                            setLogsTarget(emp.email);
-                          }}
+                          onClick={() => onShowLogs(emp.email)}
                         >
                           <ListAltOutlinedIcon fontSize="small" />
                         </IconButton>
@@ -514,7 +482,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
             </TableBody>
           </Table>
         </Box>
-        {/* Pagination and entry count */}
         <Box
           sx={{
             display: "flex",
@@ -524,7 +491,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
             flexWrap: "wrap",
             width: "100%",
             minHeight: 48,
-            // Ensure pagination stays at the bottom
             marginTop: "auto",
           }}
         >
@@ -587,7 +553,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Box>
       </Box>
 
-      {/* Delete dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
