@@ -30,6 +30,14 @@ type FormErrors = {
   password?: string;
 };
 
+type JwtResponse = {
+  accessToken?: string;
+  token?: string;
+  jwt?: string;
+  email?: string;
+  roles?: string[];
+};
+
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -83,7 +91,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const jwt = await loginApi({
+      const jwt: JwtResponse = await loginApi({
         email: formData.email,
         password: formData.password,
       });
@@ -91,6 +99,20 @@ const Login: React.FC = () => {
       localStorage.setItem('token', jwt.accessToken);
       localStorage.setItem('userEmail', jwt.email);
       localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
+
+      const token = jwt.accessToken || jwt.token || jwt.jwt || "";
+      localStorage.setItem('token', token);
+
+      localStorage.setItem('userEmail', jwt.email ?? '');
+      localStorage.setItem('userRoles', JSON.stringify(jwt.roles ?? []));
+      
+      console.log("All localStorage values:");
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          console.log(`${key}:`, localStorage.getItem(key));
+        }
+      }
 
       navigate('/'); 
     } catch (err: unknown) {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import organizationsMarket from "../assets/organization_marketplace.png";
 import clouds from "../assets/clouds.svg";
@@ -7,14 +7,55 @@ import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
 
+interface Organization {
+  id: string;
+  name: string;
+}
+
 const Market: React.FC = () => {
-  // Scrolls to the next viewport height
+  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const handleScrollToNextPage = () => {
     window.scrollTo({
       top: window.innerHeight,
       behavior: "smooth",
     });
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    console.log("JWT token:", token);
+    if (!token) {
+      setTimeout(() => {
+        setError("You are not logged in. Please log in to view organizations.");
+        setLoading(false);
+      }, 0);
+      return;
+    }
+    fetch("http://localhost:8080/organizations", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        console.log("Response status:", res.status);
+        return res.json().then((data) => {
+          console.log("Organizations API response:", data);
+          if (!res.ok) throw new Error("Network response was not ok");
+          return data;
+        });
+      })
+      .then((data) => {
+        setOrgs(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not load organizations.");
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <>
@@ -249,8 +290,41 @@ const Market: React.FC = () => {
           height: "100vh",
           background: "#fff",
           boxSizing: "border-box",
+          overflowY: "auto",
         }}
-      />
+      >
+        <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 24px" }}>
+          <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 24, color: "#222" }}>
+            Organizations
+          </h2>
+          {loading && <div>Loading organizations...</div>}
+          {error && <div style={{ color: "red" }}>{error}</div>}
+          {!loading && !error && orgs.length === 0 && (
+            <div>No organizations found.</div>
+          )}
+          {!loading && !error && orgs.length > 0 && (
+            <ul style={{ listStyle: "none", padding: 0 }}>
+              {orgs.map((org) => (
+                <li
+                  key={org.id}
+                  style={{
+                    background: "#f4f6fb",
+                    borderRadius: 8,
+                    marginBottom: 16,
+                    padding: "18px 24px",
+                    fontSize: "1.1rem",
+                    fontWeight: 500,
+                    color: "#2d3748",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  {org.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
       <style>
         {`
           html, body {
