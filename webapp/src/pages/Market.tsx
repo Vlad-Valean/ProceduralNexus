@@ -28,6 +28,8 @@ const Market: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [page, setPage] = useState(1);
+  const [heroSearch, setHeroSearch] = useState("");
+  const orgsSectionRef = React.useRef<HTMLDivElement>(null);
   const filterOpen = Boolean(filterAnchorEl);
 
   const handleScrollToNextPage = () => {
@@ -76,6 +78,32 @@ const Market: React.FC = () => {
         setLoading(false);
       });
   }, []);
+
+  // Filter organizations by name only, case-insensitive substring match
+  const filteredOrgs = orgs.filter(org => {
+    const q = searchValue.trim().toLowerCase();
+    if (!q) return true;
+    return org.name?.toLowerCase().includes(q);
+  });
+
+  // Reset to page 1 when searchValue changes
+  React.useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line
+  }, [searchValue]);
+
+  // Update: scroll to organizations table when hero search is submitted
+  const handleHeroSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setSearchValue(heroSearch);
+      setPage(1);
+      setTimeout(() => {
+        if (orgsSectionRef.current) {
+          orgsSectionRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 50);
+    }
+  };
 
   return (
     <>
@@ -194,6 +222,9 @@ const Market: React.FC = () => {
                   size="small"
                   variant="outlined"
                   autoComplete="off"
+                  value={heroSearch}
+                  onChange={e => setHeroSearch(e.target.value)}
+                  onKeyDown={handleHeroSearchKeyDown}
                   inputProps={{
                     autoComplete: "off",
                   }}
@@ -296,6 +327,7 @@ const Market: React.FC = () => {
         </div>
       </main>
       <div
+        ref={orgsSectionRef}
         style={{
           position: "absolute",
           top: "calc(100vh)",
@@ -533,7 +565,7 @@ const Market: React.FC = () => {
             </div>
           </div>
           <OrganizationsList
-            orgs={orgs}
+            orgs={filteredOrgs}
             loading={loading}
             error={error}
             page={page}
