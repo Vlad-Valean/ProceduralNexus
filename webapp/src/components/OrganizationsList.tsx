@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import Pagination from "@mui/material/Pagination";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 
 interface Organization {
   id: string;
@@ -25,7 +28,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   error,
   page,
   setPage,
-  PAGE_SIZE = 14,
+  PAGE_SIZE = 12,
 }) => {
   const totalOrgs = orgs.length;
   const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
@@ -38,6 +41,44 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   const endIdx = Math.min(page * PAGE_SIZE, totalOrgs);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setPage(value);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [docName, setDocName] = useState("");
+
+  const handleApplyClick = (org: Organization) => {
+    setSelectedOrg(org);
+    setModalOpen(true);
+    setCvFile(null);
+    setDocName("");
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedOrg(null);
+    setCvFile(null);
+    setDocName("");
+  };
+
+  const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setCvFile(file);
+    } else {
+      setCvFile(null);
+    }
+  };
+
+  const handleDocNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDocName(e.target.value);
+  };
+
+  const handleSubmitApplication = () => {
+    // TODO: Implement submit logic (API call)
+    handleCloseModal();
+  };
 
   return (
     <>
@@ -110,7 +151,12 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                   {org.status === "pending" ? (
                     <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
                   ) : (
-                    <span style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}>Apply</span>
+                    <span
+                      style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}
+                      onClick={() => handleApplyClick(org)}
+                    >
+                      Apply
+                    </span>
                   )}
                 </div>
               </div>
@@ -204,6 +250,169 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           />
         </div>
       </div>
+      {/* Modal for Apply */}
+      <Modal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="apply-modal-title"
+        aria-describedby="apply-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "#fff",
+            borderRadius: 3,
+            boxShadow: 24,
+            p: 4,
+            minWidth: 370,
+            maxWidth: 400,
+            outline: "none",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <div style={{ fontWeight: 600, color: "#374151", fontSize: "1.15rem", marginBottom: 8 }}>
+            Apply to {selectedOrg?.name}
+          </div>
+          {/* Document name field */}
+          <div style={{ marginBottom: 12 }}>
+            <label
+              htmlFor="doc-name"
+              style={{
+                display: "block",
+                fontWeight: 500,
+                fontSize: "1rem",
+                color: "#374151",
+                marginBottom: 6,
+              }}
+            >
+              Document name
+            </label>
+            <input
+              id="doc-name"
+              type="text"
+              value={docName}
+              onChange={handleDocNameChange}
+              placeholder="Enter text..."
+              autoComplete="off"
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #f2f5fa",
+                background: "#f8fafc",
+                fontSize: "1rem",
+                color: "#374151",
+                outline: "none",
+                marginBottom: 0,
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+          {/* File upload field */}
+          <div style={{ marginBottom: 18 }}>
+            <label
+              style={{
+                display: "block",
+                fontWeight: 500,
+                fontSize: "1rem",
+                color: "#374151",
+                marginBottom: 6,
+              }}
+            >
+              Upload file (PDF only)
+            </label>
+            <label
+              htmlFor="cv-upload"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1.5px dashed #e2e8f0",
+                borderRadius: 12,
+                background: "#f8fafc",
+                height: 70,
+                cursor: "pointer",
+                marginBottom: 0,
+                transition: "border-color 0.2s",
+              }}
+            >
+              <input
+                id="cv-upload"
+                type="file"
+                accept="application/pdf"
+                style={{ display: "none" }}
+                onChange={handleCvChange}
+              />
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <span style={{ color: "#64748b", fontSize: "1.7rem", display: "flex", alignItems: "center" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 16V4M12 16l-4-4M12 16l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="4" y="18" width="16" height="1.2" rx="1" fill="#64748b" />
+                  </svg>
+                </span>
+                <span style={{ color: "#64748b", fontSize: "0.9rem", fontWeight: 400, display: "inline-block" }}>
+                  {cvFile ? cvFile.name : "Choose a file"}
+                </span>
+              </span>
+            </label>
+          </div>
+          {/* Buttons */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+            <Button
+              variant="outlined"
+              onClick={handleCloseModal}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                fontSize: "0.97rem",
+                minWidth: 90,
+                bgcolor: "#f4f6fb",
+                color: "#374151",
+                borderColor: "#dde3f0",
+                "&:hover": { bgcolor: "#e9edf5", borderColor: "#cfd6e6" },
+                "&:focus": { outline: "none", boxShadow: "none", borderColor: "#dde3f0" },
+                "&:active": { outline: "none", boxShadow: "none", borderColor: "#dde3f0" },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmitApplication}
+              disabled={!docName || !cvFile}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                fontSize: "0.97rem",
+                minWidth: 150,
+                bgcolor: "#374151",
+                color: "#fff",
+                boxShadow: "none",
+                "&:hover": { bgcolor: "#276a2a" },
+                "&:focus": { outline: "none", boxShadow: "none" },
+                "&:active": { outline: "none", boxShadow: "none" },
+              }}
+            >
+              Submit Application
+            </Button>
+          </div>
+        </Box>
+      </Modal>
     </>
   );
 };
