@@ -31,6 +31,9 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
   const pagedOrgs = orgs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Calculate how many empty rows to add
+  const emptyRows = PAGE_SIZE - pagedOrgs.length > 0 ? PAGE_SIZE - pagedOrgs.length : 0;
+
   const startIdx = (page - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(page * PAGE_SIZE, totalOrgs);
 
@@ -67,6 +70,10 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           background: "#fff",
           boxShadow: "none",
           marginTop: 16,
+          minHeight: 34 * PAGE_SIZE, // Ensure minimum height for PAGE_SIZE rows
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-start",
         }}
       >
         {loading ? (
@@ -76,40 +83,74 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         ) : pagedOrgs.length === 0 ? (
           <div style={{ padding: 48, textAlign: "center", color: "#64748b" }}>No organizations found.</div>
         ) : (
-          pagedOrgs.map((org, idx) => (
-            <div
-              key={org.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2.5fr 1.2fr 1.2fr 2fr 1fr",
-                alignItems: "left",
-                padding: "0 32px",
-                height: 34,
-                background: "#fff",
-                fontSize: "0.9rem",
-                borderBottom: idx === pagedOrgs.length - 1 ? "none" : "1px solid #e2e8f0",
-              }}
-            >
-              <div style={{ fontWeight: 500, color: "#3D3C42", textAlign: "left" }}>{org.name}</div>
-              <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.membersCount ?? "-"}</div>
-              <div style={{ color: "#3D3C42", textAlign: "left" }}>
-                {org.createdAt
-                  ? new Date(org.createdAt).toLocaleDateString("en-GB")
-                  : "-"}
+          <>
+            {pagedOrgs.map((org, idx) => (
+              <div
+                key={org.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2.5fr 1.2fr 1.2fr 2fr 1fr",
+                  alignItems: "center",
+                  padding: "0 32px",
+                  height: 34,
+                  background: "#fff",
+                  fontSize: "0.9rem",
+                  borderBottom: idx === pagedOrgs.length - 1 && emptyRows === 0 ? "none" : "1px solid #e2e8f0",
+                }}
+              >
+                <div style={{ fontWeight: 500, color: "#3D3C42", textAlign: "left" }}>{org.name}</div>
+                <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.membersCount ?? "-"}</div>
+                <div style={{ color: "#3D3C42", textAlign: "left" }}>
+                  {org.createdAt
+                    ? new Date(org.createdAt).toLocaleDateString("en-GB")
+                    : "-"}
+                </div>
+                <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.ownerEmail ?? "-"}</div>
+                <div style={{ textAlign: "center" }}>
+                  {org.status === "pending" ? (
+                    <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
+                  ) : (
+                    <span style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}>Apply</span>
+                  )}
+                </div>
               </div>
-              <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.ownerEmail ?? "-"}</div>
-              <div style={{ textAlign: "center" }}>
-                {org.status === "pending" ? (
-                  <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
-                ) : (
-                  <span style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}>Apply</span>
-                )}
+            ))}
+            {/* Add empty rows to fill the table */}
+            {Array.from({ length: emptyRows }).map((_, idx) => (
+              <div
+                key={`empty-row-${idx}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2.5fr 1.2fr 1.2fr 2fr 1fr",
+                  alignItems: "left",
+                  padding: "0 32px",
+                  height: 34,
+                  background: "#fff",
+                  fontSize: "0.9rem",
+                  // Remove border for empty rows
+                  borderBottom: "none",
+                  color: "transparent",
+                  userSelect: "none",
+                }}
+              >
+                <div>&nbsp;</div>
+                <div>&nbsp;</div>
+                <div>&nbsp;</div>
+                <div>&nbsp;</div>
+                <div>&nbsp;</div>
               </div>
-            </div>
-          ))
+            ))}
+          </>
         )}
         {/* Pagination (like UserTable) */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24 }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 24,
+          marginBottom: 0,
+          minHeight: 40,
+        }}>
           <span style={{ color: "#B5B7C0", fontSize: "0.85rem", fontWeight: 400 }}>
             {`Showing data ${startIdx} to ${endIdx} of ${totalOrgs} entries`}
           </span>
