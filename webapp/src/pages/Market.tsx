@@ -79,20 +79,16 @@ const Market: React.FC = () => {
       });
   }, []);
 
-  // Filter organizations by name only, case-insensitive substring match
   const filteredOrgs = orgs.filter(org => {
     const q = searchValue.trim().toLowerCase();
     if (!q) return true;
     return org.name?.toLowerCase().includes(q);
   });
 
-  // Reset to page 1 when searchValue changes
   React.useEffect(() => {
     setPage(1);
-    // eslint-disable-next-line
   }, [searchValue]);
 
-  // Update: scroll to organizations table when hero search is submitted
   const handleHeroSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setSearchValue(heroSearch);
