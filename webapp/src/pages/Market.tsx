@@ -8,7 +8,8 @@ import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import OrganizationsList from "../components/OrganizationsList";
 
 interface Organization {
@@ -27,6 +28,8 @@ const Market: React.FC = () => {
   const [searchActive, setSearchActive] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filterMembers, setFilterMembers] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [heroSearch, setHeroSearch] = useState("");
   const orgsSectionRef = React.useRef<HTMLDivElement>(null);
@@ -79,10 +82,35 @@ const Market: React.FC = () => {
       });
   }, []);
 
+  // Filter logic for status and members
   const filteredOrgs = orgs.filter(org => {
     const q = searchValue.trim().toLowerCase();
-    if (!q) return true;
-    return org.name?.toLowerCase().includes(q);
+    if (q && !org.name?.toLowerCase().includes(q)) return false;
+
+    // Status filter
+    if (filterStatus.length > 0 && org.status) {
+      if (!filterStatus.includes(org.status.toLowerCase())) return false;
+    }
+
+    // Members filter
+    if (filterMembers.length > 0) {
+      const count = org.membersCount ?? 0;
+      let match = false;
+      for (const range of filterMembers) {
+        if (
+          (range === "1-25" && count >= 1 && count <= 25) ||
+          (range === "26-50" && count >= 26 && count <= 50) ||
+          (range === "51-200" && count >= 51 && count <= 200) ||
+          (range === "200+" && count > 200)
+        ) {
+          match = true;
+          break;
+        }
+      }
+      if (!match) return false;
+    }
+
+    return true;
   });
 
   React.useEffect(() => {
@@ -99,6 +127,23 @@ const Market: React.FC = () => {
         }
       }, 50);
     }
+  };
+
+  // Handlers for filter checkboxes
+  const handleStatusChange = (status: string) => {
+    setFilterStatus(prev =>
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const handleMembersChange = (range: string) => {
+    setFilterMembers(prev =>
+      prev.includes(range)
+        ? prev.filter(r => r !== range)
+        : [...prev, range]
+    );
   };
 
   return (
@@ -462,10 +507,10 @@ const Market: React.FC = () => {
                   sx: {
                     mt: 1,
                     borderRadius: 3,
-                    minWidth: 100,
+                    minWidth: 270,
                     boxShadow: "0 4px 24px rgba(30,41,59,0.10)",
                     bgcolor: "#fff",
-                    p: 1,
+                    p: 1.2,
                   },
                 }}
                 MenuListProps={{
@@ -474,88 +519,127 @@ const Market: React.FC = () => {
                   },
                 }}
               >
+                {/* Status Filter */}
                 <div style={{
-                  padding: "2px 0",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 0,
+                  fontWeight: 600,
+                  fontSize: "0.82rem",
+                  color: "#374151",
+                  marginBottom: 2,
+                  marginLeft: 6,
+                  letterSpacing: "0.01em"
                 }}>
-                  <MenuItem
-                    onClick={handleFilterClose}
+                  Status
+                </div>
+                <div style={{ display: "flex", flexDirection: "row", gap: 24, marginBottom: 8, marginLeft: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterStatus.includes("apply")}
+                        onChange={() => handleStatusChange("apply")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>Apply</span>}
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: "0.7rem",
-                      color: "#374151",
-                      px: 2,
-                      py: 1.2,
-                      mb: 0.5,
-                      transition: "background 0.15s",
-                      "&:hover": {
-                        bgcolor: "#f4f6fb",
-                        color: "#222",
-                      },
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
                     }}
-                  >
-                    Organization Name
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleFilterClose}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterStatus.includes("pending")}
+                        onChange={() => handleStatusChange("pending")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>Pending</span>}
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: "0.7rem",
-                      color: "#374151",
-                      px: 2,
-                      py: 1.2,
-                      mb: 0.5,
-                      transition: "background 0.15s",
-                      "&:hover": {
-                        bgcolor: "#f4f6fb",
-                        color: "#222",
-                      },
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
                     }}
-                  >
-                    No. of Members
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleFilterClose}
+                  />
+                </div>
+                <div style={{
+                  fontWeight: 600,
+                  fontSize: "0.82rem",
+                  color: "#374151",
+                  marginBottom: 2,
+                  marginTop: 8,
+                  marginLeft: 6,
+                  letterSpacing: "0.01em"
+                }}>
+                  Members
+                </div>
+                <div style={{ display: "flex", flexDirection: "row", gap: 24, marginLeft: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterMembers.includes("1-25")}
+                        onChange={() => handleMembersChange("1-25")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>1–25</span>}
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: "0.7rem",
-                      color: "#374151",
-                      px: 2,
-                      py: 1.2,
-                      mb: 0.5,
-                      transition: "background 0.15s",
-                      "&:hover": {
-                        bgcolor: "#f4f6fb",
-                        color: "#222",
-                      },
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
                     }}
-                  >
-                    Date Created
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleFilterClose}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterMembers.includes("26-50")}
+                        onChange={() => handleMembersChange("26-50")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>26–50</span>}
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: "0.7rem",
-                      color: "#374151",
-                      px: 2,
-                      py: 1.2,
-                      mb: 0.5,
-                      transition: "background 0.15s",
-                      "&:hover": {
-                        bgcolor: "#f4f6fb",
-                        color: "#222",
-                      },
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
                     }}
-                  >
-                    Status
-                  </MenuItem>
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterMembers.includes("51-200")}
+                        onChange={() => handleMembersChange("51-200")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>51–200</span>}
+                    sx={{
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
+                    }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filterMembers.includes("200+")}
+                        onChange={() => handleMembersChange("200+")}
+                        size="small"
+                        sx={{ p: 0.3 }}
+                      />
+                    }
+                    label={<span style={{ fontSize: "0.82rem", color: "#374151", fontWeight: 400 }}>200+</span>}
+                    sx={{
+                      alignItems: "center",
+                      m: 0,
+                      height: 24,
+                    }}
+                  />
                 </div>
               </Menu>
             </div>
