@@ -6,22 +6,42 @@ import agreement from "../assets/agreement.svg";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import OrganizationsList from "../components/OrganizationsList";
 
 interface Organization {
   id: string;
   name: string;
+  membersCount?: number;
+  createdAt?: string;
+  ownerEmail?: string; 
+  status?: string;
 }
 
 const Market: React.FC = () => {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchActive, setSearchActive] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [page, setPage] = useState(1);
+  const filterOpen = Boolean(filterAnchorEl);
 
   const handleScrollToNextPage = () => {
     window.scrollTo({
       top: window.innerHeight,
       behavior: "smooth",
     });
+  };
+
+  const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterAnchorEl(event.currentTarget);
+  };
+  const handleFilterClose = () => {
+    setFilterAnchorEl(null);
   };
 
   useEffect(() => {
@@ -79,7 +99,6 @@ const Market: React.FC = () => {
           zIndex: 0,
         }}
       >
-        {/* Flex container for left and right columns */}
         <div
           style={{
             display: "flex",
@@ -89,7 +108,6 @@ const Market: React.FC = () => {
             zIndex: 2,
           }}
         >
-          {/* Left column (text and clouds) */}
           <div style={{ flex: 1, position: "relative" }}>
             <img
               src={clouds}
@@ -113,7 +131,7 @@ const Market: React.FC = () => {
               style={{
                 position: "absolute",
                 top: "190px",
-                right: -850, // ensure this is 0
+                right: -850,
                 width: "24vw",
                 minWidth: 0,
                 maxWidth: "100%",
@@ -170,7 +188,6 @@ const Market: React.FC = () => {
                 <br />
                 meaningful connections.
               </p>
-              {/* Container for search bar and scroll text/arrows */}
               <div style={{ position: "relative", width: 445 }}>
                 <TextField
                   placeholder="Search an organization"
@@ -222,7 +239,7 @@ const Market: React.FC = () => {
                     flexDirection: "column",
                     alignItems: "center",
                     width: "max-content",
-                    cursor: "pointer", // pointer feedback
+                    cursor: "pointer",
                     userSelect: "none",
                   }}
                 >
@@ -251,7 +268,6 @@ const Market: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* Right column (agreement image) */}
           <div
             style={{
               flex: 1,
@@ -279,7 +295,6 @@ const Market: React.FC = () => {
           </div>
         </div>
       </main>
-      {/* Blank space after scrolling */}
       <div
         style={{
           position: "absolute",
@@ -287,42 +302,244 @@ const Market: React.FC = () => {
           left: 0,
           right: 0,
           width: "100vw",
-          height: "100vh",
+          minHeight: "100vh",
           background: "#fff",
           boxSizing: "border-box",
           overflowY: "auto",
         }}
       >
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 24px" }}>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 24, color: "#222" }}>
-            Organizations
-          </h2>
-          {loading && <div>Loading organizations...</div>}
-          {error && <div style={{ color: "red" }}>{error}</div>}
-          {!loading && !error && orgs.length === 0 && (
-            <div>No organizations found.</div>
-          )}
-          {!loading && !error && orgs.length > 0 && (
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {orgs.map((org) => (
-                <li
-                  key={org.id}
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 12px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 36,
+            marginTop: 50,
+            gap: 16,
+          }}>
+            <h2 style={{
+              fontSize: "1.9rem",
+              fontWeight: 700,
+              color: "#3D3C42",
+              margin: 0,
+              lineHeight: 1.1,
+              letterSpacing: "-0.5px",
+              textAlign: "left",
+              flex: "1 1 auto",
+            }}>
+              Organizations
+            </h2>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div
+                className="searchbar-expand"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "#6f7688",
+                  borderRadius: 10,
+                  transition: "width 0.3s cubic-bezier(.4,2,.6,1), background 0.2s",
+                  width: searchActive ? 140 : 38, 
+                  height: 32, 
+                  boxShadow: searchActive ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+                  cursor: "pointer",
+                  paddingLeft: 10,
+                  paddingRight: 1,
+                  position: "relative",
+                }}
+                onMouseEnter={() => setSearchActive(true)}
+                onMouseLeave={() => setSearchActive(false)}
+                tabIndex={0}
+              >
+                <SearchIcon sx={{ color: "#fff", fontSize: 22 }} />
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  placeholder="Search"
+                  className="searchbar-input"
                   style={{
-                    background: "#f4f6fb",
-                    borderRadius: 8,
-                    marginBottom: 16,
-                    padding: "18px 24px",
-                    fontSize: "1.1rem",
-                    fontWeight: 500,
-                    color: "#2d3748",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    color: "#fff",
+                    fontSize: "0.98rem",
+                    marginLeft: 4,
+                    width: searchActive ? 80 : 0,
+                    opacity: searchActive ? 1 : 0,
+                    transition: "width 0.3s cubic-bezier(.4,2,.6,1), opacity 0.2s",
+                    padding: 0,
                   }}
-                >
-                  {org.name}
-                </li>
-              ))}
-            </ul>
-          )}
+                  autoFocus={searchActive}
+                />
+                <style>
+                  {`
+                    .searchbar-input::placeholder {
+                      color: #fff !important;
+                      opacity: 0.5;
+                      font-size: 0.9rem;
+                    }
+                  `}
+                </style>
+              </div>
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: "#6f7688",
+                  color: "#fff",
+                  borderRadius: 2,
+                  height: 32,
+                  fontWeight: 400,
+                  textTransform: "none",
+                  px: 2,
+                  fontSize: "0.9rem",
+                  minWidth: 70,
+                  boxShadow: "none", 
+                  outline: "none",
+                  border: "none",
+                  "&:hover": {
+                    bgcolor: "#575d6b",
+                    boxShadow: "none",
+                  },
+                  "&:focus": {
+                    outline: "none",
+                    border: "none",
+                  },
+                  "&:active": {
+                    outline: "none",
+                    border: "none",
+                  },
+                }}
+                startIcon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M3 5h18M6 10h12M10 15h4"
+                      stroke="#fff"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                onClick={handleFilterClick}
+              >
+                Filter
+              </Button>
+              <Menu
+                anchorEl={filterAnchorEl}
+                open={filterOpen}
+                onClose={handleFilterClose}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                PaperProps={{
+                  sx: {
+                    mt: 1,
+                    borderRadius: 3,
+                    minWidth: 100,
+                    boxShadow: "0 4px 24px rgba(30,41,59,0.10)",
+                    bgcolor: "#fff",
+                    p: 1,
+                  },
+                }}
+                MenuListProps={{
+                  sx: {
+                    p: 0,
+                  },
+                }}
+              >
+                <div style={{
+                  padding: "2px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0,
+                }}>
+                  <MenuItem
+                    onClick={handleFilterClose}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: "0.7rem",
+                      color: "#374151",
+                      px: 2,
+                      py: 1.2,
+                      mb: 0.5,
+                      transition: "background 0.15s",
+                      "&:hover": {
+                        bgcolor: "#f4f6fb",
+                        color: "#222",
+                      },
+                    }}
+                  >
+                    Organization Name
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleFilterClose}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: "0.7rem",
+                      color: "#374151",
+                      px: 2,
+                      py: 1.2,
+                      mb: 0.5,
+                      transition: "background 0.15s",
+                      "&:hover": {
+                        bgcolor: "#f4f6fb",
+                        color: "#222",
+                      },
+                    }}
+                  >
+                    No. of Members
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleFilterClose}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: "0.7rem",
+                      color: "#374151",
+                      px: 2,
+                      py: 1.2,
+                      mb: 0.5,
+                      transition: "background 0.15s",
+                      "&:hover": {
+                        bgcolor: "#f4f6fb",
+                        color: "#222",
+                      },
+                    }}
+                  >
+                    Date Created
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleFilterClose}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: "0.7rem",
+                      color: "#374151",
+                      px: 2,
+                      py: 1.2,
+                      mb: 0.5,
+                      transition: "background 0.15s",
+                      "&:hover": {
+                        bgcolor: "#f4f6fb",
+                        color: "#222",
+                      },
+                    }}
+                  >
+                    Status
+                  </MenuItem>
+                </div>
+              </Menu>
+            </div>
+          </div>
+          <OrganizationsList
+            orgs={orgs}
+            loading={loading}
+            error={error}
+            page={page}
+            setPage={setPage}
+            PAGE_SIZE={14}
+          />
         </div>
       </div>
       <style>
