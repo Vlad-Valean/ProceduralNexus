@@ -183,8 +183,7 @@ const Navbar: React.FC = () => {
               gap: "24px",
             }}
           >
-            {(role === "user_with_org" ||
-              role === "user_without_org" ||
+            {(role === "user" ||
               role === "hr") && (
               <img
                 src={profileIcon}
