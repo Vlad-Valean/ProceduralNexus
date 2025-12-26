@@ -32,6 +32,7 @@ const Market: React.FC = () => {
   const [filterMembers, setFilterMembers] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [heroSearch, setHeroSearch] = useState("");
+  const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
   const orgsSectionRef = React.useRef<HTMLDivElement>(null);
   const filterOpen = Boolean(filterAnchorEl);
 
@@ -82,17 +83,18 @@ const Market: React.FC = () => {
       });
   }, []);
 
-  // Filter logic for status and members
   const filteredOrgs = orgs.filter(org => {
     const q = searchValue.trim().toLowerCase();
     if (q && !org.name?.toLowerCase().includes(q)) return false;
 
-    // Status filter
-    if (filterStatus.length > 0 && org.status) {
-      if (!filterStatus.includes(org.status.toLowerCase())) return false;
+    if (filterStatus.length > 0) {
+      const isPending = pendingOrgIds.has(String(org.id));
+      let match = false;
+      if (filterStatus.includes("apply") && !isPending) match = true;
+      if (filterStatus.includes("pending") && isPending) match = true;
+      if (!match) return false;
     }
 
-    // Members filter
     if (filterMembers.length > 0) {
       const count = org.membersCount ?? 0;
       let match = false;
@@ -129,7 +131,6 @@ const Market: React.FC = () => {
     }
   };
 
-  // Handlers for filter checkboxes
   const handleStatusChange = (status: string) => {
     setFilterStatus(prev =>
       prev.includes(status)
@@ -519,7 +520,6 @@ const Market: React.FC = () => {
                   },
                 }}
               >
-                {/* Status Filter */}
                 <div style={{
                   fontWeight: 600,
                   fontSize: "0.82rem",
@@ -651,6 +651,7 @@ const Market: React.FC = () => {
             page={page}
             setPage={setPage}
             PAGE_SIZE={14}
+            onPendingOrgIdsChange={setPendingOrgIds}
           />
         </div>
       </div>

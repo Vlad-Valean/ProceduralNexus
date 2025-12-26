@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Pagination from "@mui/material/Pagination";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 interface Organization {
   id: string;
@@ -13,6 +15,12 @@ interface Organization {
   status?: string;
 }
 
+interface Document {
+  id: string;
+  batchId: string;
+  uploaderEmail: string;
+}
+
 interface OrganizationsListProps {
   orgs: Organization[];
   loading: boolean;
@@ -20,6 +28,7 @@ interface OrganizationsListProps {
   page: number;
   setPage: (page: number) => void;
   PAGE_SIZE?: number;
+  onPendingOrgIdsChange?: (pending: Set<string>) => void; 
 }
 
 const OrganizationsList: React.FC<OrganizationsListProps> = ({
@@ -29,12 +38,12 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   page,
   setPage,
   PAGE_SIZE = 12,
+  onPendingOrgIdsChange, 
 }) => {
   const totalOrgs = orgs.length;
   const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
   const pagedOrgs = orgs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Calculate how many empty rows to add
   const emptyRows = PAGE_SIZE - pagedOrgs.length > 0 ? PAGE_SIZE - pagedOrgs.length : 0;
 
   const startIdx = (page - 1) * PAGE_SIZE + 1;
@@ -42,24 +51,20 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setPage(value);
 
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
-  const [docName, setDocName] = useState("");
 
   const handleApplyClick = (org: Organization) => {
     setSelectedOrg(org);
     setModalOpen(true);
     setCvFile(null);
-    setDocName("");
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedOrg(null);
     setCvFile(null);
-    setDocName("");
   };
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,18 +76,94 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
     }
   };
 
-  const handleDocNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDocName(e.target.value);
-  };
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
+  const [successOpen, setSuccessOpen] = useState(false);
 
-  const handleSubmitApplication = () => {
-    // TODO: Implement submit logic (API call)
-    handleCloseModal();
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail");
+    setUserEmail(email || null);
+  }, []);
+
+  useEffect(() => {
+    if (!userEmail) return;
+    fetch("http://localhost:8080/documents", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    })
+      .then(res => res.json())
+      .then((docs: Document[]) => {
+        const pendingIds = new Set(
+          docs
+            .filter(doc => doc.uploaderEmail === userEmail)
+            .map(doc => doc.batchId)
+        );
+        setPendingOrgIds(pendingIds);
+      })
+      .catch(() => setPendingOrgIds(new Set()));
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (onPendingOrgIdsChange) {
+      onPendingOrgIdsChange(pendingOrgIds);
+    }
+  }, [pendingOrgIds, onPendingOrgIdsChange]);
+
+  const handleSubmitApplication = async () => {
+    if (!selectedOrg || !cvFile) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", cvFile);
+      const batchId = selectedOrg.id;
+
+      const response = await fetch(
+        `http://localhost:8080/documents/upload?batchId=${encodeURIComponent(batchId)}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token || ""}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload document");
+      }
+
+      setPendingOrgIds(prev => {
+        const updated = new Set(prev);
+        updated.add(String(batchId));
+        return updated;
+      });
+
+      setSuccessOpen(true);
+
+      handleCloseModal();
+    } catch {
+      handleCloseModal();
+    }
   };
 
   return (
     <>
-      {/* Header row */}
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={3000}
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSuccessOpen(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          Your application has been submitted successfully!
+        </Alert>
+      </Snackbar>
       <div
         style={{
           display: "grid",
@@ -111,7 +192,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           background: "#fff",
           boxShadow: "none",
           marginTop: 16,
-          minHeight: 34 * PAGE_SIZE, // Ensure minimum height for PAGE_SIZE rows
+          minHeight: 34 * PAGE_SIZE, 
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
@@ -148,8 +229,10 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                 </div>
                 <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.ownerEmail ?? "-"}</div>
                 <div style={{ textAlign: "center" }}>
-                  {org.status === "pending" ? (
-                    <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
+                  {pendingOrgIds.has(String(org.id)) ? (
+                    <>
+                      <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
+                    </>
                   ) : (
                     <span
                       style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}
@@ -161,7 +244,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                 </div>
               </div>
             ))}
-            {/* Add empty rows to fill the table */}
             {Array.from({ length: emptyRows }).map((_, idx) => (
               <div
                 key={`empty-row-${idx}`}
@@ -173,7 +255,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                   height: 34,
                   background: "#fff",
                   fontSize: "0.9rem",
-                  // Remove border for empty rows
                   borderBottom: "none",
                   color: "transparent",
                   userSelect: "none",
@@ -188,7 +269,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
             ))}
           </>
         )}
-        {/* Pagination (like UserTable) */}
         <div style={{
           display: "flex",
           justifyContent: "space-between",
@@ -250,7 +330,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           />
         </div>
       </div>
-      {/* Modal for Apply */}
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -278,42 +357,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           <div style={{ fontWeight: 600, color: "#374151", fontSize: "1.15rem", marginBottom: 8 }}>
             Apply to {selectedOrg?.name}
           </div>
-          {/* Document name field */}
-          <div style={{ marginBottom: 12 }}>
-            <label
-              htmlFor="doc-name"
-              style={{
-                display: "block",
-                fontWeight: 500,
-                fontSize: "1rem",
-                color: "#374151",
-                marginBottom: 6,
-              }}
-            >
-              Document name
-            </label>
-            <input
-              id="doc-name"
-              type="text"
-              value={docName}
-              onChange={handleDocNameChange}
-              placeholder="Enter text..."
-              autoComplete="off"
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                borderRadius: 8,
-                border: "1px solid #f2f5fa",
-                background: "#f8fafc",
-                fontSize: "1rem",
-                color: "#374151",
-                outline: "none",
-                marginBottom: 0,
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-          {/* File upload field */}
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -371,7 +414,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
               </span>
             </label>
           </div>
-          {/* Buttons */}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
             <Button
               variant="outlined"
@@ -394,7 +436,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
             <Button
               variant="contained"
               onClick={handleSubmitApplication}
-              disabled={!docName || !cvFile}
+              disabled={!cvFile}
               sx={{
                 borderRadius: 2,
                 textTransform: "none",
