@@ -35,6 +35,27 @@ const HrDashboard: React.FC = () => {
     setSelectedUser(null);
     setShowApplications(false);
   }
+  const token = useMemo(() => localStorage.getItem("token"), []);
+
+  const handleRemoveSelectedUser = async (userId: string) => {
+    if (!token) throw new Error("Not authenticated (missing token).");
+
+    const res = await fetch(`${BASE_URL}/profiles/${userId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Delete failed (${res.status}). ${txt}`);
+    }
+
+    setSelectedUser((prev) => (prev?.id === userId ? null : prev));
+    setShowApplications(false);
+    await loadOrgUsers();
+  };
 
   const handleUserSelect = async (u: UserRow) => {
     setSelectedUser({
@@ -47,7 +68,6 @@ const HrDashboard: React.FC = () => {
     });
 
     try {
-      const token = localStorage.getItem("token");
       if (!token) return;
 
       const res = await fetch(`${BASE_URL}/profiles/${u.id}`, {
@@ -69,107 +89,103 @@ const HrDashboard: React.FC = () => {
       // ignore
     }
   };
+  const loadOrgUsers = async (signal?: AbortSignal) => {
+    try {
+      setLoadingUsers(true);
+      setLoadError(null);
 
-  const token = useMemo(() => localStorage.getItem("token"), []);
+      if (!token) {
+        setOrganizationName("-");
+        setOrgUsers([]);
+        setHrCount(0);
+        setUserCount(0);
+        setLoadError("Not authenticated (missing token).");
+        return;
+      }
+
+      const res = await fetch(`${BASE_URL}/hr/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        signal,
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Request failed (${res.status}). ${txt}`);
+      }
+
+      const data = await res.json();
+
+      const orgName: string =
+        data?.organizationName ?? data?.organization?.name ?? data?.orgName ?? "-";
+
+      const usersFromApi: any[] = data?.users ?? data?.members ?? [];
+
+      const profileIds: string[] = usersFromApi
+        .map((u) => String(u.id ?? u.profileId ?? u.uuid ?? ""))
+        .filter(Boolean);
+
+      const rolesResults = await Promise.all(
+        profileIds.map(async (id) => {
+          const r = await fetch(`${BASE_URL}/profiles/${id}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal,
+          });
+
+          if (!r.ok) return { id, roles: [] as string[] };
+
+          const prof = await r.json();
+          const roles: string[] = Array.isArray(prof?.roles) ? prof.roles : [];
+          return { id, roles };
+        })
+      );
+
+      let hr = 0;
+      let usr = 0;
+      for (const it of rolesResults) {
+        if (it.roles.includes("HR")) hr++;
+        else if (it.roles.includes("USER")) usr++;
+      }
+
+      setHrCount(hr);
+      setUserCount(usr);
+
+      const myEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
+
+      const mapped: UserRow[] = usersFromApi
+        .map((u) => ({
+          id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
+          firstName: String(u.firstName ?? u.firstname ?? ""),
+          lastName: String(u.lastName ?? u.lastname ?? ""),
+          email: String(u.email ?? ""),
+        }))
+        .filter((u) => u.id && u.email)
+        .filter((u) => u.email.toLowerCase() !== myEmail);
+
+      setOrganizationName(orgName);
+      setOrgUsers(mapped);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      setOrganizationName("-");
+      setOrgUsers([]);
+      setHrCount(0);
+      setUserCount(0);
+      setLoadError(e?.message ?? "Failed to load users.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
-
-    async function loadOrgUsers() {
-      try {
-        setLoadingUsers(true);
-        setLoadError(null);
-
-        if (!token) {
-          setOrganizationName("-");
-          setOrgUsers([]);
-          setLoadError("Not authenticated (missing token).");
-          return;
-        }
-
-        const res = await fetch(`${BASE_URL}/hr/users`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Unauthorized (401) - token invalid/expirat sau nu a fost trimis corect.");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(`Request failed (${res.status}). ${txt}`);
-        }
-
-        const data = await res.json();
-
-        const orgName: string =
-          data?.organizationName ?? data?.organization?.name ?? data?.orgName ?? "-";
-
-        const usersFromApi: any[] = data?.users ?? data?.members ?? [];
-
-        const profileIds: string[] = usersFromApi
-          .map((u) => String(u.id ?? u.profileId ?? u.uuid ?? ""))
-          .filter(Boolean);
-        const rolesResults = await Promise.all(
-          profileIds.map(async (id) => {
-            const r = await fetch(`${BASE_URL}/profiles/${id}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              signal: controller.signal,
-            });
-
-            if (!r.ok) return { id, roles: [] as string[] };
-
-            const prof = await r.json();
-            const roles: string[] = Array.isArray(prof?.roles) ? prof.roles : [];
-            return { id, roles };
-          })
-        );
-
-        let hr = 0;
-        let usr = 0;
-
-        for (const it of rolesResults) {
-          if (it.roles.includes("HR")) hr++;
-          else if (it.roles.includes("USER")) usr++;
-        }
-
-        setHrCount(hr);
-        setUserCount(usr);
-
-        const myEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
-
-        const mapped: UserRow[] = usersFromApi
-          .map((u) => ({
-            id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
-            firstName: String(u.firstName ?? u.firstname ?? ""),
-            lastName: String(u.lastName ?? u.lastname ?? ""),
-            email: String(u.email ?? ""),
-            role: String(u.role ?? (Array.isArray(u.roles) ? u.roles[0] : "")) || undefined,
-          }))
-          .filter((u) => u.id && u.email)
-          .filter((u) => u.email.toLowerCase() !== myEmail);
-
-        setOrganizationName(orgName);
-        setOrgUsers(mapped);
-      } catch (e: any) {
-        if (e?.name === "AbortError") return;
-        setOrganizationName("-");
-        setOrgUsers([]);
-        setLoadError(e?.message ?? "Failed to load users.");
-      } finally {
-        setLoadingUsers(false);
-      }
-    }
-
-    loadOrgUsers();
+    loadOrgUsers(controller.signal);
     return () => controller.abort();
   }, [token]);
 
@@ -226,7 +242,7 @@ const HrDashboard: React.FC = () => {
 
             <div style={{ minHeight: 0 }}>
               {selectedUser ? (
-                <UserDetails user={selectedUser} onBackToStats={handleBackToStats} />
+                <UserDetails user={selectedUser} onBackToStats={handleBackToStats} onRemoveUser={handleRemoveSelectedUser} />
               ) : showApplications ? (
                 <NewApplications onBack={() => setShowApplications(false)} />
               ) : (

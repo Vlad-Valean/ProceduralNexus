@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { downloadDocumentWithAuth } from "../utils/download";
 import type { ChangeEvent } from "react";
 import {
   Paper,
@@ -44,6 +45,7 @@ interface UserDetailsProps {
     organization?: string;
   };
   onBackToStats?: () => void;
+  onRemoveUser?: (userId: string) => Promise<void>;
 }
 
 type DocStatus = "signed" | "unsigned";
@@ -98,7 +100,7 @@ const bodyCellSx = {
   textAlign: "left" as const,
 };
 
-const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
+const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemoveUser }) => {
   const token = useMemo(() => localStorage.getItem("token"), []);
 
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -305,14 +307,26 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
 
   const handleRemoveUserClick = () => setRemoveDialogOpen(true);
 
-  const handleConfirmRemove = () => {
-    // momentan hardcodata (cum ai zis)
-    setRemoveDialogOpen(false);
-    openSnackbar(
-      `${user.firstName} ${user.lastName} was removed from your organization`,
-      "info"
-    );
+  const handleConfirmRemove = async () => {
+    try {
+      setRemoveDialogOpen(false);
+
+      if (!onRemoveUser) {
+        openSnackbar("Remove handler not connected.", "error");
+        return;
+      }
+
+      await onRemoveUser(user.id);
+
+      openSnackbar(
+        `${user.firstName} ${user.lastName} was removed from your organization`,
+        "success"
+      );
+    } catch (e: any) {
+      openSnackbar(e?.message ?? "Failed to remove user.", "error");
+    }
   };
+
 
   const downloadUrlForDoc = (docId: number) => `${BASE_URL}/documents/${docId}`;
 
@@ -589,18 +603,19 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                         {/* Download */}
                         <Tooltip title="Download file" arrow>
                           <IconButton
-                            component="a"
-                            href={downloadUrlForDoc(doc.id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             size="small"
                             disableRipple
                             sx={{ ...actionIconSx, mr: 0.75 }}
-                            onClick={(e) => {
-                              // keep normal navigation
-                              if (!token) {
-                                e.preventDefault();
-                                openSnackbar("Not authenticated (missing token).", "error");
+                            onClick={async () => {
+                              try {
+                                const token = localStorage.getItem("token");
+                                if (!token) {
+                                  openSnackbar("Not authenticated (missing token).", "error");
+                                  return;
+                                }
+                                await downloadDocumentWithAuth(doc.id, token, doc.file);
+                              } catch (e: any) {
+                                openSnackbar(e?.message ?? "Download failed.", "error");
                               }
                             }}
                           >
@@ -756,10 +771,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                   outline: "none !important",
                 },
                 "& .MuiPaginationItem-root:focus, & .MuiPaginationItem-root.Mui-focusVisible":
-                  {
-                    outline: "none !important",
-                    boxShadow: "none !important",
-                  },
+                {
+                  outline: "none !important",
+                  boxShadow: "none !important",
+                },
                 "& .Mui-selected": {
                   backgroundColor: "#67728A !important",
                   color: "#fff !important",
