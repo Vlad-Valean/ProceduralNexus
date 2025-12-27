@@ -70,7 +70,7 @@ public class ProfileController {
         return profileService.updateProfile(id, request);
     }
 
-    @PatchMapping("/profiles/{id}")
+    @PatchMapping("/{id}")
     public ProfileResponseDto patchProfile(@PathVariable UUID id,
                                            @RequestBody ProfilePatchRequest req) {
         return profileService.patchProfile(id, req);

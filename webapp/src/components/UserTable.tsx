@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Paper,
   Typography,
@@ -16,72 +16,74 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-const firstNames = [
-  "Jane", "John", "Alice", "Bob", "Maria", "Alex", "Sara", "Tom", "Emma", "Chris",
-  "Olivia", "David", "Sophia", "Mark", "Eva",
-];
-const lastNames = [
-  "Cooper", "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis",
-  "Garcia", "Martinez", "Wilson", "Moore", "Taylor", "Anderson", "Thomas",
-];
-
-const allUsers = Array.from({ length: 215 }, (_, i) => ({
-  firstName: firstNames[i % firstNames.length],
-  lastName: lastNames[i % lastNames.length],
-  email: `${firstNames[i % firstNames.length].toLowerCase()}.${lastNames[
-    i % lastNames.length
-  ].toLowerCase()}@example.com`,
-}));
-
 const PAGE_SIZE = 7;
 
+export type UserRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role?: string;
+};
+
 interface UserTableProps {
-  onUserSelect?: (user: { firstName: string; lastName: string; email: string }) => void;
+  organizationName?: string;
+  users: UserRow[];
+  onUserSelect?: (user: UserRow) => void;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSelect }) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
 
-  let filteredUsers = allUsers.filter((user) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      user.firstName.toLowerCase().includes(q) ||
-      user.lastName.toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q)
-    );
-  });
+  const filteredUsers = useMemo(() => {
+    let result = users.filter((user) => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        user.firstName.toLowerCase().includes(q) ||
+        user.lastName.toLowerCase().includes(q) ||
+        user.email.toLowerCase().includes(q)
+      );
+    });
 
-  filteredUsers = [...filteredUsers];
-  if (sort === "alpha-asc") {
-    filteredUsers.sort((a, b) =>
-      (a.firstName + " " + a.lastName)
-        .toLowerCase()
-        .localeCompare((b.firstName + " " + b.lastName).toLowerCase())
-    );
-  } else if (sort === "alpha-desc") {
-    filteredUsers.sort((a, b) =>
-      (b.firstName + " " + b.lastName)
-        .toLowerCase()
-        .localeCompare((a.firstName + " " + a.lastName).toLowerCase())
-    );
-  } else if (sort === "newest") {
-    filteredUsers.reverse();
-  }
+    result = [...result];
+
+    if (sort === "alpha-asc") {
+      result.sort((a, b) =>
+        (a.firstName + " " + a.lastName)
+          .toLowerCase()
+          .localeCompare((b.firstName + " " + b.lastName).toLowerCase())
+      );
+    } else if (sort === "alpha-desc") {
+      result.sort((a, b) =>
+        (b.firstName + " " + b.lastName)
+          .toLowerCase()
+          .localeCompare((a.firstName + " " + a.lastName).toLowerCase())
+      );
+    } else if (sort === "newest") {
+      result.reverse();
+    }
+
+    return result;
+  }, [users, search, sort]);
 
   const totalUsers = filteredUsers.length;
-  const pageCount = Math.ceil(totalUsers / PAGE_SIZE);
-  const users = filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(totalUsers / PAGE_SIZE));
 
-  const startIdx = (page - 1) * PAGE_SIZE + 1;
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
+  const usersPage = filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const startIdx = totalUsers === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(page * PAGE_SIZE, totalUsers);
 
-  const emptyRows = Math.max(0, PAGE_SIZE - users.length);
+  const emptyRows = Math.max(0, PAGE_SIZE - usersPage.length);
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) =>
-    setPage(value);
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setPage(value);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -122,11 +124,19 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
           >
             All users
           </Typography>
+
           <Typography
             variant="subtitle2"
             sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}
           >
             Organization name
+          </Typography>
+
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "#4f46e5", fontWeight: 600, mt: 0.2, textAlign: "left" }}
+          >
+            {organizationName ?? "-"}
           </Typography>
         </Box>
 
@@ -174,8 +184,8 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            height: 32, 
-            minWidth: 140, 
+            height: 32,
+            minWidth: 140,
             fontWeight: 500,
             fontSize: "0.8rem",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -232,14 +242,14 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
           minHeight: 0,
           mb: 2,
           overflowX: "auto",
-          overflowY: "auto", 
+          overflowY: "auto",
         }}
       >
         <Table
           sx={{
             tableLayout: "fixed",
-            width: "max-content", 
-            minWidth: "100%", 
+            width: "max-content",
+            minWidth: "100%",
             borderCollapse: "collapse",
           }}
         >
@@ -287,12 +297,13 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
               </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {users.length > 0 ? (
+            {usersPage.length > 0 ? (
               <>
-                {users.map((user, idx) => (
+                {usersPage.map((user) => (
                   <TableRow
-                    key={idx + startIdx}
+                    key={user.id}
                     sx={{
                       "& td": { py: 0.8 },
                       cursor: "pointer",
@@ -342,7 +353,10 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
 
                 {emptyRows > 0 &&
                   Array.from({ length: emptyRows }).map((_, idx) => (
-                    <TableRow key={`empty-${idx}`} sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}>
+                    <TableRow
+                      key={`empty-${idx}`}
+                      sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}
+                    >
                       <TableCell
                         sx={{
                           fontSize: "0.8rem",
@@ -423,9 +437,12 @@ const UserTable: React.FC<UserTableProps> = ({ onUserSelect }) => {
               fontSize: "0.75rem",
             }}
           >
-            {`Showing data ${startIdx} to ${endIdx} of ${totalUsers} entries`}
+            {totalUsers === 0
+              ? "Showing data 0 to 0 of 0 entries"
+              : `Showing data ${startIdx} to ${endIdx} of ${totalUsers} entries`}
           </Typography>
         </Box>
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Pagination
             count={pageCount}

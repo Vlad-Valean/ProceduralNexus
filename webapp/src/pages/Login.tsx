@@ -88,7 +88,7 @@ const Login: React.FC = () => {
         password: formData.password,
       });
 
-      localStorage.setItem('token', jwt.token);
+      localStorage.setItem('token', jwt.accessToken);
       localStorage.setItem('userEmail', jwt.email);
       localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
 

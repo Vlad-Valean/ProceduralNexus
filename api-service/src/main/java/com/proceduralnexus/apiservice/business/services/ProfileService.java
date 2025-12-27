@@ -80,6 +80,11 @@ public class ProfileService implements IProfileService {
         profileRepository.deleteById(id);
     }
 
+    public Profile findById(UUID id) {
+        return profileRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+    }
+
     public ProfileResponseDto toDto(Profile profile) {
         ProfileResponseDto dto = new ProfileResponseDto();
         dto.setId(profile.getId());

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import {
   Paper,
@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
@@ -31,8 +32,11 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
+const BASE_URL = "http://localhost:8081";
+
 interface UserDetailsProps {
   user: {
+    id: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -42,48 +46,25 @@ interface UserDetailsProps {
   onBackToStats?: () => void;
 }
 
-type DocStatus = "completed" | "pending" | "review";
+type DocStatus = "signed" | "unsigned";
 
 interface UserDocument {
   id: number;
-  name: string;
-  file: string;
+  file: string; // in backend ai name cu .pdf
+  signed: boolean;
   status: DocStatus;
 }
 
-const BASE_DOCS: UserDocument[] = [
-  { id: 1, name: "Identity card", file: "ID_card.pdf", status: "completed" },
-  { id: 2, name: "CV", file: "resume.pdf", status: "completed" },
-  { id: 3, name: "Bank account", file: "-", status: "pending" },
-  {
-    id: 4,
-    name: "Employment contract",
-    file: "contract.pdf",
-    status: "review",
-  },
-];
-
-const ALL_DOCS: UserDocument[] = Array.from({ length: 8 }).map((_, idx) => {
-  const base = BASE_DOCS[idx % BASE_DOCS.length];
-  return { ...base, id: idx + 1 };
-});
-
 const DOCS_PAGE_SIZE = 3;
-
 const ROW_HEIGHT = 30;
-
-const SAMPLE_DOC_URL =
-  "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
 const statusColor = (status: DocStatus) => {
   switch (status) {
-    case "completed":
+    case "signed":
       return "#2E7152";
-    case "pending":
-      return "#C0965E";
-    case "review":
+    case "unsigned":
     default:
-      return "#586AA2";
+      return "#C0965E";
   }
 };
 
@@ -118,14 +99,18 @@ const bodyCellSx = {
 };
 
 const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
-  const [documents, setDocuments] = useState<UserDocument[]>(ALL_DOCS);
+  const token = useMemo(() => localStorage.getItem("token"), []);
+
+  const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [page, setPage] = useState(1);
 
-  const [docName, setDocName] = useState("");
-  const [docNameError, setDocNameError] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -134,15 +119,158 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
 
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
+  const openSnackbar = (
+    message: string,
+    severity: "success" | "info" | "error" = "success"
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") return;
+    setSnackbarOpen(false);
+  };
+
+  // --- API helpers ---
+  async function fetchUserDocuments(profileId: string, signal?: AbortSignal) {
+    if (!token) {
+      setDocuments([]);
+      setDocsError("Not authenticated (missing token).");
+      return;
+    }
+
+    setLoadingDocs(true);
+    setDocsError(null);
+
+    try {
+      const res = await fetch(`${BASE_URL}/documents?uploaderId=${profileId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal,
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Failed to load documents (${res.status}). ${txt}`);
+      }
+
+      const data = await res.json();
+      // data e lista de DocumentResponseDto
+      const mapped: UserDocument[] = (Array.isArray(data) ? data : []).map((d: any) => {
+        const signed = Boolean(d?.signed);
+        return {
+          id: Number(d?.id),
+          file: String(d?.name ?? d?.fileName ?? "-"),
+          signed,
+          status: signed ? "signed" : "unsigned",
+        };
+      });
+
+      setDocuments(mapped);
+      setPage(1);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      setDocuments([]);
+      setDocsError(e?.message ?? "Failed to load documents.");
+    } finally {
+      setLoadingDocs(false);
+    }
+  }
+
+  async function patchDocumentSigned(documentId: number, signed: boolean) {
+    if (!token) {
+      openSnackbar("Not authenticated (missing token).", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/documents/${documentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ signed }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Failed to update document (${res.status}). ${txt}`);
+      }
+
+      // update optimist in UI
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === documentId
+            ? { ...doc, signed, status: signed ? "signed" : "unsigned" }
+            : doc
+        )
+      );
+
+      openSnackbar(signed ? "Document marked as Signed." : "Document marked as Unsigned.", "success");
+    } catch (e: any) {
+      openSnackbar(e?.message ?? "Failed to update document.", "error");
+    }
+  }
+
+  async function uploadDocumentForUser(profileId: string, file: File) {
+    if (!token) {
+      openSnackbar("Not authenticated (missing token).", "error");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      // batchId optional -> nu-l trimit
+
+      const res = await fetch(`${BASE_URL}/documents/upload?uploaderId=${profileId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // NU seta Content-Type aici (multipart boundary)
+        },
+        body: form,
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Upload failed (${res.status}). ${txt}`);
+      }
+
+      openSnackbar("Document uploaded successfully.", "success");
+      setUploadedFile(null);
+
+      // refresh list
+      await fetchUserDocuments(profileId);
+    } catch (e: any) {
+      openSnackbar(e?.message ?? "Upload failed.", "error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // Load documents when selected user changes
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchUserDocuments(user.id, controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
+
+  // --- filtering/sorting/paging ---
   let filteredDocs = documents.filter((doc) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (
-      doc.name.toLowerCase().includes(q) ||
-      doc.file.toLowerCase().includes(q)
-    );
+    return doc.file.toLowerCase().includes(q);
   });
 
+  // sort: if newest -> reverse (presupunând API returnează oldest first)
   if (sort === "newest") {
     filteredDocs = [...filteredDocs].reverse();
   }
@@ -160,7 +288,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
   const endIdx = Math.min(safePage * DOCS_PAGE_SIZE, total);
 
   const hasResults = docsToShow.length > 0;
-
   const emptyRows = hasResults
     ? Math.max(0, DOCS_PAGE_SIZE - docsToShow.length)
     : Math.max(0, DOCS_PAGE_SIZE - 1);
@@ -176,46 +303,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
     }
   };
 
-  const openSnackbar = (
-    message: string,
-    severity: "success" | "info" | "error" = "success"
-  ) => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setSnackbarOpen(true);
-  };
-
-  const handleAssignDocument = () => {
-    if (!docName.trim()) {
-      setDocNameError("Document name is required*");
-      return;
-    }
-    setDocNameError("");
-
-    const newDoc: UserDocument = {
-      id: documents.length + 1,
-      name: docName.trim(),
-      file: uploadedFile ? uploadedFile.name : "-",
-      status: "pending",
-    };
-
-    setDocuments((prev) => [...prev, newDoc]);
-    setDocName("");
-    setUploadedFile(null);
-    openSnackbar("Document assigned successfully", "success");
-  };
-
-  const updateStatus = (id: number, status: DocStatus) => {
-    setDocuments((prev) =>
-      prev.map((doc) => (doc.id === id ? { ...doc, status } : doc))
-    );
-  };
-
-  const handleRemoveUserClick = () => {
-    setRemoveDialogOpen(true);
-  };
+  const handleRemoveUserClick = () => setRemoveDialogOpen(true);
 
   const handleConfirmRemove = () => {
+    // momentan hardcodata (cum ai zis)
     setRemoveDialogOpen(false);
     openSnackbar(
       `${user.firstName} ${user.lastName} was removed from your organization`,
@@ -223,13 +314,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
     );
   };
 
-  const handleSnackbarClose = (
-    _?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") return;
-    setSnackbarOpen(false);
-  };
+  const downloadUrlForDoc = (docId: number) => `${BASE_URL}/documents/${docId}`;
 
   return (
     <Paper
@@ -331,6 +416,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Button>
       </Box>
 
+      {/* Documents header */}
       <Box
         sx={{
           mb: 2,
@@ -434,55 +520,52 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          mb: 2,
-        }}
-      >
+      {/* Documents table */}
+      <Box sx={{ flex: 1, minHeight: 0, mb: 2 }}>
+        {docsError && (
+          <Box sx={{ mb: 1 }}>
+            <Typography sx={{ color: "#d32f2f", fontWeight: 600, fontSize: "0.9rem" }}>
+              {docsError}
+            </Typography>
+          </Box>
+        )}
+
         <Box sx={{ overflowX: "auto" }}>
           <Table
             sx={{
-              tableLayout: "fixed",               
-              width: "100%",        
+              tableLayout: "fixed",
+              width: "100%",
               borderCollapse: "collapse",
             }}
           >
             <TableHead>
               <TableRow sx={{ "& th": { py: 0.8 } }}>
-                <TableCell sx={{ ...headCellSx, width: "35%" }}>Name</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "25%" }}>File</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "15%" }}>
-                  Status
-                </TableCell>
-                <TableCell sx={{ ...headCellSx, width: "25%" }}>
-                  Actions
-                </TableCell>
+                <TableCell sx={{ ...headCellSx, width: "55%" }}>File</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "20%" }}>Status</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "25%" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {hasResults ? (
+              {loadingDocs ? (
+                <TableRow sx={{ height: ROW_HEIGHT }}>
+                  <TableCell colSpan={3} sx={{ ...bodyCellSx, borderBottom: "none" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
+                      <Typography sx={{ color: "#7b8bb2", fontWeight: 500, fontSize: "0.9rem" }}>
+                        Loading documents...
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ) : hasResults ? (
                 <>
                   {docsToShow.map((doc) => (
-                    <TableRow
-                      key={doc.id}
-                      sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}
-                    >
+                    <TableRow key={doc.id} sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
                       <TableCell
                         sx={{
                           ...bodyCellSx,
-                          color: "#222",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {doc.name}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          ...bodyCellSx,
-                          color: doc.file === "-" ? "#b5b7c0" : "#67728A",
+                          color: "#67728A",
                           fontWeight: 500,
                           whiteSpace: "nowrap",
                           overflow: "hidden",
@@ -491,6 +574,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                       >
                         {doc.file}
                       </TableCell>
+
                       <TableCell
                         sx={{
                           ...bodyCellSx,
@@ -498,66 +582,55 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                           color: statusColor(doc.status),
                         }}
                       >
-                        {doc.status === "completed"
-                          ? "Completed"
-                          : doc.status === "pending"
-                          ? "Pending..."
-                          : "In review"}
+                        {doc.signed ? "Signed" : "Unsigned"}
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          ...bodyCellSx,
-                          color: "#222",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {doc.file !== "-" && (
-                          <>
-                            <Tooltip title="Download file" arrow>
-                              <IconButton
-                                component="a"
-                                href={SAMPLE_DOC_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                size="small"
-                                disableRipple
-                                sx={{ ...actionIconSx, mr: 0.75 }}
-                              >
-                                <CloudDownloadOutlinedIcon fontSize="inherit" />
-                              </IconButton>
-                            </Tooltip>
 
-                            {doc.status === "review" && (
-                              <>
-                                <Tooltip title="Accept document" arrow>
-                                  <IconButton
-                                    size="small"
-                                    disableRipple
-                                    sx={{ ...actionIconSx, mr: 0.75 }}
-                                    onClick={() =>
-                                      updateStatus(doc.id, "completed")
-                                    }
-                                  >
-                                    <CheckCircleOutlineIcon fontSize="inherit" />
-                                  </IconButton>
-                                </Tooltip>
+                      <TableCell sx={{ ...bodyCellSx, color: "#222", whiteSpace: "nowrap" }}>
+                        {/* Download */}
+                        <Tooltip title="Download file" arrow>
+                          <IconButton
+                            component="a"
+                            href={downloadUrlForDoc(doc.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="small"
+                            disableRipple
+                            sx={{ ...actionIconSx, mr: 0.75 }}
+                            onClick={(e) => {
+                              // keep normal navigation
+                              if (!token) {
+                                e.preventDefault();
+                                openSnackbar("Not authenticated (missing token).", "error");
+                              }
+                            }}
+                          >
+                            <CloudDownloadOutlinedIcon fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
 
-                                <Tooltip title="Request changes for document" arrow>
-                                  <IconButton
-                                    size="small"
-                                    disableRipple
-                                    sx={actionIconSx}
-                                    onClick={() =>
-                                      updateStatus(doc.id, "pending")
-                                    }
-                                  >
-                                    <CloseOutlinedIcon fontSize="inherit" />
-                                  </IconButton>
-                                </Tooltip>
-                              </>
-                            )}
-                          </>
-                        )}
+                        {/* Accept => signed true */}
+                        <Tooltip title="Accept document" arrow>
+                          <IconButton
+                            size="small"
+                            disableRipple
+                            sx={{ ...actionIconSx, mr: 0.75 }}
+                            onClick={() => patchDocumentSigned(doc.id, true)}
+                          >
+                            <CheckCircleOutlineIcon fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
+
+                        {/* Reject => signed false */}
+                        <Tooltip title="Mark as unsigned" arrow>
+                          <IconButton
+                            size="small"
+                            disableRipple
+                            sx={actionIconSx}
+                            onClick={() => patchDocumentSigned(doc.id, false)}
+                          >
+                            <CloseOutlinedIcon fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -575,7 +648,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                         }}
                       >
                         <TableCell
-                          colSpan={4}
+                          colSpan={3}
                           sx={{
                             px: 1.25,
                             fontSize: "0.8rem",
@@ -590,19 +663,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                 </>
               ) : (
                 <>
-                  <TableRow
-                    sx={{
-                      height: ROW_HEIGHT,
-                      "& td": { py: 0.8 },
-                    }}
-                  >
-                    <TableCell
-                      colSpan={4}
-                      sx={{
-                        ...bodyCellSx,
-                        textAlign: "center",
-                      }}
-                    >
+                  <TableRow sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
+                    <TableCell colSpan={3} sx={{ ...bodyCellSx, textAlign: "center" }}>
                       <Typography
                         sx={{
                           color: "#b5b7c0",
@@ -628,7 +690,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                         }}
                       >
                         <TableCell
-                          colSpan={4}
+                          colSpan={3}
                           sx={{
                             px: 1.25,
                             fontSize: "0.8rem",
@@ -646,6 +708,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           </Table>
         </Box>
 
+        {/* Pagination */}
         <Box
           sx={{
             display: "flex",
@@ -716,6 +779,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </Box>
       </Box>
 
+      {/* Assign new document */}
       <Box sx={{ mt: 0.5 }}>
         <Typography
           variant="h6"
@@ -729,58 +793,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           Assign new document
         </Typography>
 
-        <Box sx={{ mb: 0.75 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 0.4,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: "#4b5563",
-                textAlign: "left",
-              }}
-            >
-              Document name
-            </Typography>
-            {docNameError && (
-              <Typography
-                variant="caption"
-                sx={{ color: "#d32f2f", fontWeight: 500 }}
-              >
-                {docNameError}
-              </Typography>
-            )}
-          </Box>
-
-          <TextField
-            fullWidth
-            placeholder="Enter text..."
-            size="small"
-            value={docName}
-            onChange={(e) => {
-              setDocName(e.target.value);
-              if (docNameError) setDocNameError("");
-            }}
-            error={!!docNameError}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 3,
-                bgcolor: "#f4f6fb",
-                height: 44,
-                "& fieldset": { borderColor: "#dde3f0" },
-                "&:hover fieldset": { borderColor: "#cfd6e6" },
-                "&.Mui-focused fieldset": { borderColor: "#a5b1c8" },
-              },
-            }}
-          />
-        </Box>
-
         <Box sx={{ mb: 1.25 }}>
           <Typography
             variant="body2"
@@ -791,7 +803,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
               mb: 0.4,
             }}
           >
-            Upload file (optional)
+            Upload file
           </Typography>
 
           <Box
@@ -814,15 +826,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
               variant="body2"
               sx={{ mt: 0.4, color: "#67728A", fontSize: "0.8rem" }}
             >
-              {uploadedFile
-                ? "Click to change the file"
-                : "Click to upload a file"}
+              {uploadedFile ? "Click to change the file" : "Click to upload a file"}
             </Typography>
             <input
               id="user-doc-upload"
               type="file"
               style={{ display: "none" }}
               onChange={handleFileChange}
+              accept=".pdf"
             />
           </Box>
 
@@ -877,16 +888,17 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
           )}
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            mt: 0.5,
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
           <Button
             variant="contained"
-            onClick={handleAssignDocument}
+            disabled={!uploadedFile || uploading}
+            onClick={() => {
+              if (!uploadedFile) {
+                openSnackbar("Please choose a file.", "error");
+                return;
+              }
+              uploadDocumentForUser(user.id, uploadedFile);
+            }}
             sx={{
               textTransform: "none",
               borderRadius: 3,
@@ -904,13 +916,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
                 outline: "none",
                 boxShadow: "none",
               },
+              "&.Mui-disabled": {
+                bgcolor: "#c9ceda",
+                color: "#ffffff",
+              },
             }}
           >
-            Assign document
+            {uploading ? "Assigning..." : "Assign document"}
           </Button>
         </Box>
       </Box>
 
+      {/* Remove user dialog (momentan hardcodata) */}
       <Dialog
         open={removeDialogOpen}
         onClose={() => setRemoveDialogOpen(false)}
@@ -1025,17 +1042,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats }) => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

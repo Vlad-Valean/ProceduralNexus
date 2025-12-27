@@ -2,6 +2,7 @@ package com.proceduralnexus.apiservice.controller.controllers;
 
 import com.proceduralnexus.apiservice.business.interfaces.IDocumentService;
 import com.proceduralnexus.apiservice.business.services.ProfileService;
+import com.proceduralnexus.apiservice.controller.dtos.DocumentPatchRequest;
 import com.proceduralnexus.apiservice.controller.dtos.DocumentResponseDto;
 import com.proceduralnexus.apiservice.data.entities.Profile;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @SecurityRequirement(name = "bearerAuth")
@@ -53,12 +55,9 @@ public class DocumentController {
     public DocumentResponseDto uploadDocument(
             @RequestPart("file") MultipartFile file,
             @RequestParam(value = "batchId", required = false) String batchId,
-            @AuthenticationPrincipal UserDetails userDetails
+            @RequestParam(value = "uploaderId") UUID uploaderId
     ) {
-        // dacă endpoint-ul e protejat și vii cu JWT:
-        String email = userDetails.getUsername();
-        Profile uploader = profileService.findByEmail(email);
-
+        Profile uploader = profileService.findById(uploaderId);
         return documentService.uploadDocument(file, batchId, uploader);
     }
 
@@ -70,8 +69,10 @@ public class DocumentController {
             summary = "List documents",
             description = "Returns a list of all stored documents (metadata only)."
     )
-    public List<DocumentResponseDto> listDocuments() {
-        return documentService.getDocuments();
+    public List<DocumentResponseDto> listDocuments(
+            @RequestParam(name = "uploaderId", required = false) UUID uploaderId
+    ) {
+        return documentService.getDocuments(uploaderId);
     }
 
     /**
@@ -107,5 +108,14 @@ public class DocumentController {
     )
     public void deleteDocument(@PathVariable Long id) {
         documentService.deleteDocument(id);
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Patch document", description = "Patch document fields (currently supports signed).")
+    public DocumentResponseDto patchDocument(
+            @PathVariable Long id,
+            @RequestBody DocumentPatchRequest request
+    ) {
+        return documentService.patchDocumentSigned(id, request.getSigned());
     }
 }
