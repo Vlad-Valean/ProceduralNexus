@@ -9,11 +9,22 @@ const orbitSpin = keyframes`
 
 type OrganizationStatsProps = {
   onCheckApplications?: () => void;
+
+  organizationName?: string;
+  hrCount?: number;
+  userCount?: number;
+  membersCount?: number; // optional (dacă nu îl dai, îl calculăm)
 };
 
 const OrganizationStats: React.FC<OrganizationStatsProps> = ({
   onCheckApplications,
+  organizationName = "Your Organization",
+  hrCount = 0,
+  userCount = 0,
+  membersCount,
 }) => {
+  const members = membersCount ?? hrCount + userCount;
+
   return (
     <Paper
       sx={{
@@ -41,9 +52,10 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
             fontWeight: 700,
             color: "#2b2b35",
             fontSize: { xs: "1.7rem", sm: "2rem" },
+            px: 2,
           }}
         >
-          Your Organization
+          {organizationName || "Your Organization"}
         </Typography>
         <Typography
           variant="subtitle1"
@@ -86,24 +98,16 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               bgcolor: "#6f7688",
               boxShadow: "none",
               pointerEvents: "auto",
-              "&:hover": {
-                bgcolor: "#3D3C42",
-                boxShadow: "none",
-              },
-              "&:focus": {
-                outline: "none",
-                boxShadow: "none",
-              },
-              "&:focus-visible": {
-                outline: "none",
-                boxShadow: "none",
-              },
+              "&:hover": { bgcolor: "#3D3C42", boxShadow: "none" },
+              "&:focus": { outline: "none", boxShadow: "none" },
+              "&:focus-visible": { outline: "none", boxShadow: "none" },
             }}
           >
             Check new applications
           </Button>
         </Box>
 
+        {/* MEMBERS */}
         <Box
           sx={{
             position: "absolute",
@@ -124,12 +128,7 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               animation: `${orbitSpin} 18s linear infinite`,
             }}
           />
-          <Box
-            sx={{
-              position: "absolute",
-              inset: { xs: -4, sm: -6 },
-            }}
-          />
+          <Box sx={{ position: "absolute", inset: { xs: -4, sm: -6 } }} />
           <Box
             sx={{
               position: "absolute",
@@ -144,26 +143,16 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               textAlign: "center",
             }}
           >
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "1.7rem", sm: "2rem" },
-              }}
-            >
-              2000
+            <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.7rem", sm: "2rem" } }}>
+              {members}
             </Typography>
-            <Typography
-              sx={{
-                fontWeight: 500,
-                letterSpacing: 1,
-                fontSize: { xs: "0.9rem", sm: "1rem" },
-              }}
-            >
+            <Typography sx={{ fontWeight: 500, letterSpacing: 1, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               MEMBERS
             </Typography>
           </Box>
         </Box>
 
+        {/* HR */}
         <Box
           sx={{
             position: "absolute",
@@ -184,12 +173,7 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               animation: `${orbitSpin} 14s linear infinite`,
             }}
           />
-          <Box
-            sx={{
-              position: "absolute",
-              inset: { xs: -3, sm: -4 },
-            }}
-          />
+          <Box sx={{ position: "absolute", inset: { xs: -3, sm: -4 } }} />
           <Box
             sx={{
               position: "absolute",
@@ -204,20 +188,14 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               textAlign: "center",
             }}
           >
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "1.4rem", sm: "1.6rem" },
-              }}
-            >
-              250
+            <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.4rem", sm: "1.6rem" } }}>
+              {hrCount}
             </Typography>
-            <Typography sx={{ fontWeight: 500, fontSize: "0.9rem" }}>
-              HR
-            </Typography>
+            <Typography sx={{ fontWeight: 500, fontSize: "0.9rem" }}>HR</Typography>
           </Box>
         </Box>
 
+        {/* USERS */}
         <Box
           sx={{
             position: "absolute",
@@ -238,12 +216,7 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               animation: `${orbitSpin} 20s linear infinite`,
             }}
           />
-          <Box
-            sx={{
-              position: "absolute",
-              inset: { xs: -3, sm: -4 },
-            }}
-          />
+          <Box sx={{ position: "absolute", inset: { xs: -3, sm: -4 } }} />
           <Box
             sx={{
               position: "absolute",
@@ -258,17 +231,10 @@ const OrganizationStats: React.FC<OrganizationStatsProps> = ({
               textAlign: "center",
             }}
           >
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "1.5rem", sm: "1.7rem" },
-              }}
-            >
-              1750
+            <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.5rem", sm: "1.7rem" } }}>
+              {userCount}
             </Typography>
-            <Typography sx={{ fontWeight: 500, fontSize: "0.9rem" }}>
-              USERS
-            </Typography>
+            <Typography sx={{ fontWeight: 500, fontSize: "0.9rem" }}>USERS</Typography>
           </Box>
         </Box>
       </Box>

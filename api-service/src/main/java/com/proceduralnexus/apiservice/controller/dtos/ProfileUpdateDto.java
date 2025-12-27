@@ -16,7 +16,11 @@ public class ProfileUpdateDto {
 
     private Boolean emailVerified; // optional
 
-    // getters and setters
+    private Long organizationId;
+
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
+
 
     public String getFirstname() {
         return firstname;

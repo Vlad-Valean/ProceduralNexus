@@ -81,11 +81,29 @@ public class DocumentService implements IDocumentService {
     }
 
     @Override
-    public List<DocumentResponseDto> getDocuments() {
-        return documentRepository.findAll()
-                .stream()
+    public List<DocumentResponseDto> getDocuments(UUID uploaderId) {
+        List<Document> docs = (uploaderId == null)
+                ? documentRepository.findAll()
+                : documentRepository.findByUploader_Id(uploaderId);
+
+        return docs.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public DocumentResponseDto patchDocumentSigned(Long id, Boolean signed) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
+                );
+
+        if (signed != null) {
+            document.setSigned(signed);
+        }
+
+        Document saved = documentRepository.save(document);
+        return toDto(saved);
     }
 
     @Override
