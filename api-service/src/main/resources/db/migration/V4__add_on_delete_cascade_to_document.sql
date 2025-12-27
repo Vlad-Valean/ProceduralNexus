@@ -1,0 +1,8 @@
+ALTER TABLE document
+    DROP CONSTRAINT FK_DOCUMENT_ON_UPLOADER_PROFILE;
+
+ALTER TABLE document
+    ADD CONSTRAINT FK_DOCUMENT_ON_UPLOADER_PROFILE
+        FOREIGN KEY (uploader_profile_id)
+            REFERENCES profile (id)
+            ON DELETE CASCADE;
