@@ -93,8 +93,6 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
     setSnackbarOpen(true);
   };
 
-  const downloadUrlForDoc = (docId: number) => `${BASE_URL}/documents/${docId}`;
-
   async function loadApps(signal?: AbortSignal) {
     if (!token) {
       setErr("Not authenticated (missing token).");

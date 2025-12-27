@@ -327,9 +327,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     }
   };
 
-
-  const downloadUrlForDoc = (docId: number) => `${BASE_URL}/documents/${docId}`;
-
   return (
     <Paper
       sx={{
