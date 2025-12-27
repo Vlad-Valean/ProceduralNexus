@@ -1,4 +1,5 @@
 package com.proceduralnexus.apiservice.data.entities;
+import com.proceduralnexus.apiservice.data.entities.Document;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
