@@ -6,7 +6,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "organization")
@@ -25,6 +27,9 @@ public class Organization {
 
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Profile> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Application> applications = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -66,6 +71,14 @@ public class Organization {
 
     public void setMembers(List<Profile> members) {
         this.members = members;
+    }
+
+    public Set<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(Set<Application> applications) {
+        this.applications = applications;
     }
 
     public Instant getCreatedAt() {

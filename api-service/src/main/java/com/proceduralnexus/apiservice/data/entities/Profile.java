@@ -51,6 +51,16 @@ public class Profile {
     )
     private Set<Role> roles = new HashSet<>();
 
+    @OneToMany(mappedBy = "applicant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Application> applications = new HashSet<>();
+
+    @OneToMany(
+        mappedBy = "uploader",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
+    private Set<Document> documents = new HashSet<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;
@@ -131,6 +141,22 @@ public class Profile {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Set<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(Set<Application> applications) {
+        this.applications = applications;
+    }
+
+    public Set<Document> getDocuments() {
+        return documents;
+    }
+
+    public void setDocuments(Set<Document> documents) {
+        this.documents = documents;
     }
 
     public Instant getCreatedAt() {

@@ -1,6 +1,8 @@
 package com.proceduralnexus.apiservice.data.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -9,6 +11,11 @@ import java.time.Instant;
 @Entity
 @Table(name = "document")
 public class Document {
+
+    public enum DocumentType {
+        CV,
+        OTHER
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +27,10 @@ public class Document {
     @Column(nullable = false)
     private String filePath;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type")
+    private DocumentType type;
+
     @Column(name = "file_size_in_bytes")
     private Long fileSizeInBytes;
 
@@ -28,6 +39,7 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploader_profile_id", referencedColumnName = "id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Profile uploader;
 
     @Column(nullable = false)
@@ -65,6 +77,14 @@ public class Document {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    public DocumentType getType() {
+        return type;
+    }
+
+    public void setType(DocumentType type) {
+        this.type = type;
     }
 
     public Long getFileSizeInBytes() {
