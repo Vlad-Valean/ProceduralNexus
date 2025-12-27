@@ -39,6 +39,15 @@ type ApplicationRow = {
   cvDocumentId?: number;
 };
 
+type ApplicationDto = {
+  id: number;
+  applicantEmail?: string | null;
+  email?: string | null;
+  cvFileName?: string | null;
+  file?: string | null;
+  cvDocumentId?: number | null;
+};
+
 const PAGE_SIZE = 11;
 const ROW_HEIGHT = 34;
 
@@ -116,7 +125,9 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
       }
 
       const data = await res.json();
-      const mapped: ApplicationRow[] = (Array.isArray(data) ? data : []).map((a: any) => ({
+      const list: ApplicationDto[] = Array.isArray(data) ? (data as ApplicationDto[]) : [];
+
+      const mapped: ApplicationRow[] = list.map((a) => ({
         id: Number(a?.id),
         email: String(a?.applicantEmail ?? a?.email ?? ""),
         file: String(a?.cvFileName ?? a?.file ?? "-"),
@@ -125,9 +136,10 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
 
       setRows(mapped);
       setPage(1);
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      setErr(e?.message ?? "Failed to load applications.");
+    } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
+      const msg = e instanceof Error ? e.message : "Failed to load applications.";
+      setErr(msg);
       setRows([]);
     } finally {
       setLoading(false);
@@ -150,8 +162,9 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
 
       setRows((prev) => prev.filter((r) => r.id !== appId));
       openSnack("Application accepted and user added to your organization.", "success");
-    } catch (e: any) {
-      openSnack(e?.message ?? "Accept failed.", "error");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Accept failed.";
+      openSnack(msg, "error");
     }
   }
 
@@ -171,8 +184,9 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
 
       setRows((prev) => prev.filter((r) => r.id !== appId));
       openSnack("Application rejected.", "info");
-    } catch (e: any) {
-      openSnack(e?.message ?? "Reject failed.", "error");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Accept failed.";
+      openSnack(msg, "error");
     }
   }
 
@@ -388,8 +402,9 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
                                 }
 
                                 await downloadDocumentWithAuth(r.cvDocumentId, token, r.file);
-                              } catch (e: any) {
-                                openSnack(e?.message ?? "Download failed.", "error");
+                              } catch (e: unknown) {
+                                const msg = e instanceof Error ? e.message : "Accept failed.";
+                                openSnack(msg, "error");
                               }
                             }}
                           >

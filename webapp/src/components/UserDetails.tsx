@@ -57,6 +57,13 @@ interface UserDocument {
   status: DocStatus;
 }
 
+type DocumentDto = {
+  id: number;
+  name?: string | null;
+  fileName?: string | null;
+  signed?: boolean | null;
+};
+
 const DOCS_PAGE_SIZE = 3;
 const ROW_HEIGHT = 30;
 
@@ -161,8 +168,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       }
 
       const data = await res.json();
-      // data e lista de DocumentResponseDto
-      const mapped: UserDocument[] = (Array.isArray(data) ? data : []).map((d: any) => {
+      const list: DocumentDto[] = Array.isArray(data) ? (data as DocumentDto[]) : [];
+
+      const mapped: UserDocument[] = list.map((d) => {
         const signed = Boolean(d?.signed);
         return {
           id: Number(d?.id),
@@ -174,10 +182,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
       setDocuments(mapped);
       setPage(1);
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
+    } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
       setDocuments([]);
-      setDocsError(e?.message ?? "Failed to load documents.");
+      setDocsError(e instanceof Error ? e.message : "Failed to load documents.");
     } finally {
       setLoadingDocs(false);
     }
@@ -214,8 +222,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       );
 
       openSnackbar(signed ? "Document marked as Signed." : "Document marked as Unsigned.", "success");
-    } catch (e: any) {
-      openSnackbar(e?.message ?? "Failed to update document.", "error");
+    } catch (e: unknown) {
+      openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
     }
   }
 
@@ -250,8 +258,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
       // refresh list
       await fetchUserDocuments(profileId);
-    } catch (e: any) {
-      openSnackbar(e?.message ?? "Upload failed.", "error");
+    } catch (e: unknown) {
+      openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
     } finally {
       setUploading(false);
     }
@@ -322,8 +330,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         `${user.firstName} ${user.lastName} was removed from your organization`,
         "success"
       );
-    } catch (e: any) {
-      openSnackbar(e?.message ?? "Failed to remove user.", "error");
+    } catch (e: unknown) {
+      openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
     }
   };
 
@@ -611,8 +619,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                                   return;
                                 }
                                 await downloadDocumentWithAuth(doc.id, token, doc.file);
-                              } catch (e: any) {
-                                openSnackbar(e?.message ?? "Download failed.", "error");
+                              } catch (e: unknown) {
+                                openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
                               }
                             }}
                           >

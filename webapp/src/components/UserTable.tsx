@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Paper,
   Typography,
@@ -72,14 +72,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
   const totalUsers = filteredUsers.length;
   const pageCount = Math.max(1, Math.ceil(totalUsers / PAGE_SIZE));
 
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
+  // ✅ no setState in effect: compute a safe page instead
+  const safePage = Math.min(page, pageCount);
 
-  const usersPage = filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const usersPage = filteredUsers.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const startIdx = totalUsers === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(page * PAGE_SIZE, totalUsers);
+  const startIdx = totalUsers === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalUsers);
 
   const emptyRows = Math.max(0, PAGE_SIZE - usersPage.length);
 
@@ -118,24 +117,15 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
         }}
       >
         <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0.5 }}
-          >
+          <Typography variant="h6" sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0.5 }}>
             All users
           </Typography>
 
-          <Typography
-            variant="subtitle2"
-            sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}
-          >
+          <Typography variant="subtitle2" sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}>
             Organization name
           </Typography>
 
-          <Typography
-            variant="subtitle2"
-            sx={{ color: "#4f46e5", fontWeight: 600, mt: 0.2, textAlign: "left" }}
-          >
+          <Typography variant="subtitle2" sx={{ color: "#4f46e5", fontWeight: 600, mt: 0.2, textAlign: "left" }}>
             {organizationName ?? "-"}
           </Typography>
         </Box>
@@ -154,15 +144,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
               borderRadius: 2,
               height: 32,
               fontSize: "0.8rem",
-              "& fieldset": {
-                borderColor: "#dde3f0",
-              },
-              "&:hover fieldset": {
-                borderColor: "#cfd6e6",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#a5b1c8",
-              },
+              "& fieldset": { borderColor: "#dde3f0" },
+              "&:hover fieldset": { borderColor: "#cfd6e6" },
+              "&.Mui-focused fieldset": { borderColor: "#a5b1c8" },
             },
           }}
           InputProps={{
@@ -188,15 +172,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
             minWidth: 140,
             fontWeight: 500,
             fontSize: "0.8rem",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#dde3f0 !important",
-            },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#cfd6e6 !important",
-            },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#a5b1c8 !important",
-            },
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#dde3f0 !important" },
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cfd6e6 !important" },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a5b1c8 !important" },
           }}
           renderValue={(selected) => {
             let label = "";
@@ -308,9 +286,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
                       "& td": { py: 0.8 },
                       cursor: "pointer",
                       transition: "background 0.2s",
-                      "&:hover": {
-                        backgroundColor: "#F9FBFF",
-                      },
+                      "&:hover": { backgroundColor: "#F9FBFF" },
                     }}
                     onClick={() => onUserSelect && onUserSelect(user)}
                   >
@@ -353,10 +329,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
 
                 {emptyRows > 0 &&
                   Array.from({ length: emptyRows }).map((_, idx) => (
-                    <TableRow
-                      key={`empty-${idx}`}
-                      sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}
-                    >
+                    <TableRow key={`empty-${idx}`} sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}>
                       <TableCell
                         sx={{
                           fontSize: "0.8rem",
@@ -367,22 +340,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
                       >
                         &nbsp;
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent" }}>
                         &nbsp;
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent" }}>
                         &nbsp;
                       </TableCell>
                     </TableRow>
@@ -391,21 +352,8 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
             ) : (
               <TableRow>
                 <TableCell colSpan={3} sx={{ border: 0, py: 6, px: 0 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 100,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: "#b5b7c0",
-                        fontWeight: 500,
-                        fontSize: "1.2rem",
-                      }}
-                    >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 100 }}>
+                    <Typography sx={{ color: "#b5b7c0", fontWeight: 500, fontSize: "1.2rem" }}>
                       No results...
                     </Typography>
                   </Box>
@@ -446,7 +394,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Pagination
             count={pageCount}
-            page={page}
+            page={safePage}
             onChange={handlePageChange}
             siblingCount={1}
             boundaryCount={1}
