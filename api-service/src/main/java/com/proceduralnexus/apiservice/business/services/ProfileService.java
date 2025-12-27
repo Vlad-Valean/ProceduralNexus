@@ -4,8 +4,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.proceduralnexus.apiservice.controller.dtos.ProfilePatchRequest;
+import com.proceduralnexus.apiservice.data.entities.Organization;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.proceduralnexus.apiservice.business.interfaces.IProfileService;
@@ -13,14 +16,18 @@ import com.proceduralnexus.apiservice.controller.dtos.ProfileResponseDto;
 import com.proceduralnexus.apiservice.controller.dtos.ProfileUpdateDto;
 import com.proceduralnexus.apiservice.data.entities.Profile;
 import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
+import com.proceduralnexus.apiservice.data.repositories.OrganizationRepository;
+
 
 @Service
 public class ProfileService implements IProfileService {
 
     private final ProfileRepository profileRepository;
+    private final OrganizationRepository organizationRepository;
 
-    public ProfileService(ProfileRepository profileRepository) {
+    public ProfileService(ProfileRepository profileRepository, OrganizationRepository organizationRepository) {
         this.profileRepository = profileRepository;
+        this.organizationRepository = organizationRepository;
     }
 
     @Override
@@ -55,6 +62,12 @@ public class ProfileService implements IProfileService {
             profile.setEmailVerified(request.getEmailVerified());
         }
 
+        if (request.getOrganizationId() != null) {
+            Organization org = organizationRepository.findById(request.getOrganizationId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+            profile.setOrganization(org);
+        }
+
         Profile saved = profileRepository.save(profile);
         return toDto(saved);
     }
@@ -79,6 +92,7 @@ public class ProfileService implements IProfileService {
         dto.setRoles(profile.getRoles().stream()
             .map(role -> role.getName().name())
             .collect(Collectors.toList()));
+        dto.setOrganizationId(profile.getOrganization() != null ? profile.getOrganization().getId() : null);
         return dto;
     }
 
@@ -86,4 +100,21 @@ public class ProfileService implements IProfileService {
         return profileRepository.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
     }
+
+    @Transactional
+    public ProfileResponseDto patchProfile(UUID id, ProfilePatchRequest req) {
+        Profile profile = profileRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+
+        if (req.getFirstname() != null) profile.setFirstname(req.getFirstname());
+        if (req.getLastname() != null) profile.setLastname(req.getLastname());
+
+        if (req.getOrganizationId() != null) {
+            Organization org = organizationRepository.findById(req.getOrganizationId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+            profile.setOrganization(org);
+        }
+        return toDto(profile);
+    }
+
 }

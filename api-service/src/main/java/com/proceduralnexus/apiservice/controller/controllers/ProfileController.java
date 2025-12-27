@@ -3,16 +3,9 @@ package com.proceduralnexus.apiservice.controller.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import com.proceduralnexus.apiservice.controller.dtos.ProfilePatchRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.proceduralnexus.apiservice.business.services.ProfileService;
 import com.proceduralnexus.apiservice.controller.dtos.ProfileResponseDto;
@@ -76,6 +69,13 @@ public class ProfileController {
     ) {
         return profileService.updateProfile(id, request);
     }
+
+    @PatchMapping("/profiles/{id}")
+    public ProfileResponseDto patchProfile(@PathVariable UUID id,
+                                           @RequestBody ProfilePatchRequest req) {
+        return profileService.patchProfile(id, req);
+    }
+
 
     /**
      * DELETE /profiles/{id}
