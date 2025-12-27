@@ -30,6 +30,10 @@ public class Application {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id")
+    private Document cv;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.PENDING;
@@ -66,6 +70,14 @@ public class Application {
 
     public void setOrganization(Organization organization) {
         this.organization = organization;
+    }
+
+    public Document getCv() {
+        return cv;
+    }
+
+    public void setCv(Document cv) {
+        this.cv = cv;
     }
 
     public ApplicationStatus getStatus() {

@@ -10,6 +10,11 @@ import java.time.Instant;
 @Table(name = "document")
 public class Document {
 
+    public enum DocumentType {
+        CV,
+        OTHER
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,6 +24,10 @@ public class Document {
 
     @Column(nullable = false)
     private String filePath;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type")
+    private DocumentType type;
 
     @Column(name = "file_size_in_bytes")
     private Long fileSizeInBytes;
@@ -65,6 +74,14 @@ public class Document {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    public DocumentType getType() {
+        return type;
+    }
+
+    public void setType(DocumentType type) {
+        this.type = type;
     }
 
     public Long getFileSizeInBytes() {
