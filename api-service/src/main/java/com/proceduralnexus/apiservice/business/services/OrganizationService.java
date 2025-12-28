@@ -2,13 +2,16 @@ package com.proceduralnexus.apiservice.business.services;
 
 import com.proceduralnexus.apiservice.business.interfaces.IOrganizationService;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationCreateDto;
+import com.proceduralnexus.apiservice.controller.dtos.OrganizationMemberDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationResponseDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationUpdateDto;
 import com.proceduralnexus.apiservice.data.entities.Organization;
 import com.proceduralnexus.apiservice.data.entities.Profile;
 import com.proceduralnexus.apiservice.data.repositories.OrganizationRepository;
+import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -18,9 +21,12 @@ import java.util.stream.Collectors;
 public class OrganizationService implements IOrganizationService {
 
     private final OrganizationRepository organizationRepository;
+    private final ProfileRepository profileRepository;
 
-    public OrganizationService(OrganizationRepository organizationRepository) {
+    public OrganizationService(OrganizationRepository organizationRepository,
+                               ProfileRepository profileRepository) {
         this.organizationRepository = organizationRepository;
+        this.profileRepository = profileRepository;
     }
 
     @Override
@@ -40,9 +46,14 @@ public class OrganizationService implements IOrganizationService {
     }
 
     @Override
+    @Transactional
     public OrganizationResponseDto createOrganization(OrganizationCreateDto request, Profile owner) {
         if (organizationRepository.existsByName(request.getName())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Organization name already in use");
+        }
+
+        if (owner.getOrganization() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Owner already belongs to an organization");
         }
 
         Organization org = new Organization();
@@ -50,6 +61,10 @@ public class OrganizationService implements IOrganizationService {
         org.setOwner(owner);
 
         Organization saved = organizationRepository.save(org);
+
+        owner.setOrganization(saved);
+        profileRepository.save(owner);
+
         return toDto(saved);
     }
 
@@ -62,8 +77,7 @@ public class OrganizationService implements IOrganizationService {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
 
-        // only owner or admin
-        if (!isAdmin && !org.getOwner().getId().equals(currentUser.getId())) {
+        if (!isAdmin && (org.getOwner() == null || !org.getOwner().getId().equals(currentUser.getId()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to update this organization");
         }
@@ -76,6 +90,48 @@ public class OrganizationService implements IOrganizationService {
         org.setName(request.getName());
         Organization saved = organizationRepository.save(org);
         return toDto(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrganizationMemberDto> getOrganizationMembers(Long organizationId) {
+        Organization org = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+
+        return profileRepository.findAllByOrganization_Id(org.getId()).stream()
+                .map(p -> new OrganizationMemberDto(
+                        p.getId().toString(),
+                        p.getFirstname(),
+                        p.getLastname(),
+                        p.getEmail(),
+                        p.getRoles().stream().map(r -> r.getName().name()).toList()
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteOrganization(Long organizationId, Profile currentUser, boolean isAdmin) {
+        Organization org = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+
+        boolean isOwner = org.getOwner() != null && org.getOwner().getId().equals(currentUser.getId());
+        if (!isOwner && !isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Only the owner or an admin can delete the organization");
+        }
+
+        // 1) toti userii din org -> organization = null
+        List<Profile> members = profileRepository.findAllByOrganization_Id(org.getId());
+        for (Profile p : members) {
+            p.setOrganization(null);
+        }
+        profileRepository.saveAll(members);
+
+        profileRepository.flush();
+
+        organizationRepository.deleteById(org.getId());
+        organizationRepository.flush();
     }
 
     private OrganizationResponseDto toDto(Organization org) {

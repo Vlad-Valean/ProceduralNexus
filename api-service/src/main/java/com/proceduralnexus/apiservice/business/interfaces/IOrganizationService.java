@@ -1,6 +1,7 @@
 package com.proceduralnexus.apiservice.business.interfaces;
 
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationCreateDto;
+import com.proceduralnexus.apiservice.controller.dtos.OrganizationMemberDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationResponseDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationUpdateDto;
 import com.proceduralnexus.apiservice.data.entities.Profile;
@@ -17,4 +18,6 @@ public interface IOrganizationService {
 
     OrganizationResponseDto updateOrganization(Long id, OrganizationUpdateDto request,
                                                Profile currentUser, boolean isAdmin);
+    List<OrganizationMemberDto> getOrganizationMembers(Long organizationId);
+    void deleteOrganization(Long organizationId, Profile currentUser, boolean isAdmin);
 }
