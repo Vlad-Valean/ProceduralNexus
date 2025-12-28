@@ -60,7 +60,7 @@ const Market: React.FC = () => {
       }, 0);
       return;
     }
-    fetch("http://localhost:8080/organizations", {
+    fetch("http://localhost:8081/organizations", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

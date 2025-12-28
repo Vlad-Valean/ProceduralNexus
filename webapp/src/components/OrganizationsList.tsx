@@ -15,10 +15,11 @@ interface Organization {
   status?: string;
 }
 
-interface Document {
+interface Application {
   id: string;
-  batchId: string;
-  uploaderEmail: string;
+  organizationId: string;
+  userEmail: string;
+  // ...other fields...
 }
 
 interface OrganizationsListProps {
@@ -77,71 +78,135 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   };
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
+  const [appliedOrgIds, setAppliedOrgIds] = useState<Set<string>>(new Set());
   const [successOpen, setSuccessOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     setUserEmail(email || null);
   }, []);
 
+  interface Profile {
+    id: string;
+    email: string;
+  }
+
+  // Fetch user profile id from /profiles using email
   useEffect(() => {
     if (!userEmail) return;
-    fetch("http://localhost:8080/documents", {
+    const token = localStorage.getItem("token") || "";
+    fetch("http://localhost:8081/profiles", {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        Authorization: `Bearer ${token}`,
       },
     })
       .then(res => res.json())
-      .then((docs: Document[]) => {
+      .then((profiles: Profile[]) => {
+        const profile = profiles.find(p => p.email === userEmail);
+        if (profile) setUserProfileId(profile.id);
+      });
+  }, [userEmail]);
+
+  // Fetch applications for the current user (use /applications/mine)
+  useEffect(() => {
+    if (!userEmail) return;
+    const token = localStorage.getItem("token") || "";
+    fetch("http://localhost:8081/applications/mine", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then((apps: Application[]) => {
+        // Collect all organizationIds from the applications
         const pendingIds = new Set(
-          docs
-            .filter(doc => doc.uploaderEmail === userEmail)
-            .map(doc => doc.batchId)
+          apps
+            .filter(app => app.organizationId) // Defensive: only if organizationId exists
+            .map(app => String(app.organizationId))
         );
         setPendingOrgIds(pendingIds);
+        if (onPendingOrgIdsChange) onPendingOrgIdsChange(pendingIds);
       })
-      .catch(() => setPendingOrgIds(new Set()));
-  }, [userEmail]);
+      .catch(() => {
+        setPendingOrgIds(new Set());
+        if (onPendingOrgIdsChange) onPendingOrgIdsChange(new Set());
+      });
+  }, [userEmail, successOpen, onPendingOrgIdsChange]); // refetch after submit
 
   useEffect(() => {
     if (onPendingOrgIdsChange) {
-      onPendingOrgIdsChange(pendingOrgIds);
+      onPendingOrgIdsChange(appliedOrgIds);
     }
-  }, [pendingOrgIds, onPendingOrgIdsChange]);
+  }, [appliedOrgIds, onPendingOrgIdsChange]);
 
   const handleSubmitApplication = async () => {
-    if (!selectedOrg || !cvFile) return;
+    if (!selectedOrg || !cvFile || !userProfileId) return;
 
     try {
       const token = localStorage.getItem("token");
+      // Debug: log the token and payload
+      console.log("Token for /applications:", token);
+      console.log("Payload:", { organizationId: selectedOrg.id });
+
+      // 1. Upload document with correct uploaderId
       const formData = new FormData();
+      formData.append("uploaderId", userProfileId);
       formData.append("file", cvFile);
-      const batchId = selectedOrg.id;
 
-      const response = await fetch(
-        `http://localhost:8080/documents/upload?batchId=${encodeURIComponent(batchId)}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token || ""}`,
-          },
-          body: formData,
-        }
-      );
+      const docRes = await fetch("http://localhost:8081/documents/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: formData,
+      });
+      if (!docRes.ok) throw new Error("Failed to upload document");
+      const docData = await docRes.json();
+      const cvDocumentId = docData.id;
 
-      if (!response.ok) {
-        throw new Error("Failed to upload document");
+      // 2. Create application with cvDocumentId
+      const appRes = await fetch("http://localhost:8081/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ organizationId: selectedOrg.id, cvDocumentId }),
+      });
+
+      if (!appRes.ok) {
+        const errText = await appRes.text();
+        setErrorMsg(`Failed to create application: ${errText}`);
+        setErrorOpen(true);
+        throw new Error("Failed to create application");
       }
 
-      setPendingOrgIds(prev => {
+      // Immediately update appliedOrgIds to reflect the new pending status in the UI
+      setAppliedOrgIds(prev => {
         const updated = new Set(prev);
-        updated.add(String(batchId));
+        updated.add(String(selectedOrg.id));
         return updated;
       });
 
-      setSuccessOpen(true);
+      // Optionally, you can still fetch and log all applications for the current applicant after successful creation
+      fetch("http://localhost:8081/applications/mine", {
+        headers: {
+          Authorization: `Bearer ${token || ""}`,
+        },
+      })
+        .then(res => res.json())
+        .then(apps => {
+          console.log("All applications for current applicant after submit:", apps);
+        })
+        .catch(err => {
+          console.log("Failed to fetch applications after submit:", err);
+        });
 
+      setSuccessOpen(true);
       handleCloseModal();
     } catch {
       handleCloseModal();
@@ -162,6 +227,20 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           sx={{ width: "100%" }}
         >
           Your application has been submitted successfully!
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={4000}
+        onClose={() => setErrorOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setErrorOpen(false)}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {errorMsg}
         </Alert>
       </Snackbar>
       <div
@@ -230,9 +309,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                 <div style={{ color: "#3D3C42", textAlign: "left" }}>{org.ownerEmail ?? "-"}</div>
                 <div style={{ textAlign: "center" }}>
                   {pendingOrgIds.has(String(org.id)) ? (
-                    <>
-                      <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
-                    </>
+                    <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
                   ) : (
                     <span
                       style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}

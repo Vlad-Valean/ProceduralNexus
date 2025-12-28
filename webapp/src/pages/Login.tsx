@@ -96,10 +96,6 @@ const Login: React.FC = () => {
         password: formData.password,
       });
 
-      localStorage.setItem('token', jwt.accessToken);
-      localStorage.setItem('userEmail', jwt.email);
-      localStorage.setItem('userRoles', JSON.stringify(jwt.roles));
-
       const token = jwt.accessToken || jwt.token || jwt.jwt || "";
       localStorage.setItem('token', token);
 
@@ -305,7 +301,7 @@ const Login: React.FC = () => {
               />
             </Box>
 
-            {/* Reset password link -> opens modal */}
+            {/* Reset password link */}
             <Typography
               variant="body2"
               sx={{
