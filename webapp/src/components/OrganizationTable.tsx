@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Paper,
   Typography,
@@ -16,106 +16,72 @@ import {
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-
-const orgNames = [
-  "TechNova", "GreenLeaf", "AquaSys", "Skyline", "MediCore", "EduPrime", "FinEdge", "Buildify", "HealthSync", "DataNest",
-  "BluePeak", "UrbanRoots", "Solaris", "AgriPlus", "Cloudify", "SmartGrid", "BioGen", "LogiTrack", "Foodies", "Travelio",
-  "InnoSoft", "EcoWave", "RetailHub", "SecureNet", "Eventify", "Marketly", "HomeEase", "PetroMax", "FarmFresh", "StyleLab"
-];
-const ownerNames = [
-  "alice", "bob", "carol", "dave", "eve", "frank", "grace", "heidi", "ivan", "judy",
-  "karl", "laura", "mallory", "nancy", "oscar", "peggy", "quentin", "ruth", "sybil", "trent",
-  "ursula", "victor", "wendy", "xavier", "yvonne", "zach"
-];
-const domains = ["org.com", "mail.com", "company.com", "biz.org", "enterprises.com"];
-
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : `${n}`;
-}
-
-const allOrganizations = Array.from({ length: 20 }, (_, i) => {
-  const org = orgNames[i % orgNames.length] + (Math.floor(i / orgNames.length) + 1);
-  const owner = `${ownerNames[i % ownerNames.length]}${Math.floor(i / ownerNames.length) + 1}@${domains[i % domains.length]}`;
-  const employees = 10 + ((i * 7) % 491);
-  const date = new Date();
-  date.setDate(date.getDate() - i);
-  const createdDate = `${pad2(date.getDate())}-${pad2(date.getMonth() + 1)}-${date.getFullYear()}`;
-  return {
-    organization: org,
-    owner,
-    employees,
-    createdDate,
-  };
-});
-
+import type { OrganizationRow } from "../utils/admin";
 
 const PAGE_SIZE = 7;
 
 interface OrganizationTableProps {
-  onRowClick?: (organization: {
-    organization: string;
-    owner: string;
-    employees: number;
-    createdDate: string;
-  }) => void;
+  organizations: OrganizationRow[];
+  loading: boolean;
+  error: string | null;
+  onRowClick?: (org: OrganizationRow) => void;
 }
 
-const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => {
+function formatDateGB(iso: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB");
+}
+
+const OrganizationTable: React.FC<OrganizationTableProps> = ({
+  organizations,
+  loading,
+  error,
+  onRowClick,
+}) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("employees-desc");
 
-  let filteredOrgs = allOrganizations.filter((org) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      org.organization.toLowerCase().includes(q) ||
-      org.owner.toLowerCase().includes(q)
-    );
-  });
+  const filteredOrgs = useMemo(() => {
+    let result = organizations.filter((org) => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        org.name.toLowerCase().includes(q) ||
+        (org.ownerEmail ?? "").toLowerCase().includes(q)
+      );
+    });
 
-  filteredOrgs = [...filteredOrgs];
-  if (sort === "employees-asc") {
-    filteredOrgs.sort((a, b) => a.employees - b.employees);
-  } else if (sort === "employees-desc") {
-    filteredOrgs.sort((a, b) => b.employees - a.employees);
-  } else if (sort === "date-asc") {
-    filteredOrgs.sort((a, b) => {
-      const [da, ma, ya] = a.createdDate.split("-").map(Number);
-      const [db, mb, yb] = b.createdDate.split("-").map(Number);
-      const dateA = new Date(ya, ma - 1, da);
-      const dateB = new Date(yb, mb - 1, db);
-      return dateA.getTime() - dateB.getTime();
-    });
-  } else if (sort === "date-desc") {
-    filteredOrgs.sort((a, b) => {
-      const [da, ma, ya] = a.createdDate.split("-").map(Number);
-      const [db, mb, yb] = b.createdDate.split("-").map(Number);
-      const dateA = new Date(ya, ma - 1, da);
-      const dateB = new Date(yb, mb - 1, db);
-      return dateB.getTime() - dateA.getTime();
-    });
-  } else if (sort === "name-asc") {
-    filteredOrgs.sort((a, b) =>
-      a.organization.toLowerCase().localeCompare(b.organization.toLowerCase())
-    );
-  } else if (sort === "name-desc") {
-    filteredOrgs.sort((a, b) =>
-      b.organization.toLowerCase().localeCompare(a.organization.toLowerCase())
-    );
-  }
+    result = [...result];
+
+    if (sort === "employees-asc") result.sort((a, b) => a.employees - b.employees);
+    else if (sort === "employees-desc") result.sort((a, b) => b.employees - a.employees);
+    else if (sort === "date-asc")
+      result.sort((a, b) => new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime());
+    else if (sort === "date-desc")
+      result.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    else if (sort === "name-asc")
+      result.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    else if (sort === "name-desc")
+      result.sort((a, b) => b.name.toLowerCase().localeCompare(a.name.toLowerCase()));
+
+    return result;
+  }, [organizations, search, sort]);
 
   const totalOrgs = filteredOrgs.length;
-  const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
-  const orgs = filteredOrgs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(totalOrgs / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
 
-  const startIdx = (page - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(page * PAGE_SIZE, totalOrgs);
+  const orgs = filteredOrgs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const startIdx = totalOrgs === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalOrgs);
 
   const emptyRows = Math.max(0, PAGE_SIZE - orgs.length);
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) =>
-    setPage(value);
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setPage(value);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -177,28 +143,19 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
         height: "100%",
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          mb: 2,
-          flexWrap: "wrap",
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
         <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0 }}
-          >
+          <Typography variant="h6" sx={{ color: "#222", fontWeight: 700, textAlign: "left", mb: 0 }}>
             All organizations
           </Typography>
-          <Typography
-            variant="subtitle2"
-            sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}
-          >
-            20 organizations registered
+          <Typography variant="subtitle2" sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}>
+            {loading ? "Loading..." : `${organizations.length} organizations registered`}
           </Typography>
+          {error && (
+            <Typography sx={{ color: "#d32f2f", fontWeight: 600, mt: 0.5, fontSize: "0.85rem" }}>
+              {error}
+            </Typography>
+          )}
         </Box>
 
         <TextField
@@ -210,20 +167,14 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            width: 110, 
+            width: 110,
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              height: 28, 
+              height: 28,
               fontSize: "0.78rem",
-              "& fieldset": {
-                borderColor: "#dde3f0",
-              },
-              "&:hover fieldset": {
-                borderColor: "#cfd6e6",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#a5b1c8",
-              },
+              "& fieldset": { borderColor: "#dde3f0" },
+              "&:hover fieldset": { borderColor: "#cfd6e6" },
+              "&.Mui-focused fieldset": { borderColor: "#a5b1c8" },
             },
           }}
           InputProps={{
@@ -242,28 +193,15 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
           sx={{
             bgcolor: "#f4f6fb",
             borderRadius: 2,
-            height: 28, 
+            height: 28,
             minWidth: 120,
             fontWeight: 500,
             fontSize: "0.55rem",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#dde3f0 !important",
-            },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#cfd6e6 !important",
-            },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#a5b1c8 !important",
-            },
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#dde3f0 !important" },
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cfd6e6 !important" },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a5b1c8 !important" },
           }}
           renderValue={() => getSortLabel(sort)}
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                fontSize: "0.75rem", 
-              },
-            },
-          }}
         >
           <MenuItem value="employees-desc" sx={{ fontSize: "0.75rem", py: 0.5 }}>
             <b style={{ color: "#222" }}>Employees (desc)</b>
@@ -286,15 +224,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
         </Select>
       </Box>
 
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          mb: 2,
-          overflowX: "auto",
-          overflowY: "auto",
-        }}
-      >
+      <Box sx={{ flex: 1, minHeight: 0, mb: 2, overflowX: "auto", overflowY: "auto" }}>
         <Table
           sx={{
             tableLayout: "fixed",
@@ -305,125 +235,54 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
         >
           <TableHead>
             <TableRow sx={{ "& th": { py: 1 } }}>
-              <TableCell
-                sx={{
-                  width: 110,
-                  minWidth: 100,
-                  maxWidth: 110,
-                  fontWeight: 500,
-                  color: "#B5B7C0",
-                  borderBottom: "1px solid #e3e8f2",
-                  textAlign: "left",
-                  fontSize: "0.8rem",
-                  px: 0,
-                }}
-              >
+              <TableCell sx={{ width: 110, minWidth: 100, maxWidth: 110, fontWeight: 500, color: "#B5B7C0", borderBottom: "1px solid #e3e8f2", textAlign: "left", fontSize: "0.8rem", px: 0 }}>
                 Organization
               </TableCell>
-              <TableCell
-                sx={{
-                  width: 110,
-                  minWidth: 100,
-                  maxWidth: 110,
-                  fontWeight: 500,
-                  color: "#B5B7C0",
-                  borderBottom: "1px solid #e3e8f2",
-                  textAlign: "left",
-                  fontSize: "0.8rem",
-                }}
-              >
+              <TableCell sx={{ width: 170, minWidth: 160, maxWidth: 220, fontWeight: 500, color: "#B5B7C0", borderBottom: "1px solid #e3e8f2", textAlign: "left", fontSize: "0.8rem" }}>
                 Owner
               </TableCell>
-              <TableCell
-                sx={{
-                  width: 60,        
-                  minWidth: 60,     
-                  maxWidth: 60,     
-                  fontWeight: 500,
-                  color: "#B5B7C0",
-                  borderBottom: "1px solid #e3e8f2",
-                  textAlign: "left",
-                  fontSize: "0.8rem",
-                }}
-              >
+              <TableCell sx={{ width: 60, minWidth: 60, maxWidth: 60, fontWeight: 500, color: "#B5B7C0", borderBottom: "1px solid #e3e8f2", textAlign: "left", fontSize: "0.8rem" }}>
                 Employees
               </TableCell>
-              <TableCell
-                sx={{
-                  width: 80,        
-                  minWidth: 80,     
-                  maxWidth: 80,     
-                  fontWeight: 500,
-                  color: "#B5B7C0",
-                  borderBottom: "1px solid #e3e8f2",
-                  textAlign: "left",
-                  fontSize: "0.8rem",
-                }}
-              >
+              <TableCell sx={{ width: 90, minWidth: 90, maxWidth: 90, fontWeight: 500, color: "#B5B7C0", borderBottom: "1px solid #e3e8f2", textAlign: "left", fontSize: "0.8rem" }}>
                 Created date
               </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {orgs.length > 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, py: 6, px: 0 }}>
+                  <Box sx={{ display: "flex", justifyContent: "center", color: "#64748b" }}>
+                    Loading organizations...
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : orgs.length > 0 ? (
               <>
-                {orgs.map((org, idx) => (
+                {orgs.map((org) => (
                   <TableRow
-                    key={idx + startIdx}
+                    key={org.id}
                     sx={{
                       "& td": { py: 0.8 },
                       cursor: "pointer",
                       transition: "background 0.2s",
-                      "&:hover": {
-                        backgroundColor: "#F9FBFF",
-                      },
+                      "&:hover": { backgroundColor: "#F9FBFF" },
                     }}
-                    onClick={() => onRowClick && onRowClick(org)}
+                    onClick={() => onRowClick?.(org)}
                   >
-                    <TableCell
-                      sx={{
-                        fontSize: "0.8rem",
-                        borderBottom: "1px solid #e3e8f2",
-                        color: "#222",
-                        fontWeight: 500,
-                        textAlign: "left",
-                        px: 0,
-                      }}
-                    >
-                      {org.organization}
+                    <TableCell sx={{ fontSize: "0.8rem", borderBottom: "1px solid #e3e8f2", color: "#222", fontWeight: 500, textAlign: "left", px: 0 }}>
+                      {org.name}
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        fontSize: "0.8rem",
-                        borderBottom: "1px solid #e3e8f2",
-                        color: "#222",
-                        fontWeight: 500,
-                        textAlign: "left",
-                      }}
-                    >
-                      {org.owner}
+                    <TableCell sx={{ fontSize: "0.8rem", borderBottom: "1px solid #e3e8f2", color: "#222", fontWeight: 500, textAlign: "left" }}>
+                      {org.ownerEmail ?? "-"}
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        fontSize: "0.8rem",
-                        borderBottom: "1px solid #e3e8f2",
-                        color: "#222",
-                        fontWeight: 500,
-                        textAlign: "left",
-                      }}
-                    >
+                    <TableCell sx={{ fontSize: "0.8rem", borderBottom: "1px solid #e3e8f2", color: "#222", fontWeight: 500, textAlign: "left" }}>
                       {org.employees}
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        fontSize: "0.8rem",
-                        borderBottom: "1px solid #e3e8f2",
-                        color: "#222",
-                        fontWeight: 500,
-                        textAlign: "left",
-                      }}
-                    >
-                      {org.createdDate}
+                    <TableCell sx={{ fontSize: "0.8rem", borderBottom: "1px solid #e3e8f2", color: "#222", fontWeight: 500, textAlign: "left" }}>
+                      {formatDateGB(org.createdAt)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -431,41 +290,16 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
                 {emptyRows > 0 &&
                   Array.from({ length: emptyRows }).map((_, idx) => (
                     <TableRow key={`empty-${idx}`} sx={{ "& td": { py: 0.8, borderBottom: "none !important" } }}>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                          pl: 0,
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent", pl: 0 }}>
                         &nbsp;
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent" }}>
                         &nbsp;
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent" }}>
                         &nbsp;
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "0.8rem",
-                          borderBottom: "none !important",
-                          color: "transparent",
-                        }}
-                      >
+                      <TableCell sx={{ fontSize: "0.8rem", borderBottom: "none !important", color: "transparent" }}>
                         &nbsp;
                       </TableCell>
                     </TableRow>
@@ -474,21 +308,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
             ) : (
               <TableRow>
                 <TableCell colSpan={4} sx={{ border: 0, py: 6, px: 0 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 100,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: "#b5b7c0",
-                        fontWeight: 500,
-                        fontSize: "1.2rem",
-                      }}
-                    >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 100 }}>
+                    <Typography sx={{ color: "#b5b7c0", fontWeight: 500, fontSize: "1.2rem" }}>
                       No results...
                     </Typography>
                   </Box>
@@ -499,34 +320,19 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
         </Table>
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mt: "auto",
-          pt: 0.5,
-          flexWrap: "wrap",
-          width: "100%",
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "auto", pt: 0.5, flexWrap: "wrap", width: "100%" }}>
         <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "#B5B7C0",
-              fontWeight: 500,
-              textAlign: "left",
-              fontSize: "0.75rem",
-            }}
-          >
-            {`Showing data ${startIdx} to ${endIdx} of ${totalOrgs} entries`}
+          <Typography variant="body2" sx={{ color: "#B5B7C0", fontWeight: 500, textAlign: "left", fontSize: "0.75rem" }}>
+            {totalOrgs === 0
+              ? "Showing data 0 to 0 of 0 entries"
+              : `Showing data ${startIdx} to ${endIdx} of ${totalOrgs} entries`}
           </Typography>
         </Box>
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Pagination
             count={pageCount}
-            page={page}
+            page={safePage}
             onChange={handlePageChange}
             siblingCount={1}
             boundaryCount={1}
@@ -543,21 +349,6 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
                 padding: "2px 6px",
                 outline: "none !important",
               },
-              "& .MuiPaginationItem-root:focus": {
-                boxShadow: "none !important",
-                outline: "none !important",
-                borderColor: "#67728A !important",
-              },
-              "& .MuiPaginationItem-root:active": {
-                boxShadow: "none !important",
-                outline: "none !important",
-                borderColor: "#67728A !important",
-              },
-              "& .MuiPaginationItem-root.Mui-focusVisible": {
-                boxShadow: "none !important",
-                outline: "none !important",
-                borderColor: "#67728A !important",
-              },
               "& .Mui-selected": {
                 backgroundColor: "#67728A !important",
                 color: "#fff !important",
@@ -565,9 +356,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ onRowClick }) => 
                 borderWidth: "1.5px",
                 borderStyle: "solid",
               },
-              "& .Mui-selected:hover": {
-                backgroundColor: "#5a6276 !important",
-              },
+              "& .Mui-selected:hover": { backgroundColor: "#5a6276 !important" },
             }}
             showFirstButton={false}
             showLastButton={false}
