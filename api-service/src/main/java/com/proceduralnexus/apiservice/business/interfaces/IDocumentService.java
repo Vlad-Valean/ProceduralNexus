@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface IDocumentService {
-    DocumentResponseDto uploadDocument(MultipartFile file, String batchId, Profile uploader);
+    DocumentResponseDto uploadDocument(MultipartFile file, String batchId, Profile uploader, String name);
     List<DocumentResponseDto> getDocuments(UUID uploaderId);
     DocumentResponseDto getDocumentMetadata(Long id);
     Resource loadDocumentFile(Long id);

@@ -54,11 +54,12 @@ public class DocumentController {
             description = "Uploads a file and stores its metadata in the database.")
     public DocumentResponseDto uploadDocument(
             @RequestPart("file") MultipartFile file,
+            @RequestParam("name") String name,
             @RequestParam(value = "batchId", required = false) String batchId,
-            @RequestParam(value = "uploaderId") UUID uploaderId
+            @RequestParam("uploaderId") UUID uploaderId
     ) {
         Profile uploader = profileService.findById(uploaderId);
-        return documentService.uploadDocument(file, batchId, uploader);
+        return documentService.uploadDocument(file, batchId, uploader, name);
     }
 
     /**
@@ -85,16 +86,21 @@ public class DocumentController {
             description = "Returns the binary content of the document with the given ID."
     )
     public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
-        Resource fileResource = documentService.loadDocumentFile(id);
-        DocumentResponseDto metadata = documentService.getDocumentMetadata(id);
+        Resource file = documentService.loadDocumentFile(id);
+        DocumentResponseDto meta = documentService.getDocumentMetadata(id);
+
+        String baseName = meta.getName() == null ? "document" : meta.getName().trim();
+        if (baseName.isBlank()) baseName = "document";
+
+        String filename = baseName.toLowerCase().endsWith(".pdf")
+                ? baseName
+                : baseName + ".pdf";
 
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + metadata.getName() + "\""
-                )
-                .body(fileResource);
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + filename + "\"; filename*=UTF-8''" + encodeRFC5987(filename))
+                .body(file);
     }
 
     /**
@@ -117,5 +123,25 @@ public class DocumentController {
             @RequestBody DocumentPatchRequest request
     ) {
         return documentService.patchDocumentSigned(id, request.getSigned());
+    }
+
+    private static String encodeRFC5987(String s) {
+        byte[] bytes = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            int c = b & 0xff;
+            if ((c >= 'a' && c <= 'z') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= '0' && c <= '9') ||
+                    c == '.' || c == '_' || c == '-' ) {
+                sb.append((char) c);
+            } else {
+                sb.append('%');
+                String hex = Integer.toHexString(c).toUpperCase();
+                if (hex.length() == 1) sb.append('0');
+                sb.append(hex);
+            }
+        }
+        return sb.toString();
     }
 }
