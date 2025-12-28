@@ -475,35 +475,55 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           </div>
           <div style={{ color: "#374151", fontSize: "0.98rem", marginBottom: 5 }}>
             <span style={{ fontWeight: 500, display: "block", marginBottom: 6 }}>Document to be submitted:</span>
-            <span
-              style={{ display: "flex", alignItems: "center", color: "#64748b", fontSize: "0.97rem", fontWeight: 400, marginTop: 2, cursor: userCvId ? "pointer" : "default", textDecoration: userCvId ? "underline" : "none" }}
-              onClick={() => {
-                if (!userCvId) return;
-                const token = localStorage.getItem("token") || "";
-                fetch(`${API_BASE_URL}/documents/${userCvId}`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                })
-                  .then(async res => {
-                    if (!res.ok) throw new Error("Failed to download document");
-                    const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = userCvName || "document.pdf";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
+            <span style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
+              {/* Only the icon and name are clickable */}
+              <button
+                type="button"
+                disabled={!userCvId}
+                onClick={() => {
+                  if (!userCvId) return;
+                  const token = localStorage.getItem("token") || "";
+                  fetch(`${API_BASE_URL}/documents/${userCvId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                   })
-                  .catch(() => {
-                    alert("Failed to download document.");});
-              }}
-            >
-              <svg style={{ marginRight: 6 }} width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 16V4M12 16l-4-4M12 16l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="4" y="19" width="16" height="1.2" rx="1" fill="#64748b" />
-              </svg>
-              {userCvName ? userCvName : "No CV uploaded"}
+                    .then(async res => {
+                      if (!res.ok) throw new Error("Failed to download document");
+                      const blob = await res.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = userCvName || "document.pdf";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    })
+                    .catch(() => {
+                      alert("Failed to download document.");
+                    });
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  color: "#64748b",
+                  fontSize: "0.97rem",
+                  fontWeight: 400,
+                  cursor: userCvId ? "pointer" : "default",
+                  textDecoration: userCvId ? "underline" : "none"
+                }}
+                tabIndex={userCvId ? 0 : -1}
+                aria-label={userCvName ? `Download ${userCvName}` : "No CV uploaded"}
+              >
+                <svg style={{ marginRight: 6 }} width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 15V4M12 17l-4-4M12 17l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="4" y="20.3" width="16" height="1.2" rx="1" fill="#64748b" />
+                </svg>
+                {userCvName ? userCvName : "No CV uploaded"}
+              </button>
             </span>
           </div>
           <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center" }}>
