@@ -9,6 +9,7 @@ public class DocumentResponseDto {
     private Long fileSizeInBytes;
     private String batchId;
     private boolean signed;
+    private String filePath;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -86,4 +87,7 @@ public class DocumentResponseDto {
     public void setUploaderEmail(String uploaderEmail) {
         this.uploaderEmail = uploaderEmail;
     }
+
+    public String getFilePath() { return filePath; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
 }

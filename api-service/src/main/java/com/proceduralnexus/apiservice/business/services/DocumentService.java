@@ -45,14 +45,29 @@ public class DocumentService implements IDocumentService {
     }
 
     @Override
-    public DocumentResponseDto uploadDocument(MultipartFile file, String batchId, Profile uploader) {
+    public DocumentResponseDto uploadDocument(
+            MultipartFile file,
+            String batchId,
+            Profile uploader,
+            String name
+    ) {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file is empty");
         }
 
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         if (originalFileName == null || originalFileName.isBlank()) {
-            originalFileName = "document";
+            originalFileName = "document.pdf";
+        }
+
+        String displayName = (name == null) ? "" : name.trim();
+        if (displayName.isBlank()) {
+            displayName = originalFileName;
+        }
+
+        displayName = displayName.replaceAll("(?i)\\.pdf$", "").trim();
+        if (displayName.isBlank()) {
+            displayName = "document";
         }
 
         String storedFileName = UUID.randomUUID() + "_" + originalFileName;
@@ -69,7 +84,7 @@ public class DocumentService implements IDocumentService {
         }
 
         Document document = new Document();
-        document.setName(originalFileName);
+        document.setName(displayName);
         document.setFilePath(targetLocation.toString());
         document.setFileSizeInBytes(file.getSize());
         document.setBatchId(batchId);
@@ -153,6 +168,7 @@ public class DocumentService implements IDocumentService {
         dto.setSigned(document.isSigned());
         dto.setCreatedAt(document.getCreatedAt());
         dto.setUpdatedAt(document.getUpdatedAt());
+        dto.setFilePath(document.getFilePath());
 
         if (document.getUploader() != null) {
             dto.setUploaderId(document.getUploader().getId().toString());
