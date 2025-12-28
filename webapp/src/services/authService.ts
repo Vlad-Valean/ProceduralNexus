@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/auth'; 
+const API_URL = 'http://localhost:8081/auth'; 
 
 export type LoginRequest = {
   email: string;
@@ -6,8 +6,9 @@ export type LoginRequest = {
 };
 
 export type JwtResponse = {
-  token: string;
-  id: number;
+  accessToken: string;
+  tokenType: string;
+  id: string;
   email: string;
   roles: string[];
 };

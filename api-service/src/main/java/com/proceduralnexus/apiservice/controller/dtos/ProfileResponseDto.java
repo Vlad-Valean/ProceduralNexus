@@ -14,6 +14,15 @@ public class ProfileResponseDto {
     private Instant createdAt;
     private Instant updatedAt;
     private List<String> roles;
+    private Long organizationId;
+
+    public Long getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(Long organizationId) {
+        this.organizationId = organizationId;
+    }
 
     public UUID getId() { 
         return id; 
