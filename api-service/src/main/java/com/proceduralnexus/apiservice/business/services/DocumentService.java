@@ -49,7 +49,8 @@ public class DocumentService implements IDocumentService {
             MultipartFile file,
             String batchId,
             Profile uploader,
-            String name
+            String name,
+            String type
     ) {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file is empty");
@@ -58,6 +59,14 @@ public class DocumentService implements IDocumentService {
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         if (originalFileName == null || originalFileName.isBlank()) {
             originalFileName = "document.pdf";
+        }
+
+        Document.DocumentType docType = Document.DocumentType.OTHER;
+        if (type != null && !type.isBlank()) {
+            try {
+                docType = Document.DocumentType.valueOf(type.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+            }
         }
 
         String displayName = (name == null) ? "" : name.trim();
@@ -90,6 +99,7 @@ public class DocumentService implements IDocumentService {
         document.setBatchId(batchId);
         document.setUploader(uploader);
         document.setSigned(false);
+        document.setType(docType);
 
         Document saved = documentRepository.save(document);
         return toDto(saved);
@@ -169,6 +179,7 @@ public class DocumentService implements IDocumentService {
         dto.setCreatedAt(document.getCreatedAt());
         dto.setUpdatedAt(document.getUpdatedAt());
         dto.setFilePath(document.getFilePath());
+        dto.setType(document.getType() != null ? document.getType().name() : "OTHER");
 
         if (document.getUploader() != null) {
             dto.setUploaderId(document.getUploader().getId().toString());

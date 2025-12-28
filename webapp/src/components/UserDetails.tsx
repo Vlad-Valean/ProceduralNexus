@@ -30,10 +30,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import DoNotDisturbOnOutlinedIcon from "@mui/icons-material/DoNotDisturbOnOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 const BASE_URL = "http://localhost:8081";
+
+type DocumentType = "CV" | "OTHER";
 
 interface UserDetailsProps {
   user: {
@@ -52,9 +55,10 @@ type DocStatus = "signed" | "unsigned";
 
 interface UserDocument {
   id: number;
-  file: string; // in backend ai name cu .pdf
+  file: string;
   signed: boolean;
   status: DocStatus;
+  type?: DocumentType;
 }
 
 type DocumentDto = {
@@ -62,6 +66,7 @@ type DocumentDto = {
   name?: string | null;
   fileName?: string | null;
   signed?: boolean | null;
+  type?: unknown; // ✅ tratează ca unknown, backend poate trimite string/null/etc
 };
 
 const DOCS_PAGE_SIZE = 3;
@@ -107,6 +112,13 @@ const bodyCellSx = {
   textAlign: "left" as const,
 };
 
+// ✅ type guard/converter: unknown -> DocumentType | undefined
+function asDocumentType(v: unknown): DocumentType | undefined {
+  if (typeof v !== "string") return undefined;
+  const upper = v.toUpperCase();
+  return upper === "CV" || upper === "OTHER" ? (upper as DocumentType) : undefined;
+}
+
 const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemoveUser }) => {
   const token = useMemo(() => localStorage.getItem("token"), []);
 
@@ -127,13 +139,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     useState<"success" | "info" | "error">("success");
 
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [deleteDocDialogOpen, setDeleteDocDialogOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<UserDocument | null>(null);
 
   const [documentName, setDocumentName] = useState<string>("");
 
-  const openSnackbar = (
-    message: string,
-    severity: "success" | "info" | "error" = "success"
-  ) => {
+  const openSnackbar = (message: string, severity: "success" | "info" | "error" = "success") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
@@ -158,10 +169,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     try {
       const res = await fetch(`${BASE_URL}/documents?uploaderId=${profileId}`, {
         method: "GET",
-        headers:
-          {
-            Authorization: `Bearer ${token}`,
-          },
+        headers: { Authorization: `Bearer ${token}` },
         signal,
       });
 
@@ -170,18 +178,25 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         throw new Error(`Failed to load documents (${res.status}). ${txt}`);
       }
 
-      const data = await res.json();
+      const data: unknown = await res.json();
       const list: DocumentDto[] = Array.isArray(data) ? (data as DocumentDto[]) : [];
 
-      const mapped: UserDocument[] = list.map((d) => {
-        const signed = Boolean(d?.signed);
-        return {
-          id: Number(d?.id),
-          file: String(d?.name ?? d?.fileName ?? "-"),
-          signed,
-          status: signed ? "signed" : "unsigned",
-        };
-      });
+      const mapped: UserDocument[] = list
+        .map((d) => {
+          const signed = Boolean(d?.signed);
+          const status: DocStatus = signed ? "signed" : "unsigned";
+
+          const type = asDocumentType(d?.type);
+
+          return {
+            id: Number(d?.id),
+            file: String(d?.name ?? d?.fileName ?? "-"),
+            signed,
+            status,
+            type,
+          };
+        })
+        .filter((doc) => doc.type !== "CV");
 
       setDocuments(mapped);
       setPage(1);
@@ -191,6 +206,30 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       setDocsError(e instanceof Error ? e.message : "Failed to load documents.");
     } finally {
       setLoadingDocs(false);
+    }
+  }
+
+  async function deleteDocument(documentId: number) {
+    if (!token) {
+      openSnackbar("Not authenticated (missing token).", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/documents/${documentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Failed to delete document (${res.status}). ${txt}`);
+      }
+
+      setDocuments((prev) => prev.filter((d) => d.id !== documentId));
+      openSnackbar("Document deleted.", "success");
+    } catch (e: unknown) {
+      openSnackbar(e instanceof Error ? e.message : "Failed to delete document.", "error");
     }
   }
 
@@ -215,7 +254,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         throw new Error(`Failed to update document (${res.status}). ${txt}`);
       }
 
-      // update optimist in UI
       setDocuments((prev) =>
         prev.map((doc) =>
           doc.id === documentId
@@ -224,7 +262,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         )
       );
 
-      openSnackbar(signed ? "Document marked as Signed." : "Document marked as Unsigned.", "success");
+      openSnackbar(
+        signed ? "Document marked as Signed." : "Document marked as Unsigned.",
+        "success"
+      );
     } catch (e: unknown) {
       openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
     }
@@ -245,12 +286,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       const form = new FormData();
       form.append("file", file);
       form.append("name", documentName.trim());
+      // dacă ai și type opțional, îl poți adăuga aici când vei avea UI:
+      // form.append("type", selectedType ?? "OTHER");
 
       const res = await fetch(`${BASE_URL}/documents/upload?uploaderId=${profileId}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
 
@@ -263,16 +304,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       setUploadedFile(null);
       setDocumentName("");
 
-      // refresh list
       await fetchUserDocuments(profileId);
     } catch (e: unknown) {
-      openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
+      openSnackbar(e instanceof Error ? e.message : "Upload failed.", "error");
     } finally {
       setUploading(false);
     }
   }
 
-  // Load documents when selected user changes
   useEffect(() => {
     const controller = new AbortController();
     fetchUserDocuments(user.id, controller.signal);
@@ -287,25 +326,20 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     return doc.file.toLowerCase().includes(q);
   });
 
-  // Add sorting by status
   let sortedDocs = [...filteredDocs];
   if (sort === "newest") {
     sortedDocs = sortedDocs.reverse();
   } else if (sort === "signed") {
-    sortedDocs = sortedDocs.filter(doc => doc.signed);
+    sortedDocs = sortedDocs.filter((doc) => doc.signed);
   } else if (sort === "unsigned") {
-    sortedDocs = sortedDocs.filter(doc => !doc.signed);
+    sortedDocs = sortedDocs.filter((doc) => !doc.signed);
   }
-  // "oldest" is default (no change)
 
   const total = sortedDocs.length;
   const pageCount = Math.ceil(total / DOCS_PAGE_SIZE) || 1;
   const safePage = Math.min(page, pageCount);
 
-  const docsToShow = sortedDocs.slice(
-    (safePage - 1) * DOCS_PAGE_SIZE,
-    safePage * DOCS_PAGE_SIZE
-  );
+  const docsToShow = sortedDocs.slice((safePage - 1) * DOCS_PAGE_SIZE, safePage * DOCS_PAGE_SIZE);
 
   const startIdx = total === 0 ? 0 : (safePage - 1) * DOCS_PAGE_SIZE + 1;
   const endIdx = Math.min(safePage * DOCS_PAGE_SIZE, total);
@@ -321,9 +355,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-    }
+    if (file) setUploadedFile(file);
   };
 
   const handleRemoveUserClick = () => setRemoveDialogOpen(true);
@@ -339,12 +371,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
       await onRemoveUser(user.id);
 
-      openSnackbar(
-        `${user.firstName} ${user.lastName} was removed from your organization`,
-        "success"
-      );
+      openSnackbar(`${user.firstName} ${user.lastName} was removed from your organization`, "success");
     } catch (e: unknown) {
-      openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
+      openSnackbar(e instanceof Error ? e.message : "Failed to remove user.", "error");
     }
   };
 
@@ -417,7 +446,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               textAlign: "left",
             }}
           >
-            {/* Capitalize the first letter of user.role */}
             {user.role
               ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()
               : "Role"}{" "}
@@ -463,25 +491,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
           flexWrap: "wrap",
         }}
       >
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            color: "#222",
-            textAlign: "left",
-          }}
-        >
+        <Typography variant="h6" sx={{ fontWeight: 700, color: "#222", textAlign: "left" }}>
           Documents
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
           <TextField
             placeholder="Search"
             size="small"
@@ -527,15 +541,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               minWidth: 150,
               fontWeight: 500,
               fontSize: "0.85rem",
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#dde3f0 !important",
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#cfd6e6 !important",
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#a5b1c8 !important",
-              },
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#dde3f0 !important" },
+              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cfd6e6 !important" },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a5b1c8 !important" },
             }}
             renderValue={(selected) => (
               <span>
@@ -576,13 +584,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         )}
 
         <Box sx={{ overflowX: "auto" }}>
-          <Table
-            sx={{
-              tableLayout: "fixed",
-              width: "100%",
-              borderCollapse: "collapse",
-            }}
-          >
+          <Table sx={{ tableLayout: "fixed", width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ "& th": { py: 0.8 } }}>
                 <TableCell sx={{ ...headCellSx, width: "55%" }}>File</TableCell>
@@ -620,13 +622,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                         {doc.file}
                       </TableCell>
 
-                      <TableCell
-                        sx={{
-                          ...bodyCellSx,
-                          fontWeight: 500,
-                          color: statusColor(doc.status),
-                        }}
-                      >
+                      <TableCell sx={{ ...bodyCellSx, fontWeight: 500, color: statusColor(doc.status) }}>
                         {doc.signed ? "Signed" : "Unsigned"}
                       </TableCell>
 
@@ -639,14 +635,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                             sx={{ ...actionIconSx, mr: 0.75 }}
                             onClick={async () => {
                               try {
-                                const token = localStorage.getItem("token");
-                                if (!token) {
+                                const t = localStorage.getItem("token");
+                                if (!t) {
                                   openSnackbar("Not authenticated (missing token).", "error");
                                   return;
                                 }
-                                await downloadDocumentWithAuth(doc.id, token, doc.file);
+                                await downloadDocumentWithAuth(doc.id, t, doc.file);
                               } catch (e: unknown) {
-                                openSnackbar(e instanceof Error ? e.message : "Failed to update document.", "error");
+                                openSnackbar(e instanceof Error ? e.message : "Download failed.", "error");
                               }
                             }}
                           >
@@ -666,15 +662,30 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                           </IconButton>
                         </Tooltip>
 
-                        {/* Reject => signed false */}
+                        {/* Mark as unsigned */}
                         <Tooltip title="Mark as unsigned" arrow>
                           <IconButton
                             size="small"
                             disableRipple
-                            sx={actionIconSx}
+                            sx={{ ...actionIconSx, mr: 0.75 }}
                             onClick={() => patchDocumentSigned(doc.id, false)}
                           >
-                            <CloseOutlinedIcon fontSize="inherit" />
+                            <DoNotDisturbOnOutlinedIcon fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
+
+                        {/* Delete document */}
+                        <Tooltip title="Delete document" arrow>
+                          <IconButton
+                            size="small"
+                            disableRipple
+                            sx={actionIconSx}
+                            onClick={() => {
+                              setDocToDelete(doc);
+                              setDeleteDocDialogOpen(true);
+                            }}
+                          >
+                            <DeleteOutlineIcon fontSize="inherit" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -687,10 +698,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                         key={`empty-${idx}`}
                         sx={{
                           height: ROW_HEIGHT,
-                          "& td": {
-                            py: 0.8,
-                            borderBottom: "none !important",
-                          },
+                          "& td": { py: 0.8, borderBottom: "none !important" },
                         }}
                       >
                         <TableCell
@@ -710,21 +718,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               ) : (
                 <>
                   <TableRow sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
-                    <TableCell
-                      colSpan={3}
-                      sx={{
-                        ...bodyCellSx,
-                        textAlign: "center",
-                        borderBottom: "none", 
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#b5b7c0",
-                          fontWeight: 500,
-                          fontSize: "0.9rem",
-                        }}
-                      >
+                    <TableCell colSpan={3} sx={{ ...bodyCellSx, textAlign: "center", borderBottom: "none" }}>
+                      <Typography sx={{ color: "#b5b7c0", fontWeight: 500, fontSize: "0.9rem" }}>
                         No results...
                       </Typography>
                     </TableCell>
@@ -735,10 +730,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                         key={`empty-nores-${idx}`}
                         sx={{
                           height: ROW_HEIGHT,
-                          "& td": {
-                            py: 0.8,
-                            borderBottom: "none !important",
-                          },
+                          "& td": { py: 0.8, borderBottom: "none !important" },
                         }}
                       >
                         <TableCell
@@ -807,8 +799,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                   padding: "2px 6px",
                   outline: "none !important",
                 },
-                "& .MuiPaginationItem-root:focus, & .MuiPaginationItem-root.Mui-focusVisible":
-                {
+                "& .MuiPaginationItem-root:focus, & .MuiPaginationItem-root.Mui-focusVisible": {
                   outline: "none !important",
                   boxShadow: "none !important",
                 },
@@ -833,39 +824,19 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
       {/* Assign new document */}
       <Box sx={{ mt: 0.5 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            color: "#222",
-            textAlign: "left",
-            mb: 1.25,
-          }}
-        >
+        <Typography variant="h6" sx={{ fontWeight: 700, color: "#222", textAlign: "left", mb: 1.25 }}>
           Assign new document
         </Typography>
 
-        {/* Document name label and simple input */}
         <Box sx={{ mb: 1.25 }}>
-          <Box sx={{ display: "flex", alignItems: "center", mb: 0.4 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: "#4b5563",
-                textAlign: "left",
-                mr: 1,
-              }}
-            >
-              Document name
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "#4b5563", textAlign: "left", mb: 0.4 }}>
+            Document name
+          </Typography>
+
           <input
             type="text"
             value={documentName}
-            onChange={e => {
-              setDocumentName(e.target.value);
-            }}
+            onChange={(e) => setDocumentName(e.target.value)}
             required
             style={{
               width: "100%",
@@ -882,16 +853,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
             placeholder="Enter document name"
           />
 
-          {/* Upload file UI */}
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 500,
-              color: "#4b5563",
-              textAlign: "left",
-              mb: 0.4,
-            }}
-          >
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "#4b5563", textAlign: "left", mb: 0.4 }}>
             Upload file
           </Typography>
 
@@ -911,10 +873,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
             }}
           >
             <CloudUploadOutlinedIcon sx={{ fontSize: 26, color: "#67728A" }} />
-            <Typography
-              variant="body2"
-              sx={{ mt: 0.4, color: "#67728A", fontSize: "0.8rem" }}
-            >
+            <Typography variant="body2" sx={{ mt: 0.4, color: "#67728A", fontSize: "0.8rem" }}>
               {uploadedFile ? "Click to change the file" : "Click to upload a file"}
             </Typography>
             <input
@@ -927,16 +886,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
           </Box>
 
           {uploadedFile && (
-            <Box
-              sx={{
-                mt: 0.6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                gap: 1,
-                width: "100%",
-              }}
-            >
+            <Box sx={{ mt: 0.6, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1 }}>
               <Typography
                 variant="body2"
                 sx={{
@@ -961,10 +911,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                   color: "#A71818",
                   minWidth: "auto",
                   px: 0.5,
-                  "&:hover": {
-                    backgroundColor: "transparent",
-                    color: "#871414",
-                  },
+                  "&:hover": { backgroundColor: "transparent", color: "#871414" },
                   "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
                     outline: "none",
                     boxShadow: "none",
@@ -980,11 +927,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
           <Button
             variant="contained"
-            disabled={
-              !uploadedFile ||
-              uploading ||
-              !documentName.trim()
-            }
+            disabled={!uploadedFile || uploading || !documentName.trim()}
             onClick={() => {
               if (!uploadedFile) {
                 openSnackbar("Please choose a file.", "error");
@@ -1001,18 +944,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               boxShadow: "none",
               fontWeight: 500,
               fontSize: "0.95rem",
-              "&:hover": {
-                bgcolor: "#3D3C42",
-                boxShadow: "none",
-              },
-              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                outline: "none",
-                boxShadow: "none",
-              },
-              "&.Mui-disabled": {
-                bgcolor: "#c9ceda",
-                color: "#ffffff",
-              },
+              "&:hover": { bgcolor: "#3D3C42", boxShadow: "none" },
+              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": { outline: "none", boxShadow: "none" },
+              "&.Mui-disabled": { bgcolor: "#c9ceda", color: "#ffffff" },
             }}
           >
             {uploading ? "Assigning..." : "Assign document"}
@@ -1020,7 +954,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         </Box>
       </Box>
 
-      {/* Remove user dialog (momentan hardcodata) */}
+      {/* Remove user dialog */}
       <Dialog
         open={removeDialogOpen}
         onClose={() => setRemoveDialogOpen(false)}
@@ -1034,59 +968,24 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            fontWeight: 700,
-            fontSize: "1.05rem",
-            color: "#111827",
-            pb: 1,
-          }}
-        >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1.05rem", color: "#111827", pb: 1 }}>
           Remove user
         </DialogTitle>
         <DialogContent sx={{ pt: 0 }}>
-          <Typography
-            sx={{
-              mt: 0.5,
-              color: "#4b5563",
-              fontSize: "0.9rem",
-            }}
-          >
+          <Typography sx={{ mt: 0.5, color: "#4b5563", fontSize: "0.9rem" }}>
             Are you sure you want to exclude{" "}
             <strong>
               {user.firstName} {user.lastName}
             </strong>{" "}
             from your organization?
           </Typography>
-          <Box
-            sx={{
-              mt: 1.5,
-              p: 1,
-              borderRadius: 2,
-              bgcolor: "#fef2f2",
-              border: "1px solid #fee2e2",
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#991b1b",
-                fontSize: "0.78rem",
-              }}
-            >
+          <Box sx={{ mt: 1.5, p: 1, borderRadius: 2, bgcolor: "#fef2f2", border: "1px solid #fee2e2" }}>
+            <Typography variant="body2" sx={{ color: "#991b1b", fontSize: "0.78rem" }}>
               This action cannot be undone.
             </Typography>
           </Box>
         </DialogContent>
-        <DialogActions
-          sx={{
-            pt: 1.5,
-            pb: 0.5,
-            px: 1,
-            justifyContent: "flex-end",
-            gap: 1,
-          }}
-        >
+        <DialogActions sx={{ pt: 1.5, pb: 0.5, px: 1, justifyContent: "flex-end", gap: 1 }}>
           <Button
             onClick={() => setRemoveDialogOpen(false)}
             variant="outlined"
@@ -1097,14 +996,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               fontSize: "0.85rem",
               borderColor: "#dde3f0",
               color: "#4b5563",
-              "&:hover": {
-                borderColor: "#cbd5e1",
-                backgroundColor: "#f8fafc",
-              },
-              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                outline: "none",
-                boxShadow: "none",
-              },
+              "&:hover": { borderColor: "#cbd5e1", backgroundColor: "#f8fafc" },
+              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": { outline: "none", boxShadow: "none" },
             }}
           >
             Cancel
@@ -1120,17 +1013,89 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               fontSize: "0.85rem",
               bgcolor: "#A71818",
               boxShadow: "none",
-              "&:hover": {
-                bgcolor: "#871414",
-                boxShadow: "none",
-              },
-              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                outline: "none",
-                boxShadow: "none",
-              },
+              "&:hover": { bgcolor: "#871414", boxShadow: "none" },
+              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": { outline: "none", boxShadow: "none" },
             }}
           >
             Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete doc dialog */}
+      <Dialog
+        open={deleteDocDialogOpen}
+        onClose={() => {
+          setDeleteDocDialogOpen(false);
+          setDocToDelete(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2.5,
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.15)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1.05rem", color: "#111827", pb: 1 }}>
+          Delete document
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 0 }}>
+          <Typography sx={{ mt: 0.5, color: "#4b5563", fontSize: "0.9rem" }}>
+            Are you sure you want to delete <strong>{docToDelete?.file ?? "this document"}</strong>?
+          </Typography>
+
+          <Box sx={{ mt: 1.5, p: 1, borderRadius: 2, bgcolor: "#fef2f2", border: "1px solid #fee2e2" }}>
+            <Typography variant="body2" sx={{ color: "#991b1b", fontSize: "0.78rem" }}>
+              This action cannot be undone.
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ pt: 1.5, pb: 0.5, px: 1, justifyContent: "flex-end", gap: 1 }}>
+          <Button
+            onClick={() => {
+              setDeleteDocDialogOpen(false);
+              setDocToDelete(null);
+            }}
+            variant="outlined"
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              px: 2.5,
+              fontSize: "0.85rem",
+              borderColor: "#dde3f0",
+              color: "#4b5563",
+              "&:hover": { borderColor: "#cbd5e1", backgroundColor: "#f8fafc" },
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={async () => {
+              if (!docToDelete) return;
+              const id = docToDelete.id;
+              setDeleteDocDialogOpen(false);
+              setDocToDelete(null);
+              await deleteDocument(id);
+            }}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              px: 2.8,
+              fontSize: "0.85rem",
+              bgcolor: "#A71818",
+              boxShadow: "none",
+              "&:hover": { bgcolor: "#871414", boxShadow: "none" },
+            }}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

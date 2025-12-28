@@ -56,10 +56,11 @@ public class DocumentController {
             @RequestPart("file") MultipartFile file,
             @RequestParam("name") String name,
             @RequestParam(value = "batchId", required = false) String batchId,
-            @RequestParam("uploaderId") UUID uploaderId
+            @RequestParam("uploaderId") UUID uploaderId,
+            @RequestParam(value = "type", required = false) String type
     ) {
         Profile uploader = profileService.findById(uploaderId);
-        return documentService.uploadDocument(file, batchId, uploader, name);
+        return documentService.uploadDocument(file, batchId, uploader, name, type);
     }
 
     /**
