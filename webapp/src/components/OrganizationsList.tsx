@@ -42,6 +42,25 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   PAGE_SIZE = 12,
   onPendingOrgIdsChange, 
 }) => {
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+    const token = localStorage.getItem("token") || "";
+    fetch(`${API_BASE_URL}/documents`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then((docs: Document[]) => {
+        const userDocs = docs.filter(doc => doc.uploaderEmail === email);
+        console.log("Documents uploaded by user:", userDocs);
+      })
+      .catch(err => {
+        console.error("Failed to fetch documents:", err);
+      });
+  }, []);
+
   const totalOrgs = orgs.length;
   const pageCount = Math.ceil(totalOrgs / PAGE_SIZE);
   const pagedOrgs = orgs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -55,47 +74,65 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-  const [cvFile, setCvFile] = useState<File | null>(null);
 
   const handleApplyClick = (org: Organization) => {
     setSelectedOrg(org);
     setModalOpen(true);
-    setCvFile(null);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedOrg(null);
-    setCvFile(null);
-    setDocumentName(""); 
-  };
-
-  const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setCvFile(file);
-    } else {
-      setCvFile(null);
-    }
+    setConfirmationChecked(false);
   };
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userProfileId, setUserProfileId] = useState<string | null>(null);
   const [appliedOrgIds, setAppliedOrgIds] = useState<Set<string>>(new Set());
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
-  const [documentName, setDocumentName] = useState<string>("");
+  const [userCvName, setUserCvName] = useState<string>("");
+  const [userCvId, setUserCvId] = useState<string>("");
+  const [cvSnackbarOpen, setCvSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     setUserEmail(email || null);
   }, []);
 
-  interface Profile {
+  useEffect(() => {
+    if (!userEmail) return;
+    const token = localStorage.getItem("token") || "";
+    fetch(`${API_BASE_URL}/documents`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then((docs: Document[]) => {
+        const cvDoc = docs.find(doc => doc.type === "CV");
+        if (cvDoc && cvDoc.name) {
+          setUserCvName(cvDoc.name);
+          setUserCvId(cvDoc.id);
+        } else {
+          setUserCvName("");
+          setUserCvId("");
+        }
+      })
+      .catch(() => {
+        setUserCvName("");
+        setUserCvId("");
+      });
+  }, [userEmail]);
+
+
+
+  interface Document {
     id: string;
-    email: string;
+    name: string;
+    type: string;
+    [key: string]: unknown;
   }
 
   useEffect(() => {
@@ -107,9 +144,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       },
     })
       .then(res => res.json())
-      .then((profiles: Profile[]) => {
-        const profile = profiles.find(p => p.email === userEmail);
-        if (profile) setUserProfileId(profile.id);
+      .then(() => {
       });
   }, [userEmail]);
 
@@ -144,52 +179,31 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   }, [appliedOrgIds, onPendingOrgIdsChange]);
 
   const handleSubmitApplication = async () => {
-    if (!selectedOrg || !cvFile || !userProfileId || !documentName.trim()) return;
-
     try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("uploaderId", userProfileId);
-      formData.append("file", cvFile);
-      formData.append("name", documentName.trim());
-      formData.append("type", "CV");
-
-      const docRes = await fetch(`${API_BASE_URL}/documents/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token || ""}`,
-        },
-        body: formData,
-      });
-      if (!docRes.ok) throw new Error("Failed to upload document");
-      const docData = await docRes.json();
-      const cvDocumentId = docData.id;
-
+      if (!selectedOrg) return;
+      const token = localStorage.getItem("token") || "";
       const appRes = await fetch(`${API_BASE_URL}/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token || ""}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ organizationId: selectedOrg.id, cvDocumentId }),
+        body: JSON.stringify({ organizationId: selectedOrg.id }),
       });
-
       if (!appRes.ok) {
         const errText = await appRes.text();
         setErrorMsg(`Failed to create application: ${errText}`);
         setErrorOpen(true);
         throw new Error("Failed to create application");
       }
-
       setAppliedOrgIds(prev => {
         const updated = new Set(prev);
         updated.add(String(selectedOrg.id));
         return updated;
       });
-
       fetch(`${API_BASE_URL}/applications/mine`, {
         headers: {
-          Authorization: `Bearer ${token || ""}`,
+          Authorization: `Bearer ${token}`,
         },
       })
         .then(res => res.json())
@@ -199,14 +213,14 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         .catch(err => {
           console.log("Failed to fetch applications after submit:", err);
         });
-
       setSuccessOpen(true);
-      setDocumentName("");
       handleCloseModal();
     } catch {
       handleCloseModal();
     }
   };
+
+  const [confirmationChecked, setConfirmationChecked] = useState(false);
 
   return (
     <>
@@ -307,8 +321,18 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                     <span style={{ color: "#c89a5c", fontWeight: 500 }}>Pending...</span>
                   ) : (
                     <span
-                      style={{ color: "#2e7d32", fontWeight: 500, cursor: "pointer" }}
-                      onClick={() => handleApplyClick(org)}
+                      style={{
+                        color: "#2e7d32",
+                        fontWeight: 500,
+                        cursor: "pointer"
+                      }}
+                      onClick={() => {
+                        if (userCvName) {
+                          handleApplyClick(org);
+                        } else {
+                          setCvSnackbarOpen(true);
+                        }
+                      }}
                     >
                       Apply
                     </span>
@@ -402,6 +426,20 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           />
         </div>
       </div>
+      <Snackbar
+        open={cvSnackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setCvSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setCvSnackbarOpen(false)}
+          severity="warning"
+          sx={{ width: "100%" }}
+        >
+          Please upload your CV on the profile page before applying.
+        </Alert>
+      </Snackbar>
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -429,107 +467,82 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           <div style={{ fontWeight: 600, color: "#374151", fontSize: "1.15rem", marginBottom: 8 }}>
             Apply to {selectedOrg?.name}
           </div>
-          <div style={{ marginBottom: 18 }}>
-            <label
-              style={{
-                display: "block",
-                fontWeight: 500,
-                fontSize: "1rem",
-                color: "#374151",
-                marginBottom: 6,
-              }}
-            >
-              Document name
-            </label>
-            <input
-              type="text"
-              value={documentName}
-              onChange={e => setDocumentName(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1.5px solid #dde3f0",
-                fontSize: "0.8rem",
-                marginBottom: "12px",
-                outline: "none",
-                boxSizing: "border-box",
-                background: "#f8fafc",
-                color: "#67728A",
-              }}
-              placeholder="Enter document name"
-            />
-            <div style={{ marginBottom: 18 }}>
-              <label
-                style={{
-                  display: "block",
-                  fontWeight: 500,
-                  fontSize: "1rem",
-                  color: "#374151",
-                  marginBottom: 6,
+          <div style={{ color: "#374151", fontSize: "1rem", marginBottom: 12 }}>
+            You are about to submit an application to:
+          </div>
+          <div style={{ color: "#374151", fontSize: "0.98rem", marginBottom: 0 }}>
+            <span style={{ fontWeight: 500 }}>Organization:</span> {selectedOrg?.name}
+          </div>
+          <div style={{ color: "#374151", fontSize: "0.98rem", marginBottom: 5 }}>
+            <span style={{ fontWeight: 500, display: "block", marginBottom: 6 }}>Document to be submitted:</span>
+            <span style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
+              {/* Only the icon and name are clickable */}
+              <button
+                type="button"
+                disabled={!userCvId}
+                onClick={() => {
+                  if (!userCvId) return;
+                  const token = localStorage.getItem("token") || "";
+                  fetch(`${API_BASE_URL}/documents/${userCvId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  })
+                    .then(async res => {
+                      if (!res.ok) throw new Error("Failed to download document");
+                      const blob = await res.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = userCvName || "document.pdf";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    })
+                    .catch(() => {
+                      alert("Failed to download document.");
+                    });
                 }}
-              >
-                Upload file (PDF only)
-              </label>
-              <label
-                htmlFor="cv-upload"
                 style={{
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center",
-                  border: "1.5px dashed #e2e8f0",
-                  borderRadius: 12,
-                  background: "#f8fafc",
-                  height: 70,
-                  cursor: "pointer",
-                  marginBottom: 0,
-                  transition: "border-color 0.2s",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  color: "#64748b",
+                  fontSize: "0.97rem",
+                  fontWeight: 400,
+                  cursor: userCvId ? "pointer" : "default",
+                  textDecoration: userCvId ? "underline" : "none"
                 }}
+                tabIndex={userCvId ? 0 : -1}
+                aria-label={userCvName ? `Download ${userCvName}` : "No CV uploaded"}
               >
-                <input
-                  id="cv-upload"
-                  type="file"
-                  accept="application/pdf"
-                  style={{ display: "none" }}
-                  onChange={handleCvChange}
-                />
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    height: "100%",
-                    width: "100%",
-                  }}
-                >
-                  <span style={{ color: "#64748b", fontSize: "1.7rem", display: "flex", alignItems: "center" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 16V4M12 16l-4-4M12 16l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <rect x="4" y="18" width="16" height="1.2" rx="1" fill="#64748b" />
-                    </svg>
-                  </span>
-                  <span style={{
-                    color: "#64748b",
-                    fontSize: "0.9rem",
-                    fontWeight: 400,
-                    display: "inline-block",
-                    maxWidth: 180,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
-                    {cvFile
-                      ? cvFile.name.length > 32
-                        ? `${cvFile.name.slice(0, 20)}...${cvFile.name.slice(-8)}`
-                        : cvFile.name
-                      : "Choose a file"}
-                  </span>
-                </span>
-              </label>
-            </div>
+                <svg style={{ marginRight: 6 }} width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 15V4M12 17l-4-4M12 17l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="4" y="20.3" width="16" height="1.2" rx="1" fill="#64748b" />
+                </svg>
+                {userCvName ? userCvName : "No CV uploaded"}
+              </button>
+            </span>
+          </div>
+          <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center" }}>
+            <input
+              type="checkbox"
+              id="confirm-checkbox"
+              checked={confirmationChecked}
+              onChange={e => setConfirmationChecked(e.target.checked)}
+              style={{
+                marginRight: 14,
+                width: 24,
+                height: 24,
+                accentColor: '#374151',
+                cursor: 'pointer',
+              }}
+            />
+            <label htmlFor="confirm-checkbox" style={{ fontSize: "0.8rem", color: "#374151", userSelect: "none" }}>
+              All information and documents provided are accurate and complete to the best of my knowledge.
+            </label>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
             <Button
@@ -553,7 +566,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
             <Button
               variant="contained"
               onClick={handleSubmitApplication}
-              disabled={!cvFile || !documentName.trim()}
+              disabled={!confirmationChecked}
               sx={{
                 borderRadius: 2,
                 textTransform: "none",
