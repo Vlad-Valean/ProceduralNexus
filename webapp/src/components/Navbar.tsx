@@ -6,8 +6,13 @@ import profileIcon from "../assets/profile_icon.png";
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
+  const [hasOrg, setHasOrg] = React.useState(false);
+
   let role = "guest";
   let roles: string[] = [];
+  let userEmail: string | null = null;
+  let token: string = "";
+
   try {
     const storedRoles = localStorage.getItem("userRoles");
     if (storedRoles) {
@@ -17,14 +22,42 @@ const Navbar: React.FC = () => {
     roles = [];
   }
 
-  let hasOrg = false;
   if (roles.includes("ADMIN")) role = "admin";
   else if (roles.includes("HR")) role = "hr";
   else if (roles.includes("USER")) {
     role = "user";
-    const org = localStorage.getItem("userOrganization");
-    hasOrg = !!org && org !== "null" && org !== "undefined" && org !== "";
+    userEmail = localStorage.getItem("userEmail");
+    token = localStorage.getItem("token") || "";
   }
+
+  interface Profile {
+    email: string;
+    organizationId: string | null;
+  }
+
+  React.useEffect(() => {
+    if (role === "user" && userEmail) {
+      const fetchProfiles = async () => {
+        try {
+          const res = await fetch("http://localhost:8081/profiles", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const profiles: Profile[] = await res.json();
+            const profile = profiles.find((p) => p.email === userEmail);
+            setHasOrg(profile !== undefined && profile.organizationId !== null);
+          } else {
+            setHasOrg(false);
+          }
+        } catch {
+          setHasOrg(false);
+        }
+      };
+      fetchProfiles();
+    } else {
+      setHasOrg(false);
+    }
+  }, [role, userEmail, token]);
 
   let links: { label: string; path: string }[] = [];
   if (role === "guest") {
@@ -69,7 +102,8 @@ const Navbar: React.FC = () => {
     padding: "0 32px",
     boxSizing: "border-box",
     color: "white",
-    boxShadow: "0 6px 14px rgba(0,0,0,0.25), 0 1px 0 rgba(255, 255, 255, 0.05)", 
+    boxShadow:
+      "0 6px 14px rgba(0,0,0,0.25), 0 1px 0 rgba(255, 255, 255, 0.05)",
     fontSize: "1rem",
     fontWeight: 400,
   };
