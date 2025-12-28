@@ -128,6 +128,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
+  const [documentName, setDocumentName] = useState<string>("");
+
   const openSnackbar = (
     message: string,
     severity: "success" | "info" | "error" = "success"
@@ -156,9 +158,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     try {
       const res = await fetch(`${BASE_URL}/documents?uploaderId=${profileId}`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers:
+          {
+            Authorization: `Bearer ${token}`,
+          },
         signal,
       });
 
@@ -232,18 +235,21 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       openSnackbar("Not authenticated (missing token).", "error");
       return;
     }
+    if (!documentName.trim()) {
+      openSnackbar("Document name is required.", "error");
+      return;
+    }
 
     setUploading(true);
     try {
       const form = new FormData();
       form.append("file", file);
-      // batchId optional -> nu-l trimit
+      form.append("name", documentName.trim());
 
       const res = await fetch(`${BASE_URL}/documents/upload?uploaderId=${profileId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          // NU seta Content-Type aici (multipart boundary)
         },
         body: form,
       });
@@ -255,6 +261,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
 
       openSnackbar("Document uploaded successfully.", "success");
       setUploadedFile(null);
+      setDocumentName("");
 
       // refresh list
       await fetchUserDocuments(profileId);
@@ -404,7 +411,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               textAlign: "left",
             }}
           >
-            {user.role || "Role"} | {user.organization || "Organization name"}
+            {/* Capitalize the first letter of user.role */}
+            {user.role
+              ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()
+              : "Role"}{" "}
+            | {user.organization || "Organization name"}
           </Typography>
         </Box>
 
@@ -813,7 +824,44 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
           Assign new document
         </Typography>
 
+        {/* Document name label and simple input */}
         <Box sx={{ mb: 1.25 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.4 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: "#4b5563",
+                textAlign: "left",
+                mr: 1,
+              }}
+            >
+              Document name
+            </Typography>
+          </Box>
+          <input
+            type="text"
+            value={documentName}
+            onChange={e => {
+              setDocumentName(e.target.value);
+            }}
+            required
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1.5px solid #dde3f0",
+              backgroundColor: "#f4f6fb",
+              fontSize: "0.8rem",
+              color: "#67728A",
+              marginBottom: "12px",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+            placeholder="Enter document name"
+          />
+
+          {/* Upload file UI */}
           <Typography
             variant="body2"
             sx={{
@@ -911,7 +959,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
           <Button
             variant="contained"
-            disabled={!uploadedFile || uploading}
+            disabled={
+              !uploadedFile ||
+              uploading ||
+              !documentName.trim()
+            }
             onClick={() => {
               if (!uploadedFile) {
                 openSnackbar("Please choose a file.", "error");

@@ -151,8 +151,8 @@ const HrDashboard: React.FC = () => {
         const mapped: UserRow[] = usersFromApi
           .map((u) => ({
             id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
-            firstName: String(u.firstName ?? u.firstname ?? ""),
-            lastName: String(u.lastName ?? u.lastname ?? ""),
+            firstName: String(u.firstName ?? u.firstname ?? "-"),
+            lastName: String(u.lastName ?? u.lastname ?? "-"),
             email: String(u.email ?? ""),
           }))
           .filter((u) => u.id && u.email)

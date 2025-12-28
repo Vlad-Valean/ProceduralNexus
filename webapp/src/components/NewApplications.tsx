@@ -231,6 +231,7 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
         boxSizing: "border-box",
         height: "100%",
         minHeight: 630,
+        position: "relative", // add this
       }}
     >
       <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-start" }}>
@@ -244,6 +245,11 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
             fontSize: "0.9rem",
             px: 0,
             "&:hover": { backgroundColor: "transparent", color: "#3D3C42" },
+            "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
+              outline: "none",
+              boxShadow: "none",
+              border: "none",
+            },
           }}
         >
           Back to statistics
@@ -337,7 +343,7 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
         </Box>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0 }}>
+      <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
         <Box sx={{ overflowX: "auto" }}>
           <Table sx={{ tableLayout: "fixed", width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
@@ -442,7 +448,14 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
                 ))
               ) : (
                 <TableRow sx={{ height: ROW_HEIGHT }}>
-                  <TableCell colSpan={3} sx={{ ...bodyCellSx, textAlign: "center" }}>
+                  <TableCell
+                    colSpan={3}
+                    sx={{
+                      ...bodyCellSx,
+                      textAlign: "center",
+                      borderBottom: "none", // Remove bottom border for no results row
+                    }}
+                  >
                     <Typography sx={{ color: "#b5b7c0", fontWeight: 500, fontSize: "0.9rem" }}>
                       No results...
                     </Typography>
@@ -453,18 +466,25 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
           </Table>
         </Box>
 
+        {/* Fixed pagination at the bottom of the container */}
         <Box
           sx={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            mt: 1.5,
-            flexWrap: "wrap",
+            py: 1.5,
+            px: 0,
+            borderTop: "1px solid #e3e8f2",
           }}
         >
           <Typography
             variant="body2"
-            sx={{ color: "#B5B7C0", fontWeight: 500, textAlign: "left", fontSize: "0.75rem" }}
+            sx={{ color: "#B5B7C0", fontWeight: 500, textAlign: "left", fontSize: "0.75rem", pl: 2 }}
           >
             {total === 0 ? "Showing data 0 of 0 entries" : `Showing data ${startIdx} to ${endIdx} of ${total} entries`}
           </Typography>
@@ -478,6 +498,7 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
             shape="rounded"
             size="small"
             sx={{
+              pr: 2,
               "& .MuiPaginationItem-root": {
                 fontSize: "0.75rem",
                 minWidth: 24,
