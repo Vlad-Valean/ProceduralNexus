@@ -9,8 +9,6 @@ import Market from './pages/Market';
 import UserDashboard from './pages/UserDashboard';
 import Profile from './pages/Profile';
 import './App.css';
-import React from 'react';
-import useNoOrganization from './hooks/useNoOrganization';
 
 function getUserRoles(): string[] {
   try {
@@ -37,17 +35,6 @@ function RequireHR({ children }: { children: React.ReactElement }) {
   return children;
 }
 
-function RequireNoOrganization({ children }: { children: React.ReactElement }) {
-  const allowed = useNoOrganization();
-  if (allowed === null) {
-    return <div>Loading...</div>;
-  }
-  if (!allowed) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
-}
-
 function App() {
   
   return (
@@ -56,14 +43,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/about" element={<About />} />
-      <Route
-        path="/market"
-        element={
-          <RequireNoOrganization>
-            <Market />
-          </RequireNoOrganization>
-        }
-      />
+      <Route path="/market" element={<Market />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/dashboard" element={<UserDashboard />} />
       <Route
