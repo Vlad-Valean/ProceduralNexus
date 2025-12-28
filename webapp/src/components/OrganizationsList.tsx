@@ -6,6 +6,8 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
+const API_BASE_URL = "http://localhost:8081";
+
 interface Organization {
   id: string;
   name: string;
@@ -99,7 +101,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   useEffect(() => {
     if (!userEmail) return;
     const token = localStorage.getItem("token") || "";
-    fetch("http://localhost:8081/profiles", {
+    fetch(`${API_BASE_URL}/profiles`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -114,7 +116,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   useEffect(() => {
     if (!userEmail) return;
     const token = localStorage.getItem("token") || "";
-    fetch("http://localhost:8081/applications/mine", {
+    fetch(`${API_BASE_URL}/applications/mine`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -151,7 +153,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       formData.append("file", cvFile);
       formData.append("name", documentName.trim());
 
-      const docRes = await fetch("http://localhost:8081/documents/upload", {
+      const docRes = await fetch(`${API_BASE_URL}/documents/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token || ""}`,
@@ -162,7 +164,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       const docData = await docRes.json();
       const cvDocumentId = docData.id;
 
-      const appRes = await fetch("http://localhost:8081/applications", {
+      const appRes = await fetch(`${API_BASE_URL}/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -184,7 +186,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         return updated;
       });
 
-      fetch("http://localhost:8081/applications/mine", {
+      fetch(`${API_BASE_URL}/applications/mine`, {
         headers: {
           Authorization: `Bearer ${token || ""}`,
         },
