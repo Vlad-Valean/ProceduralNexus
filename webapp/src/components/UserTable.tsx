@@ -72,7 +72,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
   const totalUsers = filteredUsers.length;
   const pageCount = Math.max(1, Math.ceil(totalUsers / PAGE_SIZE));
 
-  // ✅ no setState in effect: compute a safe page instead
+  // no setState in effect: compute a safe page instead
   const safePage = Math.min(page, pageCount);
 
   const usersPage = filteredUsers.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -122,12 +122,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
           </Typography>
 
           <Typography variant="subtitle2" sx={{ color: "#7b8bb2", fontWeight: 500, mt: 0.5, textAlign: "left" }}>
-            Organization name
-          </Typography>
-
-          <Typography variant="subtitle2" sx={{ color: "#4f46e5", fontWeight: 600, mt: 0.2, textAlign: "left" }}>
             {organizationName ?? "-"}
           </Typography>
+
         </Box>
 
         <TextField
@@ -300,7 +297,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
                         px: 0,
                       }}
                     >
-                      {user.firstName}
+                      {user.firstName || "-"}
                     </TableCell>
                     <TableCell
                       sx={{
@@ -311,7 +308,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, organizationName, onUserSe
                         textAlign: "left",
                       }}
                     >
-                      {user.lastName}
+                      {user.lastName || "-"}
                     </TableCell>
                     <TableCell
                       sx={{
