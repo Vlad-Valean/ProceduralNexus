@@ -6,6 +6,7 @@ public class DocumentResponseDto {
 
     private Long id;
     private String name;
+    private String type;
     private Long fileSizeInBytes;
     private String batchId;
     private boolean signed;
@@ -90,4 +91,6 @@ public class DocumentResponseDto {
 
     public String getFilePath() { return filePath; }
     public void setFilePath(String filePath) { this.filePath = filePath; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 }

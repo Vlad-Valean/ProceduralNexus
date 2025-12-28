@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import com.proceduralnexus.apiservice.controller.dtos.ProfilePatchRequest;
 import com.proceduralnexus.apiservice.data.entities.Organization;
+import com.proceduralnexus.apiservice.data.entities.RoleName;
+import com.proceduralnexus.apiservice.data.repositories.RoleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +26,13 @@ public class ProfileService implements IProfileService {
 
     private final ProfileRepository profileRepository;
     private final OrganizationRepository organizationRepository;
+    private final RoleRepository roleRepository;
 
-    public ProfileService(ProfileRepository profileRepository, OrganizationRepository organizationRepository) {
+
+    public ProfileService(ProfileRepository profileRepository, OrganizationRepository organizationRepository, RoleRepository roleRepository) {
         this.profileRepository = profileRepository;
         this.organizationRepository = organizationRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -109,16 +114,48 @@ public class ProfileService implements IProfileService {
     @Transactional
     public ProfileResponseDto patchProfile(UUID id, ProfilePatchRequest req) {
         Profile profile = profileRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
 
-        if (req.getFirstname() != null) profile.setFirstname(req.getFirstname());
-        if (req.getLastname() != null) profile.setLastname(req.getLastname());
+        if (req.getFirstname() != null) {
+            profile.setFirstname(req.getFirstname());
+        }
+
+        if (req.getLastname() != null) {
+            profile.setLastname(req.getLastname());
+        }
 
         if (req.getOrganizationId() != null) {
             Organization org = organizationRepository.findById(req.getOrganizationId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+                    .orElseThrow(() ->
+                            new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
             profile.setOrganization(org);
         }
+
+        if (req.getRoles() != null) {
+            var newRoles = req.getRoles().stream()
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .map(roleStr -> {
+                        try {
+                            return RoleName.valueOf(roleStr);
+                        } catch (IllegalArgumentException ex) {
+                            throw new ResponseStatusException(
+                                    HttpStatus.BAD_REQUEST,
+                                    "Invalid role: " + roleStr
+                            );
+                        }
+                    })
+                    .map(roleName -> roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new ResponseStatusException(
+                                    HttpStatus.BAD_REQUEST,
+                                    "Role not found in DB: " + roleName
+                            )))
+                    .collect(Collectors.toSet());
+
+            profile.setRoles(newRoles);
+        }
+
         return toDto(profile);
     }
 

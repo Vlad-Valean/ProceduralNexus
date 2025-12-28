@@ -80,9 +80,10 @@ const actionIconSx = {
 
 interface Props {
   onBack: () => void;
+  onApplicationAccepted?: () => void | Promise<void>;
 }
 
-const NewApplications: React.FC<Props> = ({ onBack }) => {
+const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => {
   const token = useMemo(() => localStorage.getItem("token"), []);
   const [rows, setRows] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -162,6 +163,7 @@ const NewApplications: React.FC<Props> = ({ onBack }) => {
 
       setRows((prev) => prev.filter((r) => r.id !== appId));
       openSnack("Application accepted and user added to your organization.", "success");
+      await onApplicationAccepted?.();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Accept failed.";
       openSnack(msg, "error");

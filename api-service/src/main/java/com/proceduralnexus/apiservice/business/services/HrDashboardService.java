@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class HrDashboardService {
@@ -22,7 +23,6 @@ public class HrDashboardService {
     public HrUsersResponseDto getMyOrganizationUsers() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        // În proiectul tău, principal e UserDetails -> username = email
         String email = (auth != null) ? auth.getName() : null;
         if (email == null) {
             throw new RuntimeException("Unauthenticated");
@@ -33,15 +33,20 @@ public class HrDashboardService {
 
         Organization org = me.getOrganization();
         if (org == null) {
-            // HR fără organizație -> returnezi gol (frontend poate afișa mesaj)
             return new HrUsersResponseDto(null, null, List.of());
         }
+
+        UUID ownerId = (org.getOwner() != null) ? org.getOwner().getId() : null;
 
         List<Profile> members = profileRepository.findAllByOrganization_Id(org.getId());
 
         List<HrUsersResponseDto.UserRowDto> rows = members.stream()
+                .filter(p -> ownerId == null || !p.getId().equals(ownerId))
                 .map(p -> new HrUsersResponseDto.UserRowDto(
-                        p.getId(), p.getFirstname(), p.getLastname(), p.getEmail()
+                        p.getId(),
+                        p.getFirstname(),
+                        p.getLastname(),
+                        p.getEmail()
                 ))
                 .toList();
 

@@ -23,26 +23,30 @@ type HrUsersResponse = {
   organizationName?: string | null;
   organization?: { id?: number | null; name?: string | null } | null;
   orgName?: string | null;
-  users?: Array<{
-    id?: string | null;
-    profileId?: string | null;
-    uuid?: string | null;
-    firstName?: string | null;
-    firstname?: string | null;
-    lastName?: string | null;
-    lastname?: string | null;
-    email?: string | null;
-  }> | null;
-  members?: Array<{
-    id?: string | null;
-    profileId?: string | null;
-    uuid?: string | null;
-    firstName?: string | null;
-    firstname?: string | null;
-    lastName?: string | null;
-    lastname?: string | null;
-    email?: string | null;
-  }> | null;
+  users?:
+    | Array<{
+        id?: string | null;
+        profileId?: string | null;
+        uuid?: string | null;
+        firstName?: string | null;
+        firstname?: string | null;
+        lastName?: string | null;
+        lastname?: string | null;
+        email?: string | null;
+      }>
+    | null;
+  members?:
+    | Array<{
+        id?: string | null;
+        profileId?: string | null;
+        uuid?: string | null;
+        firstName?: string | null;
+        firstname?: string | null;
+        lastName?: string | null;
+        lastname?: string | null;
+        email?: string | null;
+      }>
+    | null;
 };
 
 type ProfileResponse = {
@@ -86,7 +90,6 @@ const HrDashboard: React.FC = () => {
         const res = await fetch(`${BASE_URL}/hr/users`, {
           method: "GET",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           signal,
@@ -101,29 +104,33 @@ const HrDashboard: React.FC = () => {
         const dto: HrUsersResponse = (data ?? {}) as HrUsersResponse;
 
         const orgName: string =
-          dto.organizationName ??
-          dto.organization?.name ??
-          dto.orgName ??
-          "-";
+          dto.organizationName ?? dto.organization?.name ?? dto.orgName ?? "-";
 
-        const usersFromApi =
-          dto.users ??
-          dto.members ??
-          [];
+        const usersFromApi = dto.users ?? dto.members ?? [];
 
-        const profileIds: string[] = usersFromApi
-          .map((u) => String(u.id ?? u.profileId ?? u.uuid ?? ""))
-          .filter(Boolean);
+        const myEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
 
-        // Load roles for counts (HR/USER)
+        // map users (backend already removed owner)
+        const mapped: UserRow[] = (usersFromApi ?? [])
+          .map((u) => ({
+            id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
+            firstName: String(u.firstName ?? u.firstname ?? "-"),
+            lastName: String(u.lastName ?? u.lastname ?? "-"),
+            email: String(u.email ?? ""),
+          }))
+          .filter((u) => u.id && u.email)
+          .filter((u) => u.email.toLowerCase() !== myEmail);
+
+        setOrganizationName(orgName);
+        setOrgUsers(mapped);
+
+        const profileIds = mapped.map((u) => u.id);
+
         const rolesResults = await Promise.all(
           profileIds.map(async (id) => {
             const r = await fetch(`${BASE_URL}/profiles/${id}`, {
               method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
               signal,
             });
 
@@ -131,6 +138,7 @@ const HrDashboard: React.FC = () => {
 
             const profJson: unknown = await r.json();
             const prof: ProfileResponse = (profJson ?? {}) as ProfileResponse;
+
             const roles: string[] = Array.isArray(prof.roles) ? prof.roles : [];
             return { id, roles };
           })
@@ -143,25 +151,11 @@ const HrDashboard: React.FC = () => {
           else if (it.roles.includes("USER")) usr++;
         }
 
-        setHrCount(hr);
+        setHrCount(hr + 2); // +2 for owner and self
         setUserCount(usr);
-
-        const myEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
-
-        const mapped: UserRow[] = usersFromApi
-          .map((u) => ({
-            id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
-            firstName: String(u.firstName ?? u.firstname ?? "-"),
-            lastName: String(u.lastName ?? u.lastname ?? "-"),
-            email: String(u.email ?? ""),
-          }))
-          .filter((u) => u.id && u.email)
-          .filter((u) => u.email.toLowerCase() !== myEmail);
-
-        setOrganizationName(orgName);
-        setOrgUsers(mapped);
       } catch (e: unknown) {
         if (e instanceof DOMException && e.name === "AbortError") return;
+
         setOrganizationName("-");
         setOrgUsers([]);
         setHrCount(0);
@@ -188,11 +182,9 @@ const HrDashboard: React.FC = () => {
         throw new Error(`Delete failed (${res.status}). ${txt}`);
       }
 
-      // Close details if removed user was selected
       setSelectedUser((prev) => (prev?.id === userId ? null : prev));
       setShowApplications(false);
 
-      // Refresh users + counters
       await loadOrgUsers();
     },
     [token, loadOrgUsers]
@@ -261,14 +253,7 @@ const HrDashboard: React.FC = () => {
               alignItems: "stretch",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-                minHeight: 0,
-              }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
               <div style={{ flex: 1, minHeight: 0 }}>
                 <UserTable
                   organizationName={organizationName}
@@ -299,7 +284,12 @@ const HrDashboard: React.FC = () => {
                   onRemoveUser={handleRemoveSelectedUser}
                 />
               ) : showApplications ? (
-                <NewApplications onBack={() => setShowApplications(false)} />
+                <NewApplications
+                  onBack={() => setShowApplications(false)}
+                  onApplicationAccepted={async () => {
+                    await loadOrgUsers(); 
+                  }}
+                />
               ) : (
                 <OrganizationStats
                   organizationName={organizationName}
