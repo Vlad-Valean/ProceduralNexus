@@ -1,48 +1,107 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import OrganizationTable from "../components/OrganizationTable";
 import AddOrganizationForm from "../components/AddOrganizationForm";
 import OrganizationDetail from "../components/OrganizationDetail";
 import AdminLogs from "../components/AdminLogs";
-
-type Organization = {
-  organization: string;
-  owner: string;
-  employees: number;
-  createdDate: string;
-};
+import type { OrganizationRow, OrganizationDetail as OrgDetailType } from "../utils/admin";
+import { fetchOrganizations, buildOrganizationDetail } from "../utils/admin";
 
 const AdminDashboard: React.FC = () => {
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
-  const [logsTarget, setLogsTarget] = useState<string | null>(null);
-  const [lastOrganization, setLastOrganization] = useState<Organization | null>(null);
+  const token = useMemo(() => localStorage.getItem("token") ?? "", []);
 
-  const handleRowClick = (organization: Organization) => {
-    setSelectedOrganization(organization);
-    setLastOrganization(organization);
+  const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgError, setOrgError] = useState<string | null>(null);
+
+  const [selectedOrg, setSelectedOrg] = useState<OrgDetailType | null>(null);
+  const [selectedLoading, setSelectedLoading] = useState(false);
+  const [selectedError, setSelectedError] = useState<string | null>(null);
+
+  const [logsTarget, setLogsTarget] = useState<string | null>(null);
+  const [lastOrganizationId, setLastOrganizationId] = useState<number | null>(null);
+
+  const loadOrganizations = async () => {
+    if (!token) {
+      setOrgError("Not authenticated (missing token).");
+      setOrganizations([]);
+      return;
+    }
+
+    setOrgLoading(true);
+    setOrgError(null);
+
+    try {
+      const list = await fetchOrganizations(token);
+      setOrganizations(list);
+    } catch (e: unknown) {
+      setOrgError(e instanceof Error ? e.message : "Failed to load organizations.");
+      setOrganizations([]);
+    } finally {
+      setOrgLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrganizations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleRowClick = async (org: OrganizationRow) => {
     setLogsTarget(null);
+    setLastOrganizationId(org.id);
+
+    if (!token) return;
+
+    setSelectedLoading(true);
+    setSelectedError(null);
+
+    try {
+      const detail = await buildOrganizationDetail(token, org.id);
+      setSelectedOrg(detail);
+    } catch (e: unknown) {
+      setSelectedOrg(null);
+      setSelectedError(e instanceof Error ? e.message : "Failed to load organization details.");
+    } finally {
+      setSelectedLoading(false);
+    }
   };
 
   const handleShowLogs = (target: string | null) => {
     setLogsTarget(target);
-    setLastOrganization(selectedOrganization);
-    setSelectedOrganization(null);
+    setSelectedOrg(null);
   };
 
-  const handleBackFromLogs = () => {
-    if (lastOrganization) {
-      setSelectedOrganization(lastOrganization);
-      setLogsTarget(null);
-    } else {
-      setSelectedOrganization(null);
-      setLogsTarget(null);
+  const handleBackFromLogs = async () => {
+    setLogsTarget(null);
+
+    if (lastOrganizationId && token) {
+      setSelectedLoading(true);
+      setSelectedError(null);
+
+      try {
+        const detail = await buildOrganizationDetail(token, lastOrganizationId);
+        setSelectedOrg(detail);
+      } catch (e: unknown) {
+        setSelectedOrg(null);
+        setSelectedError(e instanceof Error ? e.message : "Failed to load organization details.");
+      } finally {
+        setSelectedLoading(false);
+      }
     }
   };
 
   const handleBackToLogs = () => {
-    setSelectedOrganization(null);
-    setLastOrganization(null);
+    setSelectedOrg(null);
+    setLastOrganizationId(null);
     setLogsTarget(null);
+  };
+
+  const handleOrgDeleted = async () => {
+    await loadOrganizations();
+    setSelectedOrg(null);
+    setLogsTarget(null);
+    setLastOrganizationId(null);
   };
 
   return (
@@ -56,12 +115,7 @@ const AdminDashboard: React.FC = () => {
           overflowY: "auto",
         }}
       >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-          }}
-        >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div
             style={{
               display: "grid",
@@ -70,28 +124,30 @@ const AdminDashboard: React.FC = () => {
               alignItems: "stretch",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-                minHeight: 0,
-              }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
               <div style={{ flex: 1, minHeight: 0 }}>
-                <OrganizationTable onRowClick={handleRowClick} />
+                <OrganizationTable
+                  organizations={organizations}
+                  loading={orgLoading}
+                  error={orgError}
+                  onRowClick={handleRowClick}
+                />
               </div>
-              <AddOrganizationForm />
+
+              <AddOrganizationForm onCreated={loadOrganizations} />
             </div>
 
             <div style={{ minHeight: 0 }}>
               {logsTarget !== null ? (
                 <AdminLogs logsTarget={logsTarget} onBack={handleBackFromLogs} />
-              ) : selectedOrganization ? (
+              ) : selectedOrg ? (
                 <OrganizationDetail
-                  organization={selectedOrganization}
+                  organization={selectedOrg}
+                  loading={selectedLoading}
+                  error={selectedError}
                   onShowLogs={handleShowLogs}
                   onBack={handleBackToLogs}
+                  onDeleted={handleOrgDeleted}
                 />
               ) : (
                 <AdminLogs logsTarget={null} onBack={() => {}} />

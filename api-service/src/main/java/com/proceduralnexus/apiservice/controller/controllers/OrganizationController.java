@@ -2,16 +2,12 @@ package com.proceduralnexus.apiservice.controller.controllers;
 
 import java.util.List;
 
+import com.proceduralnexus.apiservice.controller.dtos.OrganizationMemberDto;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.proceduralnexus.apiservice.business.interfaces.IOrganizationService;
 import com.proceduralnexus.apiservice.business.services.ProfileService;
@@ -65,24 +61,26 @@ public class OrganizationController {
         return organizationService.getOrganization(id);
     }
 
-    /**
-     * POST /organizations
-     * Body: OrganizationCreateDto (name)
-     * Owner = current authenticated profile
-     */
     @PostMapping
     @Operation(
             summary = "Create organization",
-            description = "Creates a new organization. The current user becomes the owner."
+            description = "Creates a new organization. Default owner is current user. If caller is ADMIN, can provide ownerEmail."
     )
     public OrganizationResponseDto createOrganization(
             @Valid @RequestBody OrganizationCreateDto request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        String email = userDetails.getUsername();
-        Profile owner = profileService.findByEmail(email);
+        Profile owner;
+
+        if (request.getOwnerEmail() != null && !request.getOwnerEmail().isBlank()) {
+            owner = profileService.findByEmail(request.getOwnerEmail().trim());
+        } else {
+            owner = profileService.findByEmail(userDetails.getUsername());
+        }
+
         return organizationService.createOrganization(request, owner);
     }
+
 
     /**
      * PUT /organizations/{id}
@@ -103,8 +101,45 @@ public class OrganizationController {
         Profile currentUser = profileService.findByEmail(email);
 
         boolean isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ADMIN"));
 
         return organizationService.updateOrganization(id, request, currentUser, isAdmin);
+    }
+
+    /**
+     * GET /organizations/{id}/members
+     */
+    @GetMapping("/{id}/members")
+    @Operation(
+            summary = "List organization members",
+            description = "Returns a list of profiles that belong to the organization."
+    )
+    public List<OrganizationMemberDto> listOrganizationMembers(@PathVariable Long id) {
+        return organizationService.getOrganizationMembers(id);
+    }
+
+    /**
+     * DELETE /organizations/{id}
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Delete organization",
+            description = "Deletes an organization. Only the owner or an admin can delete."
+    )
+    public void deleteOrganization(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        String email = userDetails.getUsername();
+        Profile currentUser = profileService.findByEmail(email);
+
+
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ADMIN"));
+
+        organizationService.deleteOrganization(id, currentUser, isAdmin);
     }
 }
