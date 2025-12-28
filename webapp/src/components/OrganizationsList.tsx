@@ -19,7 +19,6 @@ interface Application {
   id: string;
   organizationId: string;
   userEmail: string;
-  // ...other fields...
 }
 
 interface OrganizationsListProps {
@@ -66,6 +65,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
     setModalOpen(false);
     setSelectedOrg(null);
     setCvFile(null);
+    setDocumentName(""); 
   };
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,6 +84,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [pendingOrgIds, setPendingOrgIds] = useState<Set<string>>(new Set());
+  const [documentName, setDocumentName] = useState<string>("");
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -95,7 +96,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
     email: string;
   }
 
-  // Fetch user profile id from /profiles using email
   useEffect(() => {
     if (!userEmail) return;
     const token = localStorage.getItem("token") || "";
@@ -111,7 +111,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       });
   }, [userEmail]);
 
-  // Fetch applications for the current user (use /applications/mine)
   useEffect(() => {
     if (!userEmail) return;
     const token = localStorage.getItem("token") || "";
@@ -122,10 +121,9 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
     })
       .then(res => res.json())
       .then((apps: Application[]) => {
-        // Collect all organizationIds from the applications
         const pendingIds = new Set(
           apps
-            .filter(app => app.organizationId) // Defensive: only if organizationId exists
+            .filter(app => app.organizationId) 
             .map(app => String(app.organizationId))
         );
         setPendingOrgIds(pendingIds);
@@ -135,7 +133,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         setPendingOrgIds(new Set());
         if (onPendingOrgIdsChange) onPendingOrgIdsChange(new Set());
       });
-  }, [userEmail, successOpen, onPendingOrgIdsChange]); // refetch after submit
+  }, [userEmail, successOpen, onPendingOrgIdsChange]); 
 
   useEffect(() => {
     if (onPendingOrgIdsChange) {
@@ -144,18 +142,14 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
   }, [appliedOrgIds, onPendingOrgIdsChange]);
 
   const handleSubmitApplication = async () => {
-    if (!selectedOrg || !cvFile || !userProfileId) return;
+    if (!selectedOrg || !cvFile || !userProfileId || !documentName.trim()) return;
 
     try {
       const token = localStorage.getItem("token");
-      // Debug: log the token and payload
-      console.log("Token for /applications:", token);
-      console.log("Payload:", { organizationId: selectedOrg.id });
-
-      // 1. Upload document with correct uploaderId
       const formData = new FormData();
       formData.append("uploaderId", userProfileId);
       formData.append("file", cvFile);
+      formData.append("name", documentName.trim());
 
       const docRes = await fetch("http://localhost:8081/documents/upload", {
         method: "POST",
@@ -168,7 +162,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       const docData = await docRes.json();
       const cvDocumentId = docData.id;
 
-      // 2. Create application with cvDocumentId
       const appRes = await fetch("http://localhost:8081/applications", {
         method: "POST",
         headers: {
@@ -185,14 +178,12 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         throw new Error("Failed to create application");
       }
 
-      // Immediately update appliedOrgIds to reflect the new pending status in the UI
       setAppliedOrgIds(prev => {
         const updated = new Set(prev);
         updated.add(String(selectedOrg.id));
         return updated;
       });
 
-      // Optionally, you can still fetch and log all applications for the current applicant after successful creation
       fetch("http://localhost:8081/applications/mine", {
         headers: {
           Authorization: `Bearer ${token || ""}`,
@@ -207,6 +198,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         });
 
       setSuccessOpen(true);
+      setDocumentName("");
       handleCloseModal();
     } catch {
       handleCloseModal();
@@ -444,52 +436,97 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
                 marginBottom: 6,
               }}
             >
-              Upload file (PDF only)
+              Document name
             </label>
-            <label
-              htmlFor="cv-upload"
+            <input
+              type="text"
+              value={documentName}
+              onChange={e => setDocumentName(e.target.value)}
+              required
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1.5px dashed #e2e8f0",
-                borderRadius: 12,
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "1.5px solid #dde3f0",
+                fontSize: "0.8rem",
+                marginBottom: "12px",
+                outline: "none",
+                boxSizing: "border-box",
                 background: "#f8fafc",
-                height: 70,
-                cursor: "pointer",
-                marginBottom: 0,
-                transition: "border-color 0.2s",
+                color: "#67728A",
               }}
-            >
-              <input
-                id="cv-upload"
-                type="file"
-                accept="application/pdf"
-                style={{ display: "none" }}
-                onChange={handleCvChange}
-              />
-              <span
+              placeholder="Enter document name"
+            />
+            <div style={{ marginBottom: 18 }}>
+              <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  height: "100%",
-                  width: "100%",
+                  display: "block",
+                  fontWeight: 500,
+                  fontSize: "1rem",
+                  color: "#374151",
+                  marginBottom: 6,
                 }}
               >
-                <span style={{ color: "#64748b", fontSize: "1.7rem", display: "flex", alignItems: "center" }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 16V4M12 16l-4-4M12 16l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <rect x="4" y="18" width="16" height="1.2" rx="1" fill="#64748b" />
-                  </svg>
+                Upload file (PDF only)
+              </label>
+              <label
+                htmlFor="cv-upload"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1.5px dashed #e2e8f0",
+                  borderRadius: 12,
+                  background: "#f8fafc",
+                  height: 70,
+                  cursor: "pointer",
+                  marginBottom: 0,
+                  transition: "border-color 0.2s",
+                }}
+              >
+                <input
+                  id="cv-upload"
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: "none" }}
+                  onChange={handleCvChange}
+                />
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    height: "100%",
+                    width: "100%",
+                  }}
+                >
+                  <span style={{ color: "#64748b", fontSize: "1.7rem", display: "flex", alignItems: "center" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 16V4M12 16l-4-4M12 16l4-4" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="4" y="18" width="16" height="1.2" rx="1" fill="#64748b" />
+                    </svg>
+                  </span>
+                  <span style={{
+                    color: "#64748b",
+                    fontSize: "0.9rem",
+                    fontWeight: 400,
+                    display: "inline-block",
+                    maxWidth: 180,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {cvFile
+                      ? cvFile.name.length > 32
+                        ? `${cvFile.name.slice(0, 20)}...${cvFile.name.slice(-8)}`
+                        : cvFile.name
+                      : "Choose a file"}
+                  </span>
                 </span>
-                <span style={{ color: "#64748b", fontSize: "0.9rem", fontWeight: 400, display: "inline-block" }}>
-                  {cvFile ? cvFile.name : "Choose a file"}
-                </span>
-              </span>
-            </label>
+              </label>
+            </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
             <Button
@@ -513,7 +550,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
             <Button
               variant="contained"
               onClick={handleSubmitApplication}
-              disabled={!cvFile}
+              disabled={!cvFile || !documentName.trim()}
               sx={{
                 borderRadius: 2,
                 textTransform: "none",
