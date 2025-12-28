@@ -67,14 +67,14 @@ const Register: React.FC = () => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
-      newErrors.email = 'Email is required.';
+      newErrors.email = 'Email is required*';
     } else if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address.';
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!formData.password) {
-      newErrors.password = 'Password is required.';
+      newErrors.password = 'Password is required*';
     } else if (!passwordRegex.test(formData.password)) {
       newErrors.password =
         'Password must be at least 8 characters and include upper and lower case letters and a number.';
