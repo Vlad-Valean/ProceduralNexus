@@ -158,7 +158,7 @@ const Login: React.FC = () => {
   };
 
   const handleSnackbarClose = (
-    event?: React.SyntheticEvent | Event,
+    _: unknown,
     reason?: string
   ) => {
     if (reason === 'clickaway') return;
