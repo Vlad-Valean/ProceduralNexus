@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { loginApi } from '../services/authService';
@@ -54,6 +55,8 @@ const Login: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleChange =
@@ -73,11 +76,11 @@ const Login: React.FC = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required.';
+      newErrors.email = 'Email is required*';
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Password is required.';
+      newErrors.password = 'Password is required*';
     }
 
     setErrors(newErrors);
@@ -111,13 +114,9 @@ const Login: React.FC = () => {
       }
 
       navigate('/'); 
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-          console.error('Login error:', err);
-          setApiError(err.message || 'Login failed');
-        } else {
-          setApiError('Login failed');
-        }
+    } catch {
+        setApiError('Authentication failed. The email address or password you entered is incorrect.');
+        setSnackbarOpen(true);
     } finally {
       setLoading(false);
     }
@@ -158,6 +157,14 @@ const Login: React.FC = () => {
     setResetOpen(false);
   };
 
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  };
+
   return (
     <>
       <Box
@@ -196,26 +203,26 @@ const Login: React.FC = () => {
             Login
           </Typography>
 
-          {apiError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {apiError}
-            </Alert>
-          )}
-
           <Stack spacing={3}>
             {/* Email */}
             <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  color: '#4b5563',
-                  mb: 0.75,
-                  textAlign: 'left',
-                }}
-              >
-                Email
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                    color: '#4b5563',
+                    textAlign: 'left',
+                  }}
+                >
+                  Email
+                </Typography>
+                {errors.email && (
+                  <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                    {errors.email}
+                  </Typography>
+                )}
+              </Box>
               <TextField
                 fullWidth
                 type="email"
@@ -224,7 +231,6 @@ const Login: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange('email')}
                 error={Boolean(errors.email)}
-                helperText={errors.email}
                 autoComplete="off"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -247,17 +253,23 @@ const Login: React.FC = () => {
 
             {/* Password */}
             <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  color: '#4b5563',
-                  mb: 0.75,
-                  textAlign: 'left',
-                }}
-              >
-                Password
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                    color: '#4b5563',
+                    textAlign: 'left',
+                  }}
+                >
+                  Password
+                </Typography>
+                {errors.password && (
+                  <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                    {errors.password}
+                  </Typography>
+                )}
+              </Box>
               <TextField
                 fullWidth
                 type={showPassword ? 'text' : 'password'}
@@ -266,7 +278,6 @@ const Login: React.FC = () => {
                 value={formData.password}
                 onChange={handleChange('password')}
                 error={Boolean(errors.password)}
-                helperText={errors.password}
                 autoComplete="off"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -450,6 +461,18 @@ const Login: React.FC = () => {
           </Stack>
         </Paper>
       </Box>
+
+      {/* Snackbar for login error */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: '100%' }}>
+          {apiError}
+        </Alert>
+      </Snackbar>
 
       {/* Reset password modal */}
       <Dialog

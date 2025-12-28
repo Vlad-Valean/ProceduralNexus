@@ -152,6 +152,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
       formData.append("uploaderId", userProfileId);
       formData.append("file", cvFile);
       formData.append("name", documentName.trim());
+      formData.append("type", "CV");
 
       const docRes = await fetch(`${API_BASE_URL}/documents/upload`, {
         method: "POST",
