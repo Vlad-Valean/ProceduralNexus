@@ -27,7 +27,7 @@ export type OrganizationDetail = {
   employeesList: EmployeeRow[];
 };
 
-type OrgResponseDto = {
+export type OrgResponseDto = {
   id: number;
   name: string;
   ownerEmail?: string | null;
@@ -45,38 +45,62 @@ type ProfileResponseDto = {
   roles?: string[];
 };
 
-function authHeaders(token: string) {
+function authHeaders(token: string): HeadersInit {
   return { Authorization: `Bearer ${token}` };
+}
+
+function toOrganizationRow(o: OrgResponseDto): OrganizationRow {
+  return {
+    id: Number(o.id),
+    name: o.name ?? "-",
+    ownerEmail: o.ownerEmail ?? null,
+    employees: Number(o.membersCount ?? 0),
+    createdAt: o.createdAt ?? null,
+  };
 }
 
 export async function fetchOrganizations(token: string): Promise<OrganizationRow[]> {
   const res = await fetch(`${BASE_URL}/organizations`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Failed to load organizations (${res.status})`);
-  const data = await res.json();
 
-  return (Array.isArray(data) ? data : []).map((o: any) => ({
-    id: Number(o.id),
-    name: o.name ?? "-",
-    ownerEmail: o.ownerEmail ?? null,
-    employees: Number(o.membersCount ?? 0),
-    createdAt: o.createdAt ?? null,
-  }));
+  if (!res.ok) {
+    throw new Error(`Failed to load organizations (${res.status})`);
+  }
+
+  const data: unknown = await res.json();
+
+  const list: OrgResponseDto[] = Array.isArray(data) ? (data as OrgResponseDto[]) : [];
+
+  return list.map(toOrganizationRow);
 }
 
 export async function fetchOrganization(token: string, id: number): Promise<OrgResponseDto> {
-  const res = await fetch(`${BASE_URL}/organizations/${id}`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`Failed to load organization (${res.status})`);
-  return res.json();
+  const res = await fetch(`${BASE_URL}/organizations/${id}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load organization (${res.status})`);
+  }
+
+  const data: unknown = await res.json();
+  return data as OrgResponseDto;
 }
 
 export async function fetchOrganizationMembers(token: string, id: number): Promise<EmployeeRow[]> {
-  const res = await fetch(`${BASE_URL}/organizations/${id}/members`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`Failed to load organization members (${res.status})`);
-  const data: ProfileResponseDto[] = await res.json();
+  const res = await fetch(`${BASE_URL}/organizations/${id}/members`, {
+    headers: authHeaders(token),
+  });
 
-  return (Array.isArray(data) ? data : []).map((p) => ({
+  if (!res.ok) {
+    throw new Error(`Failed to load organization members (${res.status})`);
+  }
+
+  const data: unknown = await res.json();
+  const list: ProfileResponseDto[] = Array.isArray(data) ? (data as ProfileResponseDto[]) : [];
+
+  return list.map((p) => ({
     id: String(p.id),
     firstname: p.firstname ?? null,
     lastname: p.lastname ?? null,
@@ -111,7 +135,7 @@ export async function createOrganization(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...authHeaders(token),
     },
     body: JSON.stringify(payload),
   });
@@ -121,13 +145,6 @@ export async function createOrganization(
     throw new Error(`Create failed (${res.status}). ${txt}`);
   }
 
-  const o = await res.json();
-
-  return {
-    id: Number(o.id),
-    name: o.name ?? "-",
-    ownerEmail: o.ownerEmail ?? null,
-    employees: Number(o.membersCount ?? 0),
-    createdAt: o.createdAt ?? null,
-  };
+  const data: unknown = await res.json();
+  return toOrganizationRow(data as OrgResponseDto);
 }
