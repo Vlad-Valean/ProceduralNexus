@@ -15,6 +15,8 @@ public class ApplicationResponseDto {
 
     private Instant createdAt;
 
+    private Long organizationId;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -38,4 +40,7 @@ public class ApplicationResponseDto {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
 }

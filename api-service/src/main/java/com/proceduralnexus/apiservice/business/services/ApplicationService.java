@@ -1,5 +1,13 @@
 package com.proceduralnexus.apiservice.business.services;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.proceduralnexus.apiservice.controller.dtos.ApplicationCreateRequestDto;
 import com.proceduralnexus.apiservice.controller.dtos.ApplicationResponseDto;
 import com.proceduralnexus.apiservice.data.entities.Application;
@@ -10,14 +18,6 @@ import com.proceduralnexus.apiservice.data.repositories.ApplicationRepository;
 import com.proceduralnexus.apiservice.data.repositories.DocumentRepository;
 import com.proceduralnexus.apiservice.data.repositories.OrganizationRepository;
 import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class ApplicationService {
@@ -46,18 +46,26 @@ public class ApplicationService {
         }
 
         Profile applicant = profileRepository.findByEmail(applicantEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant profile not found"));
+                .orElseThrow(() -> {
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant profile not found");
+                });
 
         Organization org = organizationRepository.findById(req.getOrganizationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+                .orElseThrow(() -> {
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found");
+                });
 
         applicationRepository.findByApplicant_IdAndOrganization_Id(applicant.getId(), org.getId())
-                .ifPresent(a -> { throw new ResponseStatusException(HttpStatus.CONFLICT, "Application already exists for this organization"); });
+                .ifPresent(a -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Application already exists for this organization");
+                });
 
         Document cv = null;
         if (req.getCvDocumentId() != null) {
             cv = documentRepository.findById(req.getCvDocumentId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CV document not found"));
+                    .orElseThrow(() -> {
+                        return new ResponseStatusException(HttpStatus.NOT_FOUND, "CV document not found");
+                    });
         }
 
         Application app = new Application();
@@ -82,6 +90,17 @@ public class ApplicationService {
 
         return applicationRepository
                 .findByOrganization_IdAndStatusOrderByCreatedAtDesc(orgId, Application.ApplicationStatus.PENDING)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<ApplicationResponseDto> listForApplicant(String applicantEmail) {
+        Profile applicant = profileRepository.findByEmail(applicantEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant profile not found"));
+
+        return applicationRepository
+                .findByApplicant_IdOrderByCreatedAtDesc(applicant.getId())
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -134,6 +153,11 @@ public class ApplicationService {
         dto.setApplicantEmail(p.getEmail());
         dto.setApplicantFirstname(p.getFirstname());
         dto.setApplicantLastname(p.getLastname());
+
+        // Add organizationId to the response
+        if (app.getOrganization() != null) {
+            dto.setOrganizationId(app.getOrganization().getId());
+        }
 
         if (app.getCv() != null) {
             dto.setCvDocumentId(app.getCv().getId());
