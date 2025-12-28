@@ -115,7 +115,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
   const [docsError, setDocsError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [sort, setSort] = useState<"newest" | "oldest" | "signed" | "unsigned">("newest");
   const [page, setPage] = useState(1);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -281,22 +281,28 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
   }, [user.id]);
 
   // --- filtering/sorting/paging ---
-  let filteredDocs = documents.filter((doc) => {
+  const filteredDocs = documents.filter((doc) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return doc.file.toLowerCase().includes(q);
   });
 
-  // sort: if newest -> reverse (presupunând API returnează oldest first)
+  // Add sorting by status
+  let sortedDocs = [...filteredDocs];
   if (sort === "newest") {
-    filteredDocs = [...filteredDocs].reverse();
+    sortedDocs = sortedDocs.reverse();
+  } else if (sort === "signed") {
+    sortedDocs = sortedDocs.filter(doc => doc.signed);
+  } else if (sort === "unsigned") {
+    sortedDocs = sortedDocs.filter(doc => !doc.signed);
   }
+  // "oldest" is default (no change)
 
-  const total = filteredDocs.length;
+  const total = sortedDocs.length;
   const pageCount = Math.ceil(total / DOCS_PAGE_SIZE) || 1;
   const safePage = Math.min(page, pageCount);
 
-  const docsToShow = filteredDocs.slice(
+  const docsToShow = sortedDocs.slice(
     (safePage - 1) * DOCS_PAGE_SIZE,
     safePage * DOCS_PAGE_SIZE
   );
@@ -510,7 +516,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
           <Select
             value={sort}
             onChange={(e) => {
-              setSort(e.target.value as "newest" | "oldest");
+              setSort(e.target.value as "newest" | "oldest" | "signed" | "unsigned");
               setPage(1);
             }}
             size="small"
@@ -535,7 +541,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               <span>
                 <span style={{ color: "#7E7E7E" }}>Sort by : </span>
                 <b style={{ color: "#222" }}>
-                  {selected === "oldest" ? "Oldest" : "Newest"}
+                  {selected === "oldest" && "Oldest"}
+                  {selected === "newest" && "Newest"}
+                  {selected === "signed" && "Signed"}
+                  {selected === "unsigned" && "Unsigned"}
                 </b>
               </span>
             )}
@@ -545,6 +554,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
             </MenuItem>
             <MenuItem value="oldest" sx={{ fontSize: "0.85rem", py: 0.5 }}>
               <b style={{ color: "#222" }}>Oldest</b>
+            </MenuItem>
+            <MenuItem value="signed" sx={{ fontSize: "0.85rem", py: 0.5 }}>
+              <b style={{ color: "#222" }}>Signed</b>
+            </MenuItem>
+            <MenuItem value="unsigned" sx={{ fontSize: "0.85rem", py: 0.5 }}>
+              <b style={{ color: "#222" }}>Unsigned</b>
             </MenuItem>
           </Select>
         </Box>
@@ -695,7 +710,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
               ) : (
                 <>
                   <TableRow sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
-                    <TableCell colSpan={3} sx={{ ...bodyCellSx, textAlign: "center" }}>
+                    <TableCell
+                      colSpan={3}
+                      sx={{
+                        ...bodyCellSx,
+                        textAlign: "center",
+                        borderBottom: "none", 
+                      }}
+                    >
                       <Typography
                         sx={{
                           color: "#b5b7c0",
@@ -707,7 +729,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
                       </Typography>
                     </TableCell>
                   </TableRow>
-
                   {emptyRows > 0 &&
                     Array.from({ length: emptyRows }).map((_, idx) => (
                       <TableRow

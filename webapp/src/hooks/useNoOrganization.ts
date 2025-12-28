@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const API_BASE_URL = "http://localhost:8081";
+
 function getUserRoles(): string[] {
   try {
     const roles = localStorage.getItem("userRoles");
@@ -28,7 +30,7 @@ export default function useNoOrganization(): boolean | null {
     if (allowed === false) {
       return;
     }
-    fetch("http://localhost:8081/profiles", {
+    fetch(`${API_BASE_URL}/profiles`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())

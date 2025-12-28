@@ -225,6 +225,7 @@ const Login: React.FC = () => {
                 onChange={handleChange('email')}
                 error={Boolean(errors.email)}
                 helperText={errors.email}
+                autoComplete="off"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 4,
@@ -266,6 +267,7 @@ const Login: React.FC = () => {
                 onChange={handleChange('password')}
                 error={Boolean(errors.password)}
                 helperText={errors.password}
+                autoComplete="off"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 4,
@@ -490,6 +492,7 @@ const Login: React.FC = () => {
             }}
             error={Boolean(resetError)}
             helperText={resetError}
+            autoComplete="off"
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 3.5,
