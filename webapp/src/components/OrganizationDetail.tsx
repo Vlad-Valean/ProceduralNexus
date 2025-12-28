@@ -1,18 +1,14 @@
-import React, { useState } from "react";
+import React, {useState } from "react";
 import {
   Paper,
-  Button,
   Box,
   Typography,
-  IconButton,
-  TextField,
-  InputAdornment,
+  Button,
   Table,
   TableHead,
   TableRow,
   TableCell,
   TableBody,
-  Pagination,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,104 +18,69 @@ import {
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import SearchIcon from "@mui/icons-material/Search";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
+import type { OrganizationDetail } from "../utils/admin";
 
-export interface Organization {
-  organization: string;
-  owner: string;
-  employees: number;
-  createdDate: string;
-}
+const BASE_URL = "http://localhost:8081";
 
-type OrganizationDetailProps = {
-  organization: {
-    organization: string;
-    owner: string;
-    employees: number;
-    createdDate: string;
-  };
+type Props = {
+  organization: OrganizationDetail;
+  loading: boolean;
+  error: string | null;
+  onBack: () => void;
   onShowLogs: (target: string | null) => void;
-  onBack: () => void; 
+  onDeleted: () => void;
 };
 
-const MOCK_EMPLOYEES = [
-  { email: "alice@example.com", role: "User" },
-  { email: "bob@example.com", role: "HR" },
-  { email: "carol@example.com", role: "User" },
-  { email: "dave@example.com", role: "User" },
-  { email: "eve@example.com", role: "HR" },
-  { email: "frank@example.com", role: "User" },
-  { email: "grace@example.com", role: "User" },
-  { email: "heidi@example.com", role: "User" },
-  { email: "ivan@example.com", role: "User" },
-  { email: "judy@example.com", role: "User" },
-];
-
-const EMPLOYEES_PAGE_SIZE = 6;
-const ROW_HEIGHT = 36;
-
-const headCellSx = {
-  px: 1.25,
-  fontWeight: 500,
-  color: "#B5B7C0",
-  borderBottom: "1px solid #e3e8f2",
-  textAlign: "left" as const,
-  fontSize: "0.8rem",
-};
-
-const bodyCellSx = {
-  px: 1.25,
-  fontSize: "0.8rem",
-  borderBottom: "1px solid #e3e8f2",
-  textAlign: "left" as const,
-};
-
-const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
+const OrganizationDetailComp: React.FC<Props> = ({
   organization,
-  onShowLogs,
+  loading,
+  error,
   onBack,
+  onShowLogs,
+  onDeleted,
 }) => {
-  const [search, setSearch] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState("");
+  const token = localStorage.getItem("token") ?? "";
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const employees = React.useMemo(() => {
-    const base = MOCK_EMPLOYEES;
-    const count = organization.employees;
-    const arr = [];
-    for (let i = 0; i < count; ++i) {
-      arr.push({
-        ...base[i % base.length],
-        email: `${base[i % base.length].email.split("@")[0]}${i + 1}@example.com`,
-      });
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMsg, setSnackMsg] = useState("");
+  const [snackSeverity, setSnackSeverity] = useState<"success" | "error">("success");
+
+  const openSnack = (msg: string, severity: "success" | "error") => {
+    setSnackMsg(msg);
+    setSnackSeverity(severity);
+    setSnackOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!token) {
+      openSnack("Not authenticated (missing token).", "error");
+      return;
     }
-    return arr;
-  }, [organization.employees]);
 
-  const filteredEmployees = employees.filter((emp) =>
-    emp.email.toLowerCase().includes(search.toLowerCase())
-  );
+    try {
+      const res = await fetch(`${BASE_URL}/organizations/${organization.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  const total = filteredEmployees.length;
-  const pageCount = Math.ceil(total / EMPLOYEES_PAGE_SIZE) || 1;
-  const safePage = Math.min(page, pageCount);
+      if (!res.ok && res.status !== 204) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Delete failed (${res.status}). ${txt}`);
+      }
 
-  const employeesToShow = filteredEmployees.slice(
-    (safePage - 1) * EMPLOYEES_PAGE_SIZE,
-    safePage * EMPLOYEES_PAGE_SIZE
-  );
+      setDeleteOpen(false);
+      openSnack("Organization deleted.", "success");
+      onDeleted();
+    } catch (e: unknown) {
+      openSnack(e instanceof Error ? e.message : "Failed to delete organization.", "error");
+    }
+  };
 
-  const startIdx = total === 0 ? 0 : (safePage - 1) * EMPLOYEES_PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * EMPLOYEES_PAGE_SIZE, total);
-
-  const hasResults = employeesToShow.length > 0;
-  const emptyRows = hasResults
-    ? Math.max(0, EMPLOYEES_PAGE_SIZE - employeesToShow.length)
-    : Math.max(0, EMPLOYEES_PAGE_SIZE - 1);
+  const ownerLabel =
+    organization.ownerEmail ??
+    [organization.ownerFirstName, organization.ownerLastName].filter(Boolean).join(" ") ??
+    "-";
 
   return (
     <Paper
@@ -132,8 +93,6 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         boxShadow: "0 2px 16px #bfcbe6",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        justifyContent: "flex-start",
         width: "100%",
         minWidth: 0,
         boxSizing: "border-box",
@@ -141,7 +100,7 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         minHeight: 630,
       }}
     >
-      <Box sx={{ mb: 1, width: "100%", display: "flex", justifyContent: "flex-start" }}>
+      <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-start" }}>
         <Button
           onClick={onBack}
           startIcon={<ArrowBackIosNewIcon sx={{ fontSize: 14 }} />}
@@ -152,11 +111,9 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
             fontSize: "0.9rem",
             px: 0,
             "&:hover": { backgroundColor: "transparent", color: "#3D3C42" },
-            "&:focus": { outline: "none" },
-            justifyContent: "flex-start",
           }}
         >
-          Go back to general log
+          Back
         </Button>
       </Box>
 
@@ -186,503 +143,136 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
         </Typography>
         <Button
           variant="contained"
-          color="error"
           startIcon={<DeleteOutlineIcon />}
-          onClick={() => setDeleteDialogOpen(true)}
+          onClick={() => setDeleteOpen(true)}
           sx={{
-            alignSelf: "center",
             textTransform: "none",
             borderRadius: 2,
             px: 2,
-            py: 0.7,
+            py: 0.6,
             bgcolor: "#A71818",
             boxShadow: "none",
-            fontWeight: 600,
-            fontSize: "0.8rem",
-            borderColor: "#A71818",
-            color: "#fff",
-            minWidth: "fit-content",
-            "&:hover": {
-              bgcolor: "#871414",
-              boxShadow: "none",
-            },
-            "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-              outline: "none",
-              boxShadow: "none",
-            },
+            fontWeight: 700,
+            fontSize: "0.85rem",
+            "&:hover": { bgcolor: "#871414", boxShadow: "none" },
           }}
         >
           Delete organization
         </Button>
       </Box>
 
-      <Box sx={{ width: "100%", mb: 1, display: "flex", justifyContent: "flex-start" }}>
-        <a
-          href="#"
-          onClick={e => {
-            e.preventDefault();
-            onShowLogs(organization.organization);
-          }}
-          style={{
-            color: "#586AA2",
-            fontWeight: 500,
-            fontSize: "0.95rem",
-            textDecoration: "underline",
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            padding: 0,
-          }}
-        >
-          [Check organization logs]
-        </a>
-      </Box>
-
-      <Box sx={{ height: 16 }} />
-
-      <Box sx={{ mb: 2, width: "100%" }}>
-        <Typography sx={{ fontWeight: 700, color: "#222", mb: 0.5, textAlign: "left", fontSize: "0.95rem" }}>
-          Owner:{" "}
-          <span style={{ color: "#222", fontWeight: 500 }}>{organization.owner}</span>
+      {error && (
+        <Typography sx={{ color: "#d32f2f", fontWeight: 700, mb: 1 }}>
+          {error}
         </Typography>
-        <Typography sx={{ fontWeight: 700, color: "#222", mb: 0.5, textAlign: "left", fontSize: "0.95rem" }}>
-          Created on:{" "}
-          <span style={{ color: "#222", fontWeight: 500 }}>{organization.createdDate}</span>
-        </Typography>
-        <Typography sx={{ fontWeight: 700, color: "#222", textAlign: "left", fontSize: "0.95rem" }}>
-          Number of employees:{" "}
-          <span style={{ color: "#222", fontWeight: 500 }}>{organization.employees}</span>
-        </Typography>
-      </Box>
+      )}
 
-      <Box
-        sx={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 1,
-          gap: 2,
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            color: "#222",
-            textAlign: "left",
-            fontSize: "1.1rem",
-          }}
-        >
-          Employees
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <TextField
-            placeholder="Search"
-            size="small"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            sx={{
-              bgcolor: "#f4f6fb",
-              borderRadius: 2,
-              width: 180,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                height: 36,
-                fontSize: "0.85rem",
-                "& fieldset": { borderColor: "#dde3f0" },
-                "&:hover fieldset": { borderColor: "#cfd6e6" },
-                "&.Mui-focused fieldset": { borderColor: "#a5b1c8" },
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#3D3C42", fontSize: 18 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-      </Box>
+      <Typography sx={{ fontWeight: 800, color: "#111827", mb: 1 }}>
+        Employees
+      </Typography>
 
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          mb: 2,
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Box sx={{ overflowX: "auto", flex: 1 }}>
-          <Table
-            sx={{
-              tableLayout: "fixed",
-              width: "100%",
-              borderCollapse: "collapse",
-            }}
-          >
-            <TableHead>
-              <TableRow sx={{ "& th": { py: 0.8 } }}>
-                <TableCell sx={{ ...headCellSx, width: "40%" }}>Email</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "20%" }}>Role</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "20%" }}>Reset credentials</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "20%" }}>Check logs</TableCell>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", borderRadius: 2, border: "1px solid #e3e8f2" }}>
+        <Table sx={{ tableLayout: "fixed", width: "100%" }}>
+          <TableHead>
+            <TableRow sx={{ "& th": { py: 1 } }}>
+              <TableCell sx={{ fontWeight: 600, color: "#B5B7C0" }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: "#B5B7C0" }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: "#B5B7C0" }}>Roles</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: "#B5B7C0", width: 170 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ py: 4, color: "#64748b" }}>
+                  Loading employees...
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {hasResults ? (
-                <>
-                  {employeesToShow.map((emp) => (
-                    <TableRow
-                      key={emp.email}
-                      sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}
-                    >
-                      <TableCell
-                        sx={{
-                          ...bodyCellSx,
-                          color: "#222",
-                          fontWeight: 500,
-                        }}
+            ) : organization.employeesList?.length ? (
+              organization.employeesList.map((u) => {
+                const name = `${u.firstname ?? ""} ${u.lastname ?? ""}`.trim() || "-";
+                return (
+                  <TableRow key={u.id} sx={{ "& td": { py: 1 } }}>
+                    <TableCell sx={{ fontWeight: 600, color: "#111827" }}>{name}</TableCell>
+                    <TableCell sx={{ color: "#67728A", fontWeight: 600 }}>{u.email ?? "-"}</TableCell>
+                    <TableCell sx={{ color: "#111827", fontWeight: 600 }}>
+                      {u.roles?.length ? u.roles.join(", ") : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {/* HARDCODAT: “Reset credentials” */}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => openSnack("Reset credentials (hardcoded).", "success")}
+                        sx={{ textTransform: "none", mr: 1 }}
                       >
-                        {emp.email}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          ...bodyCellSx,
-                          color: "#67728A",
-                          fontWeight: 500,
-                        }}
+                        Reset credentials
+                      </Button>
+
+                      {/* HARDCODAT logs: doar email se schimbă */}
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => onShowLogs(u.email ?? "")}
+                        sx={{ textTransform: "none", fontWeight: 700 }}
                       >
-                        {emp.role}
-                      </TableCell>
-                      <TableCell sx={bodyCellSx}>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            color: "#586AA2",
-                            "&:hover": { color: "#3D3C42" },
-                            "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                              outline: "none",
-                              boxShadow: "none",
-                              border: "none",
-                            },
-                          }}
-                          onClick={() => {
-                            setSnackbarMsg(`User ${emp.email} received an email for updating their password`);
-                            setSnackbarOpen(true);
-                          }}
-                        >
-                          <RestartAltIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell sx={bodyCellSx}>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            color: "#586AA2",
-                            "&:hover": { color: "#3D3C42" },
-                            "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                              outline: "none",
-                              boxShadow: "none",
-                              border: "none",
-                            },
-                          }}
-                          onClick={() => onShowLogs(emp.email)}
-                        >
-                          <ListAltOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {emptyRows > 0 &&
-                    Array.from({ length: emptyRows }).map((_, idx) => (
-                      <TableRow
-                        key={`empty-${idx}`}
-                        sx={{
-                          height: ROW_HEIGHT,
-                          "& td": {
-                            py: 0.8,
-                            borderBottom: "none !important",
-                          },
-                        }}
-                      >
-                        <TableCell
-                          colSpan={4}
-                          sx={{
-                            px: 1.25,
-                            fontSize: "0.8rem",
-                            color: "transparent",
-                            borderBottom: "none !important",
-                          }}
-                        >
-                          &nbsp;
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </>
-              ) : (
-                <>
-                  <TableRow
-                    sx={{
-                      height: ROW_HEIGHT,
-                      "& td": { py: 0.8 },
-                    }}
-                  >
-                    <TableCell
-                      colSpan={4}
-                      sx={{
-                        ...bodyCellSx,
-                        textAlign: "center",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#b5b7c0",
-                          fontWeight: 500,
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        No results...
-                      </Typography>
+                        Check logs
+                      </Button>
                     </TableCell>
                   </TableRow>
-                  {emptyRows > 0 &&
-                    Array.from({ length: emptyRows }).map((_, idx) => (
-                      <TableRow
-                        key={`empty-nores-${idx}`}
-                        sx={{
-                          height: ROW_HEIGHT,
-                          "& td": {
-                            py: 0.8,
-                            borderBottom: "none !important",
-                          },
-                        }}
-                      >
-                        <TableCell
-                          colSpan={4}
-                          sx={{
-                            px: 1.25,
-                            fontSize: "0.8rem",
-                            color: "transparent",
-                            borderBottom: "none !important",
-                          }}
-                        >
-                          &nbsp;
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </>
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mt: 1.5,
-            flexWrap: "wrap",
-            width: "100%",
-            minHeight: 48,
-            marginTop: "auto",
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#B5B7C0",
-                fontWeight: 500,
-                textAlign: "left",
-                fontSize: "0.75rem",
-              }}
-            >
-              {total === 0
-                ? "Showing data 0 of 0 entries"
-                : `Showing data ${startIdx} to ${endIdx} of ${total} entries`}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Pagination
-              count={pageCount}
-              page={safePage}
-              onChange={(_, value) => setPage(value)}
-              siblingCount={1}
-              boundaryCount={1}
-              color="primary"
-              shape="rounded"
-              size="small"
-              sx={{
-                "& .MuiPaginationItem-root": {
-                  fontSize: "0.75rem",
-                  minWidth: 24,
-                  height: 24,
-                  boxShadow: "none !important",
-                  borderColor: "#67728A !important",
-                  padding: "2px 6px",
-                  outline: "none !important",
-                },
-                "& .MuiPaginationItem-root:focus, & .MuiPaginationItem-root.Mui-focusVisible":
-                  {
-                    outline: "none !important",
-                    boxShadow: "none !important",
-                  },
-                "& .Mui-selected": {
-                  backgroundColor: "#67728A !important",
-                  color: "#fff !important",
-                  borderColor: "#67728A !important",
-                  borderWidth: "1.5px",
-                  borderStyle: "solid",
-                  outline: "none !important",
-                },
-                "& .Mui-selected:hover": {
-                  backgroundColor: "#5a6276 !important",
-                },
-              }}
-              showFirstButton={false}
-              showLastButton={false}
-            />
-          </Box>
-        </Box>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ py: 4, color: "#64748b" }}>
+                  No employees found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </Box>
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            p: 2.5,
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.15)",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            fontWeight: 700,
-            fontSize: "1.05rem",
-            color: "#111827",
-            pb: 1,
-            textAlign: "left",
-          }}
+      {/* HARDCODAT: org logs (doar numele se schimbă) */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+        <Button
+          variant="text"
+          onClick={() => onShowLogs(`ORG:${organization.name}`)}
+          sx={{ textTransform: "none", fontWeight: 800 }}
         >
-          Delete organization
-        </DialogTitle>
-        <DialogContent sx={{ pt: 0 }}>
-          <Typography
-            sx={{
-              mt: 0.5,
-              color: "#4b5563",
-              fontSize: "0.9rem",
-              textAlign: "left",
-            }}
-          >
-            Are you sure you want to delete{" "}
-            <strong>{organization.organization}</strong>?
-          </Typography>
-          <Box
-            sx={{
-              mt: 1.5,
-              p: 1,
-              borderRadius: 2,
-              bgcolor: "#fef2f2",
-              border: "1px solid #fee2e2",
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#991b1b",
-                fontSize: "0.78rem",
-                textAlign: "left",
-              }}
-            >
-              This action cannot be undone.
-            </Typography>
-          </Box>
+          Check organization logs
+        </Button>
+      </Box>
+
+      {/* Delete confirm */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Delete organization</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete <b>{organization.name}</b>? This action cannot be undone.
         </DialogContent>
-        <DialogActions
-          sx={{
-            pt: 1.5,
-            pb: 0.5,
-            px: 1,
-            justifyContent: "flex-end",
-            gap: 1,
-          }}
-        >
-          <Button
-            onClick={() => setDeleteDialogOpen(false)}
-            variant="outlined"
-            sx={{
-              textTransform: "none",
-              borderRadius: 2,
-              px: 2.5,
-              fontSize: "0.85rem",
-              borderColor: "#dde3f0",
-              color: "#4b5563",
-              "&:hover": {
-                borderColor: "#cbd5e1",
-                backgroundColor: "#f8fafc",
-              },
-              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                outline: "none",
-                boxShadow: "none",
-              },
-            }}
-          >
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)} sx={{ textTransform: "none" }}>
             Cancel
           </Button>
-          <Button
-            onClick={() => setDeleteDialogOpen(false)}
-            variant="contained"
-            color="error"
-            sx={{
-              textTransform: "none",
-              borderRadius: 2,
-              px: 2.8,
-              fontSize: "0.85rem",
-              bgcolor: "#A71818",
-              boxShadow: "none",
-              "&:hover": {
-                bgcolor: "#871414",
-                boxShadow: "none",
-              },
-              "&:focus, &:active, &:focus-visible, &.Mui-focusVisible": {
-                outline: "none",
-                boxShadow: "none",
-              },
-            }}
-          >
+          <Button onClick={handleDelete} color="error" variant="contained" sx={{ textTransform: "none" }}>
             Delete
           </Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar
-        open={snackbarOpen}
+        open={snackOpen}
         autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
+        onClose={() => setSnackOpen(false)}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="info"
-          sx={{ width: "100%" }}
-        >
-          {snackbarMsg}
+        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: "100%" }}>
+          {snackMsg}
         </Alert>
       </Snackbar>
     </Paper>
   );
 };
 
-export default OrganizationDetail;
+export default OrganizationDetailComp;
