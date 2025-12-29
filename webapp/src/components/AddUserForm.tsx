@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Paper,
   Typography,
@@ -12,20 +12,43 @@ import {
   Alert,
 } from "@mui/material";
 
-const AddUserForm: React.FC = () => {
+const BASE_URL = "http://localhost:8081";
+
+type RoleUi = "user" | "hr";
+
+interface AddUserFormProps {
+  onUserAdded?: () => void | Promise<void>;
+}
+
+const AddUserForm: React.FC<AddUserFormProps> = ({ onUserAdded }) => {
+  const token = localStorage.getItem("token");
+
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState<RoleUi | "">("");
+
   const [emailError, setEmailError] = useState("");
   const [roleError, setRoleError] = useState("");
-  const [successOpen, setSuccessOpen] = useState(false);
 
-  const validateEmail = (value: string) =>
-    /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/.test(value);
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackSeverity, setSnackSeverity] = useState<"success" | "error">("success");
+  const [snackMsg, setSnackMsg] = useState("");
 
-  const handleAddUser = () => {
+  const [adding, setAdding] = useState(false);
+
+  const validateEmail = (value: string) => /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/.test(value);
+
+  const openSnack = (msg: string, severity: "success" | "error") => {
+    setSnackMsg(msg);
+    setSnackSeverity(severity);
+    setSnackOpen(true);
+  };
+
+  const handleAddUser = async () => {
     let valid = true;
 
-    if (!validateEmail(email)) {
+    const trimmedEmail = email.trim();
+
+    if (!validateEmail(trimmedEmail)) {
       setEmailError("Invalid email address*");
       valid = false;
     } else {
@@ -41,12 +64,44 @@ const AddUserForm: React.FC = () => {
 
     if (!valid) return;
 
-    setEmail("");
-    setRole("");
-    setEmailError("");
-    setRoleError("");
-    setSuccessOpen(true);
+    if (!token) {
+      openSnack("Not authenticated (missing token).", "error");
+      return;
+    }
 
+    const backendRole = role === "hr" ? "HR" : "USER";
+
+    setAdding(true);
+    try {
+      const res = await fetch(`${BASE_URL}/hr/users/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: trimmedEmail, role: backendRole }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Add user failed (${res.status}). ${txt}`);
+      }
+
+      // succes -> refresh listă sus
+      await onUserAdded?.();
+
+      setEmail("");
+      setRole("");
+      setEmailError("");
+      setRoleError("");
+
+      openSnack("User was successfully added", "success");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Add user failed.";
+      openSnack(msg, "error");
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
@@ -55,7 +110,7 @@ const AddUserForm: React.FC = () => {
       autoComplete="off"
       onSubmit={(e) => {
         e.preventDefault();
-        handleAddUser();
+        if (!adding) handleAddUser();
       }}
       sx={{
         p: { xs: 2, sm: 2.5 },
@@ -70,22 +125,12 @@ const AddUserForm: React.FC = () => {
         mb: 0,
       }}
     >
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: 700, mb: 1, textAlign: "left" }}
-      >
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: "left" }}>
         Add new user
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            mb: 0.75,
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", mb: 0.75 }}>
           <Typography
             variant="body2"
             sx={{ fontWeight: 500, color: "#4b5563", textAlign: "left", flex: 1 }}
@@ -112,6 +157,7 @@ const AddUserForm: React.FC = () => {
           onChange={(e) => setEmail(e.target.value)}
           error={!!emailError}
           autoComplete="off"
+          disabled={adding}
           sx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: 3,
@@ -127,20 +173,10 @@ const AddUserForm: React.FC = () => {
               borderRadius: 12,
             },
           }}
-          inputProps={{
-            autoComplete: "new-user-email",
-          }}
+          inputProps={{ autoComplete: "new-user-email" }}
         />
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            mb: 0.75,
-            mt: 2,
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", mb: 0.75, mt: 2 }}>
           <Typography
             variant="body2"
             sx={{ fontWeight: 500, color: "#4b5563", textAlign: "left", flex: 1 }}
@@ -158,34 +194,20 @@ const AddUserForm: React.FC = () => {
           )}
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 2,
-            alignItems: "flex-end",
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 2, alignItems: "flex-end" }}>
           <Box sx={{ flex: "1 1 220px", minWidth: 0 }}>
-            <FormControl fullWidth variant="outlined" error={!!roleError}>
+            <FormControl fullWidth variant="outlined" error={!!roleError} disabled={adding}>
               <Select
                 value={role}
-                onChange={(e) => setRole(e.target.value as string)}
+                onChange={(e) => setRole(e.target.value as RoleUi)}
                 displayEmpty
                 sx={{
                   bgcolor: "#f4f6fb",
                   borderRadius: 3,
                   height: 42,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#dde3f0",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#cfd6e6",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#a5b1c8",
-                  },
+                  "& .MuiOutlinedInput-notchedOutline": { borderColor: "#dde3f0" },
+                  "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cfd6e6" },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a5b1c8" },
                 }}
               >
                 <MenuItem value="" disabled>
@@ -202,6 +224,7 @@ const AddUserForm: React.FC = () => {
               type="submit"
               variant="contained"
               size="small"
+              disabled={adding}
               sx={{
                 width: "100%",
                 fontWeight: 500,
@@ -218,34 +241,25 @@ const AddUserForm: React.FC = () => {
                   boxShadow: "none",
                   border: "2px solid #636a7b",
                 },
-                "&:focus": {
-                  border: "2px solid #636a7b",
-                  outline: "none",
-                },
-                "&:active": {
-                  border: "2px solid #636a7b",
-                  outline: "none",
-                },
+                "&:focus": { border: "2px solid #636a7b", outline: "none" },
+                "&:active": { border: "2px solid #636a7b", outline: "none" },
+                "&.Mui-disabled": { bgcolor: "#c9ceda", color: "#ffffff", border: "2px solid #c9ceda" },
               }}
             >
-              Add user
+              {adding ? "Adding..." : "Add user"}
             </Button>
           </Box>
         </Box>
       </Box>
 
       <Snackbar
-        open={successOpen}
+        open={snackOpen}
         autoHideDuration={3000}
-        onClose={() => setSuccessOpen(false)}
+        onClose={() => setSnackOpen(false)}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setSuccessOpen(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          User was successfully added
+        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: "100%" }}>
+          {snackMsg}
         </Alert>
       </Snackbar>
     </Paper>

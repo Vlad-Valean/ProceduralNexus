@@ -148,3 +148,22 @@ export async function createOrganization(
   const data: unknown = await res.json();
   return toOrganizationRow(data as OrgResponseDto);
 }
+
+export async function deleteOrganization(token: string, id: number): Promise<void> {
+  const res = await fetch(`${BASE_URL}/organizations/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Delete failed (${res.status}). ${txt}`);
+  }
+}
+
+export function formatDateGB(iso: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB");
+}

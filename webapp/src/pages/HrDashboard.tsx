@@ -24,29 +24,29 @@ type HrUsersResponse = {
   organization?: { id?: number | null; name?: string | null } | null;
   orgName?: string | null;
   users?:
-    | Array<{
-        id?: string | null;
-        profileId?: string | null;
-        uuid?: string | null;
-        firstName?: string | null;
-        firstname?: string | null;
-        lastName?: string | null;
-        lastname?: string | null;
-        email?: string | null;
-      }>
-    | null;
+  | Array<{
+    id?: string | null;
+    profileId?: string | null;
+    uuid?: string | null;
+    firstName?: string | null;
+    firstname?: string | null;
+    lastName?: string | null;
+    lastname?: string | null;
+    email?: string | null;
+  }>
+  | null;
   members?:
-    | Array<{
-        id?: string | null;
-        profileId?: string | null;
-        uuid?: string | null;
-        firstName?: string | null;
-        firstname?: string | null;
-        lastName?: string | null;
-        lastname?: string | null;
-        email?: string | null;
-      }>
-    | null;
+  | Array<{
+    id?: string | null;
+    profileId?: string | null;
+    uuid?: string | null;
+    firstName?: string | null;
+    firstname?: string | null;
+    lastName?: string | null;
+    lastname?: string | null;
+    email?: string | null;
+  }>
+  | null;
 };
 
 type ProfileResponse = {
@@ -172,14 +172,14 @@ const HrDashboard: React.FC = () => {
     async (userId: string) => {
       if (!token) throw new Error("Not authenticated (missing token).");
 
-      const res = await fetch(`${BASE_URL}/profiles/${userId}`, {
-        method: "DELETE",
+      const res = await fetch(`${BASE_URL}/hr/users/${userId}/remove`, {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
-        throw new Error(`Delete failed (${res.status}). ${txt}`);
+        throw new Error(`Remove failed (${res.status}). ${txt}`);
       }
 
       setSelectedUser((prev) => (prev?.id === userId ? null : prev));
@@ -273,7 +273,7 @@ const HrDashboard: React.FC = () => {
                 )}
               </div>
 
-              <AddUserForm />
+              <AddUserForm onUserAdded={loadOrgUsers} />
             </div>
 
             <div style={{ minHeight: 0 }}>
@@ -287,7 +287,7 @@ const HrDashboard: React.FC = () => {
                 <NewApplications
                   onBack={() => setShowApplications(false)}
                   onApplicationAccepted={async () => {
-                    await loadOrgUsers(); 
+                    await loadOrgUsers();
                   }}
                 />
               ) : (
