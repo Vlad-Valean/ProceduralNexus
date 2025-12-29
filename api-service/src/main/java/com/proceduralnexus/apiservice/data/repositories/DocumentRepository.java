@@ -11,4 +11,5 @@ import java.util.UUID;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByUploader_Id(UUID uploaderId);
+    void deleteByUploader_IdAndTypeNot(UUID uploaderId, Document.DocumentType type);
 }
