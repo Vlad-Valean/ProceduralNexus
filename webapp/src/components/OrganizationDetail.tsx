@@ -27,7 +27,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
 
-import type { OrganizationDetail as OrgDetailType, EmployeeRow } from "../utils/admin";
+import type { OrganizationDetail as OrgDetailType } from "../utils/admin";
 import { deleteOrganization, formatDateGB } from "../utils/admin";
 
 type OrganizationDetailProps = {
