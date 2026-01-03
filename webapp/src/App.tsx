@@ -1,4 +1,19 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+// OAuth2 Redirect Handler
+function OAuth2RedirectHandler() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      // Optionally, fetch user info here and store roles/email if needed
+    }
+    navigate('/', { replace: true });
+  }, [location, navigate]);
+  return <div>Signing in with Google...</div>;
+}
 import Login from './pages/Login';
 import Register from './pages/Register';
 import HrDashboard from './pages/HrDashboard';
@@ -52,6 +67,7 @@ function App() {
   
   return (
     <Routes>
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
