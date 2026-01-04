@@ -29,22 +29,40 @@ public class EmailService {
         
         String body = String.format(
             """
+            <!DOCTYPE html>
             <html>
-            <body>
-                <h2>Welcome to ProceduralNexus!</h2>
-                <p>Hello,</p>
-                <p>Please verify your account by clicking the link below:</p>
-                <p><a href="%s" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
-                <p>Or copy and paste this link in your browser:</p>
-                <p>%s</p>
-                <p>This link will expire in 24 hours.</p>
-                <p>If you did not create an account, please ignore this email.</p>
-                <br>
-                <p>Best regards,<br>ProceduralNexus Team</p>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #007bff; margin-top: 0;">Welcome to ProceduralNexus!</h2>
+                    <p>Hello,</p>
+                    <p>Thank you for registering! Please verify your account by clicking the button below:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Verify Email Address</a>
+                    </div>
+                    
+                    <p>Or copy and paste this link in your browser:</p>
+                    <p style="background-color: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all;">
+                        <a href="%s" style="color: #007bff;">%s</a>
+                    </p>
+                    
+                    <p style="color: #dc3545; font-weight: bold;">⏰ This link will expire in 24 hours.</p>
+                    <p style="color: #6c757d; font-size: 14px;">If you did not create an account, please ignore this email.</p>
+                    
+                    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
+                    <p style="color: #6c757d; font-size: 12px; margin-bottom: 0;">
+                        Best regards,<br>
+                        <strong>ProceduralNexus Team</strong>
+                    </p>
+                </div>
             </body>
             </html>
             """,
-            verificationUrl, verificationUrl
+            verificationUrl, verificationUrl, verificationUrl
         );
 
         sendEmail(toEmail, subject, body);
