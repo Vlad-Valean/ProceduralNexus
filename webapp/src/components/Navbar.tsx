@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
     if (role === "user" && userEmail) {
       const fetchProfiles = async () => {
         try {
-          const res = await fetch("http://localhost:8081/profiles", {
+          const res = await fetch("http://localhost:8080/profiles", {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {

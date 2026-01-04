@@ -10,7 +10,7 @@ export type HrUsersResponseDto = {
   users: HrUserDto[];
 };
 
-const API_URL = "http://localhost:8081";
+const API_URL = "http://localhost:8080";
 
 export async function getHrUsers(): Promise<HrUsersResponseDto> {
   const token = localStorage.getItem("token");
