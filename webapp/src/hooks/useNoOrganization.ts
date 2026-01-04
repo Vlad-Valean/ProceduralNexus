@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_BASE_URL = "http://localhost:8081";
+const API_BASE_URL = "http://localhost:8080";
 
 function getUserRoles(): string[] {
   try {

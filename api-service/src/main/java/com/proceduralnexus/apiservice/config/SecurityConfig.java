@@ -34,8 +34,8 @@ public class SecurityConfig {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
-    // @Autowired
-    // private com.proceduralnexus.apiservice.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    @Autowired
+    private com.proceduralnexus.apiservice.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -80,21 +80,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> {});
         http.csrf(csrf -> csrf.disable())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/**").permitAll()
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                                .anyRequest().authenticated()
-                );
-                // .oauth2Login(oauth2 -> oauth2
-                //         .successHandler(oAuth2LoginSuccessHandler)
-                // );
+            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth ->
+                auth.requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2LoginSuccessHandler)
+            );
 
         http.authenticationProvider(authenticationProvider());
-
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }
