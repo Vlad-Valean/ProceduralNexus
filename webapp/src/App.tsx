@@ -14,6 +14,7 @@ function OAuth2RedirectHandler() {
   }, [location, navigate]);
   return <div>Signing in with Google...</div>;
 }
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import HrDashboard from './pages/HrDashboard';
@@ -23,6 +24,7 @@ import About from './pages/About';
 import Market from './pages/Market';
 import UserDashboard from './pages/UserDashboard';
 import Profile from './pages/Profile';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import './App.css';
 import React from 'react';
 import useNoOrganization from './hooks/useNoOrganization';
@@ -71,6 +73,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/about" element={<About />} />
       <Route
         path="/market"

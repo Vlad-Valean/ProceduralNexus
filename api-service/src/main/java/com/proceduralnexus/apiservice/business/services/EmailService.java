@@ -1,3 +1,4 @@
+
 package com.proceduralnexus.apiservice.business.services;
 
 import jakarta.mail.MessagingException;
@@ -225,6 +226,45 @@ public class EmailService {
             userName, organizationName, role, baseUrl
         );
 
+        sendEmail(toEmail, subject, body);
+    }
+
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        String subject = "[ProceduralNexus] Password Reset Request";
+        String resetUrl = baseUrl + "/reset-password?token=" + token;
+        String body = String.format(
+                                    """
+                                        <!DOCTYPE html>
+                                        <html>
+                                        <head>
+                                            <meta charset=\"UTF-8\">
+                                            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                                        </head>
+                                        <body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">
+                                            <div style=\"background-color: #f8f9fa; padding: 20px; border-radius: 10px;\">
+                                                <h2 style=\"color: #007bff; margin-top: 0;\">Reset Your Password</h2>
+                                                <p>Hello,</p>
+                                                <p>We received a request to reset your password. Click the button below to set a new password:</p>
+                                                <div style=\"text-align: center; margin: 30px 0;\">
+                                                    <a href=\"%s\" style=\"background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;\">Reset Password</a>
+                                                </div>
+                                                <p>Or copy and paste this link in your browser:</p>
+                                                <p style=\"background-color: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all;\">
+                                                    <a href=\"%s\" style=\"color: #007bff;\">%s</a>
+                                                </p>
+                                                <p style=\"color: #dc3545; font-weight: bold;\">⏰ This link will expire in 1 hour.</p>
+                                                <p style=\"color: #6c757d; font-size: 14px;\">If you did not request a password reset, you can ignore this email.</p>
+                                                <hr style=\"border: none; border-top: 1px solid #dee2e6; margin: 20px 0;\">
+                                                <p style=\"color: #6c757d; font-size: 12px; margin-bottom: 0;\">
+                                                    Best regards,<br>
+                                                    <strong>ProceduralNexus Team</strong>
+                                                </p>
+                                            </div>
+                                        </body>
+                                        </html>
+                                        """,
+                                        resetUrl, resetUrl, resetUrl
+            );
         sendEmail(toEmail, subject, body);
     }
 
