@@ -18,7 +18,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { loginApi } from '../services/authService';
+import { loginApi, requestPasswordReset } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 
 type FormData = {
@@ -142,7 +142,7 @@ const Login: React.FC = () => {
     setResetOpen(false);
   };
 
-  const handleResetContinue = () => {
+  const handleResetContinue = async () => {
     if (!resetEmail.trim()) {
       setResetError('Email is required.');
       return;
@@ -152,9 +152,18 @@ const Login: React.FC = () => {
       setResetError('Please enter a valid email address.');
       return;
     }
-
-    console.log('Send reset link to:', resetEmail);
-    setResetOpen(false);
+    try {
+      await requestPasswordReset(resetEmail);
+      setResetOpen(false);
+      setSnackbarOpen(true);
+      setApiError('If the email exists, a reset link was sent.');
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'message' in e) {
+        setResetError((e as { message?: string }).message || 'Failed to send reset link.');
+      } else {
+        setResetError('Failed to send reset link.');
+      }
+    }
   };
 
   const handleSnackbarClose = (

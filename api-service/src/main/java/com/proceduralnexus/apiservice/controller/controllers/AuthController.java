@@ -1,6 +1,8 @@
 package com.proceduralnexus.apiservice.controller.controllers;
 
 import com.proceduralnexus.apiservice.business.services.EmailVerificationService;
+import com.proceduralnexus.apiservice.business.services.PasswordResetService;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.proceduralnexus.apiservice.data.entities.Profile;
 import com.proceduralnexus.apiservice.data.entities.Role;
 import com.proceduralnexus.apiservice.data.entities.RoleName;
@@ -176,7 +178,32 @@ public class AuthController {
                     .body(new MessageResponse("Unable to send verification email. Email may not exist or is already verified."));
         }
     }
+        @Autowired
+    PasswordResetService passwordResetService;
+    // Request password reset (send email)
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        try {
+            passwordResetService.createPasswordResetToken(email);
+            return ResponseEntity.ok(new MessageResponse("Password reset link sent!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(e.getMessage()));
+        }
+    }
 
+    // Confirm password reset (set new password)
+    @PostMapping("/confirm-password-reset")
+    public ResponseEntity<?> confirmPasswordReset(@RequestBody java.util.Map<String, String> body) {
+        String token = body.get("token");
+        String newPassword = body.get("newPassword");
+        try {
+            passwordResetService.resetPassword(token, newPassword);
+            return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse(e.getMessage()));
+        }
+    }
     // @GetMapping("/google")
     // public ResponseEntity<?> googleAuth() {
     //     return ResponseEntity.status(302).header("Location", "/oauth2/authorization/google").build();
