@@ -157,8 +157,12 @@ const Login: React.FC = () => {
       setResetOpen(false);
       setSnackbarOpen(true);
       setApiError('If the email exists, a reset link was sent.');
-    } catch (e: any) {
-      setResetError(e.message || 'Failed to send reset link.');
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'message' in e) {
+        setResetError((e as { message?: string }).message || 'Failed to send reset link.');
+      } else {
+        setResetError('Failed to send reset link.');
+      }
     }
   };
 

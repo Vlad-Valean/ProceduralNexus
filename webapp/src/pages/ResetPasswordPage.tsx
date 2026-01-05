@@ -33,8 +33,12 @@ const ResetPasswordPage: React.FC = () => {
       await confirmPasswordReset(token, newPassword);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
-    } catch (e: any) {
-      setError(e.message || 'Failed to reset password.');
+    } catch (e: unknown) {
+        if (e && typeof e === 'object' && 'message' in e) {
+          setError((e as { message?: string }).message || 'Failed to reset password.');
+        } else {
+          setError('Failed to reset password.');
+        }
     } finally {
       setLoading(false);
     }
