@@ -50,7 +50,10 @@ const Login: React.FC = () => {
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  const [resetError, setResetError] = useState<string | undefined>();
+  const [, setResetError] = useState<string | undefined>();
+  const [resetSnackbarOpen, setResetSnackbarOpen] = useState(false);
+  const [resetSnackbarMsg, setResetSnackbarMsg] = useState('');
+  const [resetSnackbarType, setResetSnackbarType] = useState<'error' | 'success'>('error');
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -145,24 +148,39 @@ const Login: React.FC = () => {
   const handleResetContinue = async () => {
     if (!resetEmail.trim()) {
       setResetError('Email is required.');
+      setResetSnackbarType('error');
+      setResetSnackbarMsg('Please enter your email address.');
+      setResetSnackbarOpen(true);
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(resetEmail)) {
       setResetError('Please enter a valid email address.');
+      setResetSnackbarType('error');
+      setResetSnackbarMsg('Please enter a valid email address.');
+      setResetSnackbarOpen(true);
       return;
     }
     try {
       await requestPasswordReset(resetEmail);
       setResetOpen(false);
-      setSnackbarOpen(true);
-      setApiError('If the email exists, a reset link was sent.');
+      setResetSnackbarType('success');
+      setResetSnackbarMsg('If the email exists, a password reset link has been sent to your email address. Please check your inbox and spam folder.');
+      setResetSnackbarOpen(true);
     } catch (e: unknown) {
+      let msg = 'We could not process your request. Please try again later.';
       if (e && typeof e === 'object' && 'message' in e) {
-        setResetError((e as { message?: string }).message || 'Failed to send reset link.');
-      } else {
-        setResetError('Failed to send reset link.');
+        const raw = (e as { message?: string }).message;
+        if (raw && raw.toLowerCase().includes('not found')) {
+          msg = 'No account found with this email address.';
+        } else if (raw && raw.toLowerCase().includes('entitymanager')) {
+          msg = 'There was a problem processing your request. Please try again later.';
+        }
       }
+      setResetError(undefined);
+      setResetSnackbarType('error');
+      setResetSnackbarMsg(msg);
+      setResetSnackbarOpen(true);
     }
   };
 
@@ -483,6 +501,17 @@ const Login: React.FC = () => {
           {apiError}
         </Alert>
       </Snackbar>
+      {/* Snackbar for reset password modal errors/success */}
+      <Snackbar
+        open={resetSnackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setResetSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setResetSnackbarOpen(false)} severity={resetSnackbarType} sx={{ width: '100%' }}>
+          {resetSnackbarMsg}
+        </Alert>
+      </Snackbar>
 
       {/* Reset password modal */}
       <Dialog
@@ -508,73 +537,75 @@ const Login: React.FC = () => {
           Reset password
         </DialogTitle>
 
-        <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" sx={{ color: '#4b5563', mb: 2 }}>
-            Enter your account&apos;s email address, and we&apos;ll send you a
-            link to reset your password.
-          </Typography>
+        <form autoComplete="off">
+          <DialogContent sx={{ pt: 1 }}>
+            <Typography variant="body2" sx={{ color: '#4b5563', mb: 2 }}>
+              Enter your account&apos;s email address, and we&apos;ll send you a
+              link to reset your password.
+            </Typography>
 
-          <TextField
-            fullWidth
-            type="email"
-            placeholder="Email address"
-            value={resetEmail}
-            onChange={e => {
-              setResetEmail(e.target.value);
-              setResetError(undefined);
-            }}
-            error={Boolean(resetError)}
-            helperText={resetError}
-            autoComplete="off"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3.5,
-                bgcolor: '#f4f6fb',
-                height: 48,
-                overflow: 'hidden',
-                '& fieldset': {
-                  borderColor: '#dde3f0',
+            <TextField
+              fullWidth
+              type="email"
+              placeholder="Email address"
+              value={resetEmail}
+              onChange={e => {
+                setResetEmail(e.target.value);
+                setResetError(undefined);
+              }}
+              error={false}
+              helperText={''}
+              autoComplete="off"
+              sx={{
+                '& .MuiOutlinedInput-root': {
                   borderRadius: 3.5,
+                  bgcolor: '#f4f6fb',
+                  height: 48,
+                  overflow: 'hidden',
+                  '& fieldset': {
+                    borderColor: '#dde3f0',
+                    borderRadius: 3.5,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#dde3f0',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#dde3f0',
+                  },
                 },
-                '&:hover fieldset': {
-                  borderColor: '#dde3f0',
+                '& input:-webkit-autofill': {
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#dde3f0',
-                },
-              },
-              '& input:-webkit-autofill': {
-              },
-            }}
-          />
-        </DialogContent>
+              }}
+            />
+          </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1.5 }}>
-          <Button
-            onClick={handleCloseReset}
-            sx={{
-              textTransform: 'none',
-              color: '#4b5563',
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleResetContinue}
-            sx={{
-              textTransform: 'none',
-              borderRadius: 3.25,
-              px: 3,
-              bgcolor: '#111827',
-              boxShadow: 'none',
-              '&:hover': {
-              },
-            }}
-          >
-            Continue
-          </Button>
-        </DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1.5 }}>
+            <Button
+              onClick={handleCloseReset}
+              sx={{
+                textTransform: 'none',
+                color: '#4b5563',
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleResetContinue}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 3.25,
+                px: 3,
+                bgcolor: '#111827',
+                boxShadow: 'none',
+                '&:hover': {
+                },
+              }}
+            >
+              Continue
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </>
   );
