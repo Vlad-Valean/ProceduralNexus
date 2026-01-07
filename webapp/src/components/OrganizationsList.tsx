@@ -182,16 +182,30 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
     try {
       if (!selectedOrg) return;
       const token = localStorage.getItem("token") || "";
+      console.log("=== APPLICATION SUBMIT DEBUG ===");
+      console.log("Token exists:", !!token);
+      console.log("Token value:", token ? token.substring(0, 20) + "..." : "NO TOKEN");
+      console.log("Selected Org ID:", selectedOrg.id);
+      console.log("User CV ID:", userCvId);
+      
       const appRes = await fetch(`${API_BASE_URL}/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ organizationId: selectedOrg.id }),
+        body: JSON.stringify({ 
+          organizationId: selectedOrg.id,
+          cvDocumentId: userCvId ? parseInt(userCvId) : null
+        }),
       });
+      
+      console.log("Response status:", appRes.status);
+      console.log("Response ok:", appRes.ok);
+      
       if (!appRes.ok) {
         const errText = await appRes.text();
+        console.error("Error response:", errText);
         setErrorMsg(`Failed to create application: ${errText}`);
         setErrorOpen(true);
         throw new Error("Failed to create application");

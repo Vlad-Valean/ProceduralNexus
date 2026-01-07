@@ -28,7 +28,7 @@ public class JwtUtils {
 
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
-        return generateTokenFromUsername(userPrincipal.getUsername());
+        return generateTokenFromUsernameAndRoles(userPrincipal.getUsername(), userPrincipal.getAuthorities());
     }
 
     public String generateTokenFromUsernameAndRoles(String username, Collection<? extends GrantedAuthority> authorities) {
