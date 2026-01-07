@@ -97,7 +97,9 @@ public class DocumentService implements IDocumentService {
 
         Document document = new Document();
         document.setName(displayName);
-        document.setFilePath(targetLocation.toString());
+       // document.setFilePath(targetLocation.toString());
+        Path relativePath = Paths.get("uploads").resolve(storedFileName).normalize();
+        document.setFilePath(relativePath.toString().replace("\\", "/"));
         document.setFileSizeInBytes(file.getSize());
         document.setBatchId(batchId);
         document.setUploader(uploader);
@@ -180,7 +182,11 @@ public class DocumentService implements IDocumentService {
                 );
 
         try {
-            Path filePath = Paths.get(document.getFilePath()).normalize();
+           // Path filePath = Paths.get(document.getFilePath()).normalize();
+            Path stored = Paths.get(document.getFilePath()).normalize();
+            Path filePath = stored.isAbsolute()
+                    ? stored
+                    : Paths.get("").toAbsolutePath().resolve(stored).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;
