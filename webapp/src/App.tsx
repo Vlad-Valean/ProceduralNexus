@@ -8,7 +8,35 @@ function OAuth2RedirectHandler() {
     const token = params.get('token');
     if (token) {
       localStorage.setItem('token', token);
-      // Optionally, fetch user info here and store roles/email if needed
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Try to extract email (common: email, sub, preferred_username)
+        const email = payload.email || payload.sub || payload.preferred_username || '';
+        if (email) localStorage.setItem('userEmail', email);
+        // Try to extract roles (common: roles, authorities, role, scope)
+        // Extract roles from 'roles' claim (array)
+        let roles = [];
+        if (Array.isArray(payload.roles)) {
+          roles = payload.roles;
+        } else if (typeof payload.roles === 'string') {
+          roles = payload.roles.split(/[ ,]+/);
+        }
+        // Fallback to other claims if needed
+        if (roles.length === 0) {
+          if (Array.isArray(payload.authorities)) roles = payload.authorities;
+          else if (typeof payload.authorities === 'string') roles = payload.authorities.split(/[ ,]+/);
+        }
+        // Fallback: if still empty, try to infer from sub/email
+        if (roles.length === 0 && payload.sub) {
+          // Example: if email contains 'admin', add ADMIN
+          if (payload.sub.includes('admin')) roles.push('ADMIN');
+          if (payload.sub.includes('hr')) roles.push('HR');
+          if (payload.sub.includes('user')) roles.push('USER');
+        }
+        localStorage.setItem('userRoles', JSON.stringify(roles));
+      } catch (e) {
+        // Optionally handle error
+      }
     }
     navigate('/', { replace: true });
   }, [location, navigate]);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Paper,
   Button,
@@ -12,115 +12,13 @@ import {
   TableBody,
   Pagination,
 } from "@mui/material";
+
+import { getAdminLogs } from "../services/adminLogsService";
+import type { LogEntry } from "../services/adminLogsService";
+
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
-const MOCK_LOGS = [
-  {
-    timestamp: "2024-05-01 10:15:00",
-    user: "alice@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-01 10:17:23",
-    user: "bob@example.com",
-    action: "Upload",
-    description: "Uploaded document contract.pdf.",
-  },
-  {
-    timestamp: "2024-05-01 10:20:10",
-    user: "carol@example.com",
-    action: "Download",
-    description: "Downloaded file resume.pdf.",
-  },
-  {
-    timestamp: "2024-05-01 11:00:00",
-    user: "alice@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-02 09:00:00",
-    user: "bob@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  { timestamp: "2024-05-02 09:05:00", user: "dave@example.com", action: "Delete", description: "Deleted file old_contract.pdf." },
-  { timestamp: "2024-05-02 09:10:00", user: "eve@example.com", action: "Edit", description: "Edited profile information." },
-  { timestamp: "2024-05-02 09:15:00", user: "frank@example.com", action: "Share", description: "Shared document NDA.pdf." },
-  {
-    timestamp: "2024-05-02 09:20:00",
-    user: "grace@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-02 09:25:00",
-    user: "heidi@example.com",
-    action: "Upload",
-    description: "Uploaded document invoice.pdf.",
-  },
-  {
-    timestamp: "2024-05-02 09:30:00",
-    user: "ivan@example.com",
-    action: "Download",
-    description: "Downloaded file offer.pdf.",
-  },
-  {
-    timestamp: "2024-05-02 09:35:00",
-    user: "judy@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-03 08:00:00",
-    user: "alice@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-03 08:05:00",
-    user: "bob@example.com",
-    action: "Edit",
-    description: "Changed password.",
-  },
-  {
-    timestamp: "2024-05-03 08:10:00",
-    user: "carol@example.com",
-    action: "Upload",
-    description: "Uploaded document report.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:15:00",
-    user: "dave@example.com",
-    action: "Download",
-    description: "Downloaded file summary.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:20:00",
-    user: "eve@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-03 08:25:00",
-    user: "frank@example.com",
-    action: "Share",
-    description: "Shared document roadmap.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:30:00",
-    user: "grace@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-03 08:35:00",
-    user: "heidi@example.com",
-    action: "Edit",
-    description: "Updated contact details.",
-  },
-];
+
 
 interface AdminLogsProps {
   onBack: () => void;
@@ -147,46 +45,65 @@ const LOGS_PAGE_SIZE_ALL = 8;
 const LOGS_PAGE_SIZE_OTHER = 7;
 const ROW_HEIGHT = 36;
 
+
 const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
   const [startDate, setStartDate] = useState<string>("");
   const [startTime, setStartTime] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [page, setPage] = useState(1);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    setLoading(true);
+    getAdminLogs()
+      .then((data) => {
+        setLogs(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load logs");
+        setLoading(false);
+      });
+  }, []);
 
   const getDateTime = (date: string, time: string) => {
     if (!date) return undefined;
     return time ? `${date}T${time}` : `${date}T00:00`;
   };
 
-  const filteredLogs = MOCK_LOGS.filter((log) => {
-    const logDate = log.timestamp.replace(" ", "T");
+  const filteredLogs = logs.filter((log) => {
+    const logDate = log.loggedAt || "";
     const start = getDateTime(startDate, startTime);
     const end = getDateTime(endDate, endTime);
-
     if (start && logDate < start) return false;
     if (end && logDate > end) return false;
     return true;
   });
 
   const pageSize = logsTarget === undefined || logsTarget === null ? LOGS_PAGE_SIZE_ALL : LOGS_PAGE_SIZE_OTHER;
-
   const total = filteredLogs.length;
   const pageCount = Math.ceil(total / pageSize) || 1;
   const safePage = Math.min(page, pageCount);
-
   const logsToShow = filteredLogs.slice(
     (safePage - 1) * pageSize,
     safePage * pageSize
   );
-
   const startIdx = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const endIdx = Math.min(safePage * pageSize, total);
-
   const hasResults = logsToShow.length > 0;
   const emptyRows = hasResults
     ? Math.max(0, pageSize - logsToShow.length)
     : Math.max(0, pageSize - 1);
+
+  if (loading) {
+    return <Paper sx={{ p: 4, textAlign: "center" }}>Loading logs...</Paper>;
+  }
+  if (error) {
+    return <Paper sx={{ p: 4, textAlign: "center", color: "red" }}>{error}</Paper>;
+  }
 
   return (
     <Paper
@@ -413,10 +330,10 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
                 <>
                   {logsToShow.map((log, idx) => (
                     <TableRow key={idx} sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.timestamp}</TableCell>
+                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.loggedAt}</TableCell>
                       <TableCell sx={{ ...bodyCellSx, color: "#67728A" }}>{log.user}</TableCell>
                       <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.action}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.description}</TableCell>
+                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.details}</TableCell>
                     </TableRow>
                   ))}
                   {emptyRows > 0 &&

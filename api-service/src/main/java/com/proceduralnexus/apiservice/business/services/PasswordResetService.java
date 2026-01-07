@@ -14,7 +14,10 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 public class PasswordResetService {
     @Autowired
     private PasswordResetTokenRepository tokenRepository;

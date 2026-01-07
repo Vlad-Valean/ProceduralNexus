@@ -32,13 +32,29 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                
+                // Extrage roles din JWT
+                java.util.List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
+                java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+                
+                if (roles != null && !roles.isEmpty()) {
+                    // Folosește roles din JWT
+                    for (String role : roles) {
+                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(role));
+                    }
+                } else {
+                    // Fallback la DB dacă nu există roles în JWT
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    authorities.addAll(userDetails.getAuthorities().stream()
+                            .map(a -> new org.springframework.security.core.authority.SimpleGrantedAuthority(a.getAuthority()))
+                            .collect(java.util.stream.Collectors.toList()));
+                }
+                
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userDetails,
+                                username,
                                 null,
-                                userDetails.getAuthorities());
+                                authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);

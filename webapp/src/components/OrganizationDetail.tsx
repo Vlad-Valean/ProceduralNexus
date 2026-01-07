@@ -388,11 +388,34 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
                                 border: "none",
                               },
                             }}
-                            onClick={() => {
-                              setSnackbarMsg(
-                                `User ${email} received an email for updating their password`
-                              );
-                              setSnackbarOpen(true);
+                            onClick={async () => {
+                              try {
+                                const token = localStorage.getItem("token");
+                                const roles = JSON.parse(localStorage.getItem("userRoles") || "[]");
+                                const isAdmin = roles.includes("ADMIN");
+                                const endpoint = isAdmin 
+                                  ? `http://localhost:8080/admin/logs/users/${encodeURIComponent(email)}/reset-password`
+                                  : `http://localhost:8080/hr/users/${encodeURIComponent(email)}/reset-password`;
+                                const res = await fetch(endpoint, {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                  },
+                                });
+                                if (res.ok) {
+                                  setSnackbarMsg(
+                                    `User ${email} received an email for updating their password`
+                                  );
+                                  setSnackbarOpen(true);
+                                } else {
+                                  setSnackbarMsg(`Failed to send reset email to ${email}`);
+                                  setSnackbarOpen(true);
+                                }
+                              } catch (error) {
+                                setSnackbarMsg(`Error sending reset email to ${email}`);
+                                setSnackbarOpen(true);
+                              }
                             }}
                           >
                             <RestartAltIcon fontSize="small" />

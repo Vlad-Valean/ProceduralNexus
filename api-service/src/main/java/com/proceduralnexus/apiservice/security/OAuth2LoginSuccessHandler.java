@@ -63,7 +63,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             profileRepository.save(profile);
         }
 
-        String jwt = jwtUtils.generateTokenFromUsername(email);
+        // Extrage authorities din profil
+        java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = profile.getRoles().stream()
+            .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName().name()))
+            .toList();
+        String jwt = jwtUtils.generateTokenFromUsernameAndRoles(email, authorities);
 
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:80/oauth2/redirect")
             .queryParam("token", jwt)

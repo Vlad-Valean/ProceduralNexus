@@ -13,6 +13,7 @@ import com.proceduralnexus.apiservice.data.payloads.RegisterRequest;
 import com.proceduralnexus.apiservice.data.repositories.ProfileRepository;
 import com.proceduralnexus.apiservice.data.repositories.RoleRepository;
 import com.proceduralnexus.apiservice.security.JwtUtils;
+import com.proceduralnexus.apiservice.business.services.LoggingService;
 import com.proceduralnexus.apiservice.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/auth")
 public class AuthController {
     @Autowired
+    private LoggingService loggingService;
+    @Autowired
     AuthenticationManager authenticationManager;
 
     @Autowired
@@ -57,7 +60,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
             // Check if email is verified
             Profile user = userRepository.findByEmail(loginRequest.getEmail())
@@ -77,7 +80,9 @@ public class AuthController {
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(new JwtResponse(jwt,
+                // Log login action
+                loggingService.logAction(userDetails.getEmail(), "LOGIN", "User logged in");
+                return ResponseEntity.ok(new JwtResponse(jwt,
                     userDetails.getId(),
                     userDetails.getEmail(),
                     roles));
@@ -136,6 +141,8 @@ public class AuthController {
 
         user.setRoles(roles);
         Profile savedUser = userRepository.save(user);
+        // Log register action
+        loggingService.logAction(savedUser.getEmail(), "REGISTER", "User registered");
 
         // Send verification email
         try {

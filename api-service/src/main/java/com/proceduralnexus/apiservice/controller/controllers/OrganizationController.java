@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.proceduralnexus.apiservice.business.interfaces.IOrganizationService;
 import com.proceduralnexus.apiservice.business.services.ProfileService;
+import com.proceduralnexus.apiservice.business.services.LoggingService;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationCreateDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationResponseDto;
 import com.proceduralnexus.apiservice.controller.dtos.OrganizationUpdateDto;
@@ -28,14 +29,17 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "bearerAuth")
 public class OrganizationController {
 
-    private final IOrganizationService organizationService;
-    private final ProfileService profileService;
+        private final IOrganizationService organizationService;
+        private final ProfileService profileService;
+        private final LoggingService loggingService;
 
-    public OrganizationController(IOrganizationService organizationService,
-                                  ProfileService profileService) {
-        this.organizationService = organizationService;
-        this.profileService = profileService;
-    }
+        public OrganizationController(IOrganizationService organizationService,
+                                                                  ProfileService profileService,
+                                                                  LoggingService loggingService) {
+                this.organizationService = organizationService;
+                this.profileService = profileService;
+                this.loggingService = loggingService;
+        }
 
     /**
      * GET /organizations
@@ -66,20 +70,23 @@ public class OrganizationController {
             summary = "Create organization",
             description = "Creates a new organization. Default owner is current user. If caller is ADMIN, can provide ownerEmail."
     )
-    public OrganizationResponseDto createOrganization(
-            @Valid @RequestBody OrganizationCreateDto request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        Profile owner;
+        public OrganizationResponseDto createOrganization(
+                        @Valid @RequestBody OrganizationCreateDto request,
+                        @AuthenticationPrincipal UserDetails userDetails
+        ) {
+                Profile owner;
 
-        if (request.getOwnerEmail() != null && !request.getOwnerEmail().isBlank()) {
-            owner = profileService.findByEmail(request.getOwnerEmail().trim());
-        } else {
-            owner = profileService.findByEmail(userDetails.getUsername());
+                if (request.getOwnerEmail() != null && !request.getOwnerEmail().isBlank()) {
+                        owner = profileService.findByEmail(request.getOwnerEmail().trim());
+                } else {
+                        owner = profileService.findByEmail(userDetails.getUsername());
+                }
+
+                OrganizationResponseDto response = organizationService.createOrganization(request, owner);
+                // Log action
+                loggingService.logOrganizationCreated(userDetails.getUsername(), response.getName());
+                return response;
         }
-
-        return organizationService.createOrganization(request, owner);
-    }
 
 
     /**
@@ -135,11 +142,13 @@ public class OrganizationController {
         String email = userDetails.getUsername();
         Profile currentUser = profileService.findByEmail(email);
 
-
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(a -> a.equals("ADMIN"));
 
+        // Get organization name before delete (for logging)
+        OrganizationResponseDto org = organizationService.getOrganization(id);
         organizationService.deleteOrganization(id, currentUser, isAdmin);
+        loggingService.logOrganizationDeleted(email, org.getName());
     }
 }

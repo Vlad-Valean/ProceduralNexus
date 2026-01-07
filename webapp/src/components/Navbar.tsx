@@ -259,7 +259,9 @@ const Navbar: React.FC = () => {
                 transition: "box-shadow 0.1s ease, background 0.1s ease",
               }}
               onClick={() => {
-                localStorage.removeItem("userRole");
+                localStorage.removeItem("token");
+                localStorage.removeItem("userEmail");
+                localStorage.removeItem("userRoles");
                 navigate("/login");
               }}
               onMouseDown={(e) => e.preventDefault()}

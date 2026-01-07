@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Collection;
+import org.springframework.security.core.GrantedAuthority;
 
 @Component
 public class JwtUtils {
@@ -29,6 +31,17 @@ public class JwtUtils {
         return generateTokenFromUsername(userPrincipal.getUsername());
     }
 
+    public String generateTokenFromUsernameAndRoles(String username, Collection<? extends GrantedAuthority> authorities) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("roles", authorities.stream().map(GrantedAuthority::getAuthority).toList())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // For backward compatibility
     public String generateTokenFromUsername(String username) {
         return Jwts.builder()
                 .setSubject(username)
@@ -45,6 +58,18 @@ public class JwtUtils {
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build()
                .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public java.util.List<String> getRolesFromJwtToken(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(key()).build()
+                .parseClaimsJws(token).getBody();
+        Object rolesObj = claims.get("roles");
+        if (rolesObj instanceof java.util.List<?>) {
+            return ((java.util.List<?>) rolesObj).stream()
+                    .map(Object::toString)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return new java.util.ArrayList<>();
     }
 
     public boolean validateJwtToken(String authToken) {

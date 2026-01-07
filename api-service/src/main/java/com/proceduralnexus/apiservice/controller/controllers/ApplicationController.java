@@ -3,6 +3,7 @@ package com.proceduralnexus.apiservice.controller.controllers;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -47,12 +48,14 @@ public class ApplicationController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('HR')")
     @Operation(summary = "List pending applications for HR org", description = "Returns pending applications for the HR's organization.")
     public List<ApplicationResponseDto> listForHr(@AuthenticationPrincipal UserDetails userDetails) {
         return applicationService.listPendingForHr(userDetails.getUsername());
     }
 
     @PostMapping("/{id}/accept")
+    @PreAuthorize("hasAuthority('HR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Accept application", description = "Accept application: set applicant organization and delete application.")
     public void accept(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
@@ -60,6 +63,7 @@ public class ApplicationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('HR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Reject application", description = "Reject application: delete application.")
     public void reject(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
