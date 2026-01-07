@@ -69,4 +69,3 @@ services:
 
 networks:
   proceduralnexus-net:
-    external: true
