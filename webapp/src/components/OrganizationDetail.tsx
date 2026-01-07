@@ -412,7 +412,7 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
                                   setSnackbarMsg(`Failed to send reset email to ${email}`);
                                   setSnackbarOpen(true);
                                 }
-                              } catch (error) {
+                              } catch {
                                 setSnackbarMsg(`Error sending reset email to ${email}`);
                                 setSnackbarOpen(true);
                               }

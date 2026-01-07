@@ -53,20 +53,22 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
   const [endTime, setEndTime] = useState<string>("");
   const [page, setPage] = useState(1);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    setLoading(true);
-    getAdminLogs()
-      .then((data) => {
+    const fetchLogs = async () => {
+      setLoading(true);
+      try {
+        const data = await getAdminLogs();
         setLogs(data);
-        setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         setError("Failed to load logs");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchLogs();
   }, []);
 
   const getDateTime = (date: string, time: string) => {

@@ -34,7 +34,7 @@ function OAuth2RedirectHandler() {
           if (payload.sub.includes('user')) roles.push('USER');
         }
         localStorage.setItem('userRoles', JSON.stringify(roles));
-      } catch (e) {
+      } catch {
         // Optionally handle error
       }
     }
