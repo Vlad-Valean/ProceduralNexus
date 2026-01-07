@@ -314,6 +314,16 @@ const Login: React.FC = () => {
                         onClick={handleTogglePasswordVisibility}
                         onMouseDown={handleMouseDownPassword}
                         edge="end"
+                        disableRipple
+                        sx={{
+                          border: 'none',
+                          boxShadow: 'none',
+                          outline: 'none',
+                          background: 'none',
+                          '&:focus': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                          '&:active': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                          '&:hover': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                        }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>

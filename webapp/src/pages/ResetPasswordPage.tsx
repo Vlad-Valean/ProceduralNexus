@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, Alert, InputAdornment, IconButton } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { confirmPasswordReset } from '../services/authService';
 
 const ResetPasswordPage: React.FC = () => {
@@ -12,6 +14,8 @@ const ResetPasswordPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,23 +57,102 @@ const ResetPasswordPage: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <TextField
             label="New Password"
-            type="password"
+            type={showNewPassword ? 'text' : 'password'}
             fullWidth
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, mt: 2}}
             disabled={loading || success}
+            autoComplete="off"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowNewPassword((show) => !show)}
+                    edge="end"
+                    tabIndex={-1}
+                    disableRipple
+                    sx={{
+                      border: 'none',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      background: 'none',
+                      '&:focus': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                      '&:active': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                      '&:hover': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                    }}
+                  >
+                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <TextField
             label="Confirm Password"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             fullWidth
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2}}
             disabled={loading || success}
+            autoComplete="off"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowConfirmPassword((show) => !show)}
+                    edge="end"
+                    tabIndex={-1}
+                    disableRipple
+                    sx={{
+                      border: 'none',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      background: 'none',
+                      '&:focus': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                      '&:active': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                      '&:hover': { border: 'none', outline: 'none', boxShadow: 'none', background: 'none' },
+                    }}
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading || success}>
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            disabled={loading || success}
+            sx={{
+              mt: 1,
+              fontWeight: 600,
+              fontSize: 16,
+              textTransform: 'none',
+              borderRadius: 1,
+              py: 1.4,
+              bgcolor: '#6f7688',
+              boxShadow: 'none',
+              border: '2px solid #6f7688',
+              '&:hover': {
+                bgcolor: '#636a7b',
+                boxShadow: 'none',
+                border: '2px solid #636a7b',
+              },
+              '&:focus': {
+                border: '2px solid #636a7b',
+                outline: 'none',
+              },
+              '&:active': {
+                border: '2px solid #636a7b',
+                outline: 'none',
+              },
+            }}
+          >
             {loading ? 'Resetting...' : 'Reset Password'}
           </Button>
         </form>
