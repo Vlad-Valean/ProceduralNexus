@@ -87,7 +87,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onUserAdded }) => {
         throw new Error(`Add user failed (${res.status}). ${txt}`);
       }
 
-      // succes -> refresh listă sus
       await onUserAdded?.();
 
       setEmail("");
