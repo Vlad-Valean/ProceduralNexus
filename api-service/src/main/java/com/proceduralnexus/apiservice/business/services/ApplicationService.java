@@ -27,19 +27,22 @@ public class ApplicationService {
     private final OrganizationRepository organizationRepository;
     private final DocumentRepository documentRepository;
     private final EmailService emailService;
+    private final LoggingService loggingService;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
             ProfileRepository profileRepository,
             OrganizationRepository organizationRepository,
             DocumentRepository documentRepository,
-            EmailService emailService
+            EmailService emailService,
+            LoggingService loggingService
     ) {
         this.applicationRepository = applicationRepository;
         this.profileRepository = profileRepository;
         this.organizationRepository = organizationRepository;
         this.documentRepository = documentRepository;
         this.emailService = emailService;
+        this.loggingService = loggingService;
     }
 
     @Transactional
@@ -78,6 +81,7 @@ public class ApplicationService {
         app.setStatus(Application.ApplicationStatus.PENDING);
 
         Application saved = applicationRepository.save(app);
+        loggingService.logApplicationCreated(applicantEmail, org.getName());
         return toDto(saved);
     }
 
@@ -133,6 +137,8 @@ public class ApplicationService {
 
         applicationRepository.delete(app);
 
+        loggingService.logApplicationAccepted(hrEmail, applicant.getEmail(), organization.getName());
+        
         // Send acceptance email notification
         try {
             String userName = applicant.getFirstname() + " " + applicant.getLastname();
@@ -159,6 +165,8 @@ public class ApplicationService {
         
         applicationRepository.delete(app);
 
+        loggingService.logApplicationRejected(hrEmail, applicant.getEmail(), organization.getName());
+        
         // Send rejection email notification
         try {
             String userName = applicant.getFirstname() + " " + applicant.getLastname();

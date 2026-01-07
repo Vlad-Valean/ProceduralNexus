@@ -62,4 +62,19 @@ public class LoggingService {
         logAction(deleterEmail, "ORGANIZATION_DELETED", 
             String.format("Deleted organization '%s'", organizationName));
     }
+    
+    public void logApplicationCreated(String applicantEmail, String organizationName) {
+        logAction(applicantEmail, "APPLICATION_CREATED", 
+            String.format("Created application to organization '%s'", organizationName));
+    }
+    
+    public void logApplicationAccepted(String hrEmail, String applicantEmail, String organizationName) {
+        logAction(hrEmail, "APPLICATION_ACCEPTED", 
+            String.format("Accepted application from %s to organization '%s'", applicantEmail, organizationName));
+    }
+    
+    public void logApplicationRejected(String hrEmail, String applicantEmail, String organizationName) {
+        logAction(hrEmail, "APPLICATION_REJECTED", 
+            String.format("Rejected application from %s to organization '%s'", applicantEmail, organizationName));
+    }
 }

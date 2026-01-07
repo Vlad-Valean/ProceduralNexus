@@ -13,9 +13,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/admin/logs")
+@Tag(name = "admin-logs-controller")
 public class AdminLogsController {
     private final LogEntryRepository logEntryRepository;
     
