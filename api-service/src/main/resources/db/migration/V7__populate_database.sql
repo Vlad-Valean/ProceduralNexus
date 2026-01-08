@@ -365,38 +365,29 @@ INSERT INTO profile (
 )
 SELECT
   gen_random_uuid(),
-
-  firstnames[(i - 1) % array_length(firstnames, 1) + 1],
-  lastnames[(i - 1) % array_length(lastnames, 1) + 1],
-
-  lower(
-    firstnames[(i - 1) % array_length(firstnames, 1) + 1]
-    || '.'
-    || lastnames[(i - 1) % array_length(lastnames, 1) + 1]
-    || i
-    || '@example.com'
-  ),
-
+  fn.firstname,
+  ln.lastname,
+  lower(fn.firstname || '.' || ln.lastname || '@example.com'),
   '$2b$12$1DRd53EUT.X/i4xuVW5MduV258FqazREoWwv3.P2FrQjs6eqeUpl2',
   TRUE,
   NULL,
   NULL,
   now(),
   now()
-FROM generate_series(1, 400) AS s(i)
+FROM (
+  SELECT unnest(ARRAY[
+    'John','Jane','Alex','Maria','Luca','Elena','Andrei','Ioana',
+    'Mihai','Ana','Victor','Sofia','Daniel','Irina','Paul','Laura',
+    'Radu','Bianca','Cristian','Daria'
+  ]) AS firstname
+) fn
 CROSS JOIN (
-  SELECT
-    ARRAY[
-      'John','Jane','Alex','Maria','Luca','Elena','Andrei','Ioana',
-      'Mihai','Ana','Victor','Sofia','Daniel','Irina','Paul','Laura',
-      'Radu','Bianca','Cristian','Daria'
-    ] AS firstnames,
-    ARRAY[
-      'Popescu','Ionescu','Smith','Brown','Taylor','Miller','Wilson',
-      'Anderson','Clark','Lewis','Walker','Hall','Young','Allen',
-      'King','Wright','Scott','Green','Baker','Adams'
-    ] AS lastnames
-) n;
+  SELECT unnest(ARRAY[
+    'Popescu','Ionescu','Smith','Brown','Taylor','Miller','Wilson',
+    'Anderson','Clark','Lewis','Walker','Hall','Young','Allen',
+    'King','Wright','Scott','Green','Baker','Adams'
+  ]) AS lastname
+) ln;
 
 INSERT INTO profile_to_role (profile_id, role_id)
 SELECT id, 1
