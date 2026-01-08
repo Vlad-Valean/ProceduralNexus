@@ -110,7 +110,6 @@ const HrDashboard: React.FC = () => {
 
         const myEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
 
-        // map users (backend already removed owner)
         const mapped: UserRow[] = (usersFromApi ?? [])
           .map((u) => ({
             id: String(u.id ?? u.profileId ?? u.uuid ?? ""),
@@ -151,7 +150,7 @@ const HrDashboard: React.FC = () => {
           else if (it.roles.includes("USER")) usr++;
         }
 
-        setHrCount(hr + 2); // +2 for owner and self
+        setHrCount(hr + 2);
         setUserCount(usr);
       } catch (e: unknown) {
         if (e instanceof DOMException && e.name === "AbortError") return;
