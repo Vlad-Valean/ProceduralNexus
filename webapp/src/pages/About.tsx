@@ -1,10 +1,10 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import { Box, Container, Typography, Button, Paper, Grid } from '@mui/material';
-import { Upload, Search, CheckCircle, Database, Server, Zap } from 'lucide-react';
+import { FileUpload, Search, CheckCircle, Storage, ElectricBolt } from '@mui/icons-material';
 
 
-export default function About() {
+const About: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
       <Navbar />
@@ -99,7 +99,7 @@ export default function About() {
           <Grid container spacing={3}>
             {[
               {
-                icon: Upload,
+                icon: FileUpload,
                 title: 'Upload & Assign',
                 description: 'Upload documents and assign them to team members with customizable workflows and due dates.'
               },
@@ -251,7 +251,7 @@ export default function About() {
                   gap: 1
                 }}
               >
-                <Database size={16} color="#12B76A" />
+                <Storage size={16} color="#12B76A" />
                 <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#12B76A', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
                   PostgreSQL
                 </Box>
@@ -268,7 +268,7 @@ export default function About() {
                   gap: 1
                 }}
               >
-                <Zap size={16} color="#F79009" />
+                <ElectricBolt size={16} color="#F79009" />
                 <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#F79009', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
                   Redis
                 </Box>

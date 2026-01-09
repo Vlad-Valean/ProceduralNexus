@@ -1,10 +1,9 @@
-import React from "react";
+//import React from "react";
 import Navbar from "../components/Navbar";
 import { Box, Container, Typography, Button, Grid, Paper } from '@mui/material';
-import { FileText, TrendingUp, Edit3 } from 'lucide-react';
+import { Description, TrendingUpSharp, DrawRounded } from '@mui/icons-material';
 
-
-export default function Home() {
+const Home: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
       <Navbar />
@@ -174,17 +173,17 @@ export default function Home() {
         <Grid container spacing={3}>
           {[
             {
-              icon: FileText,
+              icon: Description,
               title: 'Document Management',
               description: 'upload, assign, track'
             },
             {
-              icon: TrendingUp,
+              icon: TrendingUpSharp,
               title: 'AI Analysis',
               description: 'extract insights, automate workflows'
             },
             {
-              icon: Edit3,
+              icon: DrawRounded,
               title: 'E‑Signature',
               description: 'secure signing, audit trail'
             }
