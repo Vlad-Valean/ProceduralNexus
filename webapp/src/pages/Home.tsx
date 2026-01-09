@@ -15,7 +15,7 @@ const Home: React.FC = () => {
       <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
         <Grid container spacing={4} alignItems="center">
           {/* Left Column - Text */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Typography
               variant="h1"
               sx={{
@@ -84,7 +84,7 @@ const Home: React.FC = () => {
           </Grid>
 
           {/* Right Column - Preview Card */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={4} key={index}>
             <Paper
               sx={{
                 p: 3,
@@ -191,7 +191,7 @@ const Home: React.FC = () => {
               description: 'secure signing, audit trail'
             }
           ].map((feature, index) => (
-            <Grid item xs={12} md={4} key={index}>
+            <Grid xs={12} md={4} key={index}>
               <Paper
                 sx={{
                   p: 3,
@@ -214,7 +214,7 @@ const Home: React.FC = () => {
                     mb: 2
                   }}
                 >
-                  <feature.icon size={24} color="#2563EB" />
+                  <feature.icon sx={{ fontSize: 24, color: "#2563EB" }} />
                 </Box>
                 <Typography
                   sx={{

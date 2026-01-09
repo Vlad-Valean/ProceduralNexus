@@ -117,7 +117,7 @@ const About: React.FC = () => {
                 description: 'Review, approve, and digitally sign documents with legally-binding e-signatures and full audit trails.'
               }
             ].map((step, index) => (
-              <Grid item xs={12} md={4} key={index}>
+              <Grid xs={12} md={4} key={index}>
                 <Box>
                   <Box
                     sx={{
@@ -131,7 +131,7 @@ const About: React.FC = () => {
                       mb: 2
                     }}
                   >
-                    <step.icon size={24} color="#2563EB" />
+                    <step.icon sx={{ fontSize: 24, color: "#2563EB" }} />
                   </Box>
                   <Typography
                     sx={{
@@ -254,7 +254,7 @@ const About: React.FC = () => {
                   gap: 1
                 }}
               >
-                <Storage size={16} color="#12B76A" />
+                <Storage sx={{ fontSize: 16, color: "#12B76A" }} />
                 <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#12B76A', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
                   PostgreSQL
                 </Box>
@@ -271,7 +271,7 @@ const About: React.FC = () => {
                   gap: 1
                 }}
               >
-                <ElectricBolt size={16} color="#F79009" />
+                <ElectricBolt sx={{ fontSize: 16, color: "#F79009" }} />
                 <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#F79009', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
                   Redis
                 </Box>
@@ -310,7 +310,7 @@ const About: React.FC = () => {
               'User-controlled signature management'
             ].map((item, index) => (
               <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <CheckCircle size={20} color="#12B76A" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <CheckCircle sx={{ fontSize: 20, color: "#12B76A", flexShrink: 0, mt: "2px" }} />
                 <Typography
                   sx={{
                     fontSize: '14px',
