@@ -2,16 +2,15 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import { Box, Container, Typography, Button, Grid, Paper } from '@mui/material';
 import { Description, TrendingUpSharp, DrawRounded } from '@mui/icons-material';
+import { Link } from "react-router-dom";
 
 const Home: React.FC = () => {
   return (
-    <>
     <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
       <Navbar />
       <main>
         <h1>Home</h1>
       </main>
-    </>
       {/* Hero Section */}
       <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
         <Grid container spacing={4} alignItems="center">

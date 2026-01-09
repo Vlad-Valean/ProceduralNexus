@@ -2,17 +2,16 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import { Box, Container, Typography, Button, Paper, Grid } from '@mui/material';
 import { FileUpload, Search, CheckCircle, Storage, ElectricBolt } from '@mui/icons-material';
+import { Link } from "react-router-dom";
 
 
 const About: React.FC = () => {
   return (
-    <>
     <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
       <Navbar />
       <main>
         <h1>About</h1>
       </main>
-    </>
       <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
         {/* Page Title */}
         <Typography
