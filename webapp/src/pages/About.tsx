@@ -6,9 +6,13 @@ import { FileUpload, Search, CheckCircle, Storage, ElectricBolt } from '@mui/ico
 
 const About: React.FC = () => {
   return (
+    <>
     <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
       <Navbar />
-
+      <main>
+        <h1>About</h1>
+      </main>
+    </>
       <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
         {/* Page Title */}
         <Typography
