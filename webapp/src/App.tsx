@@ -11,7 +11,8 @@ function OAuth2RedirectHandler() {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         email = payload.email ?? '';
-      } catch {}
+      } catch {
+      }
       if (email) {
         fetch('http://localhost:8080/auth/oauth-token', {
           method: 'POST',
