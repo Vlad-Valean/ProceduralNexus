@@ -7,10 +7,65 @@ function OAuth2RedirectHandler() {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
     if (token) {
-      localStorage.setItem('token', token);
-      // Optionally, fetch user info here and store roles/email if needed
+      let email = '';
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        email = payload.email ?? '';
+      } catch {}
+      if (email) {
+        fetch('http://localhost:8080/auth/oauth-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.token) {
+              localStorage.setItem('token', data.token);
+              localStorage.setItem('userEmail', data.email ?? '');
+              localStorage.setItem('userRoles', JSON.stringify(data.roles ?? []));
+            } else {
+              // fallback: decode and save from original token
+              localStorage.setItem('token', token);
+              localStorage.setItem('userEmail', '');
+              localStorage.setItem('userRoles', '[]');
+
+            }
+            navigate('/', { replace: true });
+          })
+          .catch(() => {
+            // fallback: decode and save from original token
+            localStorage.setItem('token', token);
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              localStorage.setItem('userEmail', payload.email ?? '');
+              localStorage.setItem('userRoles', JSON.stringify(payload.roles ?? []));
+              if (payload.id) localStorage.setItem('userId', payload.id);
+            } catch {
+              localStorage.setItem('userEmail', '');
+              localStorage.setItem('userRoles', '[]');
+              localStorage.removeItem('userId');
+            }
+            navigate('/', { replace: true });
+          });
+      } else {
+        // fallback: decode and save from original token
+        localStorage.setItem('token', token);
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          localStorage.setItem('userEmail', payload.email ?? '');
+          localStorage.setItem('userRoles', JSON.stringify(payload.roles ?? []));
+          if (payload.id) localStorage.setItem('userId', payload.id);
+        } catch {
+          localStorage.setItem('userEmail', '');
+          localStorage.setItem('userRoles', '[]');
+          localStorage.removeItem('userId');
+        }
+        navigate('/', { replace: true });
+      }
+    } else {
+      navigate('/', { replace: true });
     }
-    navigate('/', { replace: true });
   }, [location, navigate]);
   return <div>Signing in with Google...</div>;
 }
