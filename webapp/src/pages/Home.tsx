@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { Box, Container, Typography, Button, Paper } from "@mui/material";
 import { Description, TrendingUpSharp, DrawRounded } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import undrawSignature from "../assets/home_header.svg";
 
 type Role = "guest" | "user" | "hr" | "admin";
 
@@ -178,93 +179,30 @@ const Home: React.FC = () => {
               display: "flex",
               flexDirection: "column",
               alignItems: { xs: "center", md: "flex-start" },
+              justifyContent: "center",
             }}
           >
-            <Paper
+            <Box
               sx={{
-                p: 3,
-                borderRadius: "12px",
-                border: "1px solid #E6E8EE",
-                boxShadow: "0px 8px 24px rgba(16, 24, 40, 0.08)",
-                backgroundColor: "white",
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: { xs: "center", md: "flex-start" },
+                minHeight: 220,
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  mb: 2,
-                  color: "#111827",
-                  fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
+              <img
+                src={undrawSignature}
+                alt="Signature illustration"
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  height: "auto",
+                  display: "block",
+                  margin: "0 auto",
                 }}
-              >
-                Your documents in numbers
-              </Typography>
-
-              <Box sx={{ display: "flex", justifyContent: "space-around", mb: 3 }}>
-                {[
-                  { label: "PENDING", value: "3", color: "#2563EB" },
-                  { label: "IN REVIEW", value: "1", color: "#F79009" },
-                  { label: "COMPLETED", value: "8", color: "#12B76A" },
-                ].map((stat) => (
-                  <Box key={stat.label} sx={{ textAlign: "center" }}>
-                    <Box
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: "50%",
-                        border: `8px solid ${stat.color}`,
-                        borderRightColor: "#EEF2F6",
-                        borderBottomColor: "#EEF2F6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mb: 1,
-                        position: "relative",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: "20px",
-                          fontWeight: 600,
-                          color: stat.color,
-                          fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
-                        }}
-                      >
-                        {stat.value}
-                      </Typography>
-                    </Box>
-
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontWeight: 500,
-                        color: "#667085",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.02em",
-                        fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
-                      }}
-                    >
-                      {stat.label}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <Box
-                sx={{
-                  borderTop: "1px solid #E6E8EE",
-                  pt: 2,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography sx={{ fontSize: "12px", color: "#667085", fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif" }}>
-                  5 documents awaiting signature
-                </Typography>
-              </Box>
-            </Paper>
+              />
+            </Box>
           </Box>
         </Paper>
       </Box>
