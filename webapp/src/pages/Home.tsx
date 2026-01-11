@@ -1,33 +1,69 @@
-import React from "react";
+import React, { useRef } from "react";
 import Navbar from "../components/Navbar";
-import { Box, Container, Typography, Button, Grid, Paper } from '@mui/material';
+import { Box, Container, Typography, Button, Paper } from '@mui/material';
 import { Description, TrendingUpSharp, DrawRounded } from '@mui/icons-material';
 import { Link } from "react-router-dom";
 
 const Home: React.FC = () => {
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const handleScrollToFeatures = () => {
+    if (featuresRef.current) {
+      featuresRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Navbar />
-      <main>
-        <h1>Home</h1>
-      </main>
-      {/* Hero Section */}
-      <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
-        <Grid container spacing={4} alignItems="center">
+      {/* Hero Section - Full viewport height, centered, single white container */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, mt: 5, mb: 6 }}>
+        <Paper
+          sx={{
+            width: '100%',
+            maxWidth: '1056px',
+            minHeight: { xs: 'auto', md: '70vh' },
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            p: { xs: 3, md: 6 },
+            borderRadius: '18px',
+            boxShadow: '0px 8px 32px rgba(16, 24, 40, 0.10)',
+            backgroundColor: 'white',
+            my: 0,
+          }}
+        >
           {/* Left Column - Text */}
-          <Grid xs={12} md={6}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              maxWidth: { xs: '100%', md: '50%' },
+              pr: { md: 4 },
+              mb: { xs: 4, md: 0 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' },
+              textAlign: { xs: 'center', md: 'left' }
+            }}
+          >
             <Typography
               variant="h1"
               sx={{
-                fontSize: '32px',
-                lineHeight: '40px',
+                fontSize: { xs: '32px', md: '48px' },
+                lineHeight: { xs: '40px', md: '56px' },
                 fontWeight: 600,
                 color: '#111827',
                 mb: 3,
-                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                textAlign: { xs: 'center', md: 'left' },
+                width: '100%'
               }}
             >
-              Streamline documents. Automate analysis. Sign faster.
+                  Streamline documents.<br />
+                  Automate analysis.<br />
+                  Sign faster.
             </Typography>
             <Typography
               sx={{
@@ -35,36 +71,39 @@ const Home: React.FC = () => {
                 lineHeight: '20px',
                 color: '#667085',
                 mb: 4,
-                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                textAlign: { xs: 'center', md: 'left' },
+                width: '100%'
               }}
             >
               ProceduralNexus helps you upload, manage, and track documents, extract insights with AI, and complete secure e‑signatures in one place.
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'center', md: 'flex-start' }, width: '100%' }}>
               <Link to="/register" style={{ textDecoration: 'none' }}>
                 <Button
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#2563EB',
-                    color: 'white',
+              variant="contained"
+              sx={{
+                    backgroundColor: '#67728A',
+                    color: '#FFFFFF',
                     textTransform: 'none',
                     borderRadius: '10px',
-                    px: 3,
+                    px: 4,
                     py: 1.5,
                     fontSize: '14px',
                     fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
                     '&:hover': {
-                      backgroundColor: '#1D4ED8'
+                    backgroundColor: '#3D3C42'
                     }
                   }}
-                >
+            >
                   Get started
                 </Button>
               </Link>
               <Button
                 variant="outlined"
+                onClick={handleScrollToFeatures}
                 sx={{
-                  color: '#2563EB',
+                  color: '#67728A',
                   borderColor: '#E6E8EE',
                   textTransform: 'none',
                   borderRadius: '10px',
@@ -73,18 +112,37 @@ const Home: React.FC = () => {
                   fontSize: '14px',
                   fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
                   '&:hover': {
-                    borderColor: '#2563EB',
-                    backgroundColor: 'rgba(37, 99, 235, 0.04)'
+                    borderColor: '#67728A',
+                    backgroundColor: 'rgba(103, 114, 138, 0.04)'
+                  },
+                  '&:focus': {
+                    outline: 'none',
+                    boxShadow: 'none'
+                  },
+                  '&:active': {
+                    outline: 'none',
+                    boxShadow: 'none'
                   }
                 }}
               >
                 View features
               </Button>
             </Box>
-          </Grid>
+          </Box>
 
           {/* Right Column - Preview Card */}
-          <Grid xs={12} md={4} key={index}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              maxWidth: { xs: '100%', md: '33.33%' },
+              pl: { md: 4 },
+              mb: { xs: 4, md: 0 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' }
+            }}
+          >
             <Paper
               sx={{
                 p: 3,
@@ -167,39 +225,74 @@ const Home: React.FC = () => {
                 </Typography>
               </Box>
             </Paper>
-          </Grid>
-        </Grid>
-      </Container>
+          </Box>
+        </Paper>
+      </Box>
 
-      {/* Feature Cards */}
-      <Container maxWidth="lg" sx={{ mb: 8 }}>
-        <Grid container spacing={3}>
-          {[
-            {
-              icon: Description,
-              title: 'Document Management',
-              description: 'upload, assign, track'
-            },
-            {
-              icon: TrendingUpSharp,
-              title: 'AI Analysis',
-              description: 'extract insights, automate workflows'
-            },
-            {
-              icon: DrawRounded,
-              title: 'E‑Signature',
-              description: 'secure signing, audit trail'
-            }
-          ].map((feature, index) => (
-            <Grid xs={12} md={4} key={index}>
-              <Paper
+      {/* Features Section - Single white container */}
+      <Container maxWidth="lg" sx={{ mb: 8 }} ref={featuresRef}>
+        <Paper
+          sx={{
+            p: { xs: 3, md: 6 },
+            borderRadius: '18px',
+            boxShadow: '0px 8px 32px rgba(16, 24, 40, 0.10)',
+            backgroundColor: 'white',
+            mb: 0,
+          }}
+        >
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '24px', md: '32px' },
+              fontWeight: 700,
+              color: '#111827',
+              mb: 6,
+              textAlign: 'center',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              letterSpacing: '-0.01em'
+            }}
+          >
+            Discover our features
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: 'stretch',
+              justifyContent: 'center',
+              gap: 4,
+              width: '100%'
+            }}
+          >
+            {[
+              {
+                icon: Description,
+                title: 'Document Management',
+                description: 'upload, assign, track'
+              },
+              {
+                icon: TrendingUpSharp,
+                title: 'AI Analysis',
+                description: 'extract insights, automate workflows'
+              },
+              {
+                icon: DrawRounded,
+                title: 'E‑Signature',
+                description: 'secure signing, audit trail'
+              }
+            ].map((feature, index) => (
+              <Box
+                key={index}
                 sx={{
-                  p: 3,
-                  borderRadius: '12px',
-                  border: '1px solid #E6E8EE',
-                  boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
-                  backgroundColor: 'white',
-                  height: '100%'
+                  flex: 1,
+                  minWidth: 0,
+                  maxWidth: { xs: '100%', md: '33.33%' },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  px: 2,
+                  mb: { xs: 4, md: 0 }
                 }}
               >
                 <Box
@@ -222,7 +315,8 @@ const Home: React.FC = () => {
                     fontWeight: 600,
                     mb: 1,
                     color: '#111827',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                    textAlign: 'center'
                   }}
                 >
                   {feature.title}
@@ -231,15 +325,16 @@ const Home: React.FC = () => {
                   sx={{
                     fontSize: '14px',
                     color: '#667085',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                    textAlign: 'center'
                   }}
                 >
                   {feature.description}
                 </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
       </Container>
 
       {/* CTA Section */}
@@ -256,7 +351,7 @@ const Home: React.FC = () => {
         >
           <Typography
             sx={{
-              fontSize: '20px',
+              fontSize: '26px',
               fontWeight: 600,
               mb: 2,
               color: '#111827',
@@ -269,7 +364,7 @@ const Home: React.FC = () => {
             sx={{
               fontSize: '14px',
               color: '#667085',
-              mb: 3,
+              mb: 4,
               fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
             }}
           >
@@ -279,47 +374,24 @@ const Home: React.FC = () => {
             <Button
               variant="contained"
               sx={{
-                backgroundColor: '#2563EB',
-                color: 'white',
-                textTransform: 'none',
-                borderRadius: '10px',
-                px: 4,
-                py: 1.5,
-                fontSize: '14px',
-                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                '&:hover': {
-                  backgroundColor: '#1D4ED8'
-                }
-              }}
+                    backgroundColor: '#67728A',
+                    color: '#FFFFFF',
+                    textTransform: 'none',
+                    borderRadius: '10px',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '14px',
+                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                    '&:hover': {
+                    backgroundColor: '#3D3C42'
+                    }
+                  }}
             >
-              Create account
-            </Button>
+            Create an account
+           </Button>
           </Link>
         </Paper>
       </Container>
-
-      {/* Footer */}
-      <Box
-        sx={{
-          borderTop: '1px solid #E6E8EE',
-          py: 3,
-          backgroundColor: 'white'
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Privacy
-            </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Terms
-            </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Contact
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
     </Box>
   );
 }
