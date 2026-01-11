@@ -26,17 +26,20 @@ public class ApplicationService {
     private final ProfileRepository profileRepository;
     private final OrganizationRepository organizationRepository;
     private final DocumentRepository documentRepository;
+    private final EmailService emailService;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
             ProfileRepository profileRepository,
             OrganizationRepository organizationRepository,
-            DocumentRepository documentRepository
+            DocumentRepository documentRepository,
+            EmailService emailService
     ) {
         this.applicationRepository = applicationRepository;
         this.profileRepository = profileRepository;
         this.organizationRepository = organizationRepository;
         this.documentRepository = documentRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -123,10 +126,20 @@ public class ApplicationService {
         }
 
         Profile applicant = app.getApplicant();
-        applicant.setOrganization(hr.getOrganization());
+        Organization organization = hr.getOrganization();
+        
+        applicant.setOrganization(organization);
         profileRepository.save(applicant);
 
         applicationRepository.delete(app);
+
+        // Send acceptance email notification
+        try {
+            String userName = applicant.getFirstname() + " " + applicant.getLastname();
+            emailService.sendApplicationAcceptedEmail(applicant.getEmail(), userName, organization.getName());
+        } catch (Exception e) {
+            System.err.println("Failed to send application accepted email: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -141,7 +154,18 @@ public class ApplicationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed for this organization");
         }
 
+        Profile applicant = app.getApplicant();
+        Organization organization = app.getOrganization();
+        
         applicationRepository.delete(app);
+
+        // Send rejection email notification
+        try {
+            String userName = applicant.getFirstname() + " " + applicant.getLastname();
+            emailService.sendApplicationRejectedEmail(applicant.getEmail(), userName, organization.getName(), null);
+        } catch (Exception e) {
+            System.err.println("Failed to send application rejected email: " + e.getMessage());
+        }
     }
 
     private ApplicationResponseDto toDto(Application app) {

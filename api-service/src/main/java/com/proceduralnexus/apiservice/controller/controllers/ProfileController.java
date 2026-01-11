@@ -3,8 +3,13 @@ package com.proceduralnexus.apiservice.controller.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import com.proceduralnexus.apiservice.controller.dtos.PasswordChangeRequest;
 import com.proceduralnexus.apiservice.controller.dtos.ProfilePatchRequest;
+import com.proceduralnexus.apiservice.data.payloads.MessageResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.proceduralnexus.apiservice.business.services.ProfileService;
@@ -88,5 +93,26 @@ public class ProfileController {
     )
     public void deleteProfile(@PathVariable UUID id) {
         profileService.deleteProfile(id);
+    }
+
+    /**
+     * POST /profiles/change-password
+     * Change password for the currently authenticated user
+     */
+    @PostMapping("/change-password")
+    @Operation(
+            summary = "Change password",
+            description = "Change the password for the currently authenticated user."
+    )
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody PasswordChangeRequest request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        profileService.changePassword(
+                userDetails.getUsername(),
+                request.getCurrentPassword(),
+                request.getNewPassword()
+        );
+        return ResponseEntity.ok(new MessageResponse("Password changed successfully!"));
     }
 }

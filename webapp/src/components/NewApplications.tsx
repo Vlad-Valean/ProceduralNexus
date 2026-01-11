@@ -28,7 +28,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 type SortMode = "newest" | "oldest";
 

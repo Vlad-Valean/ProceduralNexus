@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-const API_BASE_URL = "http://localhost:8081";
+const API_BASE_URL = "http://localhost:8080";
 
 interface Organization {
   id: string;

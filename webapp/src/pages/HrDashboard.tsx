@@ -7,7 +7,7 @@ import AddUserForm from "../components/AddUserForm";
 import NewApplications from "../components/NewApplications";
 import UserDetails from "../components/UserDetails";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 type SelectedUser = {
   id: string;

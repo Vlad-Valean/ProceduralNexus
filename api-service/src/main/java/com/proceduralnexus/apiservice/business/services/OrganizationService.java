@@ -22,11 +22,14 @@ public class OrganizationService implements IOrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final ProfileRepository profileRepository;
+    private final EmailService emailService;
 
     public OrganizationService(OrganizationRepository organizationRepository,
-                               ProfileRepository profileRepository) {
+                               ProfileRepository profileRepository,
+                               EmailService emailService) {
         this.organizationRepository = organizationRepository;
         this.profileRepository = profileRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -64,6 +67,14 @@ public class OrganizationService implements IOrganizationService {
 
         owner.setOrganization(saved);
         profileRepository.save(owner);
+
+        // Send organization created email to owner
+        try {
+            String ownerName = owner.getFirstname() + " " + owner.getLastname();
+            emailService.sendOrganizationCreatedEmail(owner.getEmail(), ownerName, saved.getName());
+        } catch (Exception e) {
+            System.err.println("Failed to send organization created email: " + e.getMessage());
+        }
 
         return toDto(saved);
     }
