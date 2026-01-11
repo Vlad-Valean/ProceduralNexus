@@ -1,5 +1,5 @@
-import Navbar from "../components/Navbar";
-import { useState } from 'react';
+import React, { useState } from 'react';
+import Navbar from '../components/Navbar';
 import {
   Box,
   Container,
@@ -598,4 +598,5 @@ const Profile: React.FC = () => {
     </Box>
   );
 }
+
 export default Profile;
