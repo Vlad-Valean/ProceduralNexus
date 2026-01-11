@@ -1,15 +1,393 @@
 import React from "react";
 import Navbar from "../components/Navbar";
+import { Box, Container, Typography, Button, Paper } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { FileUpload, Search, CheckCircle, Storage, ElectricBolt } from '@mui/icons-material';
+import { Link } from "react-router-dom";
+
 
 const About: React.FC = () => {
   return (
-    <>
+    <Box sx={{ minHeight: '100vh' }}>
       <Navbar />
-      <main>
-        <h1>About</h1>
-      </main>
-    </>
+      <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
+        {/* Page Title in Box */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '24px',
+              fontWeight: 600,
+              mb: 2,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            About ProceduralNexus
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              lineHeight: '20px',
+              color: '#667085',
+              maxWidth: '800px',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            ProceduralNexus is a comprehensive document management platform designed to streamline your workflow from upload to signature. 
+            We combine powerful automation, intelligent analysis, and secure e-signature capabilities to help teams work more efficiently.
+          </Typography>
+        </Paper>
+
+        {/* Our Mission */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 2,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            Our mission
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              lineHeight: '20px',
+              color: '#667085',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            We believe document management should be effortless. Our mission is to eliminate the friction in document workflows 
+            by providing intelligent automation, real-time insights, and seamless collaboration tools. Whether you're managing 
+            contracts, compliance documents, or employee onboarding materials, ProceduralNexus adapts to your needs.
+          </Typography>
+        </Paper>
+
+        {/* How it works */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 3,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            How it works
+          </Typography>
+          <Grid container spacing={3}>
+            {[
+              {
+                icon: FileUpload,
+                title: 'Upload & Assign',
+                description: 'Upload documents and assign them to team members with customizable workflows and due dates.'
+              },
+              {
+                icon: Search,
+                title: 'Analyze',
+                description: 'Our AI engine automatically extracts key information and categorizes documents for easy retrieval.'
+              },
+              {
+                icon: CheckCircle,
+                title: 'Review & Sign',
+                description: 'Review, approve, and digitally sign documents with legally-binding e-signatures and full audit trails.'
+              }
+            ].map((step, index) => (
+              <Box key={index} sx={{ flex: { xs: '1 1 100%', md: '1 1 0' }, maxWidth: { xs: '100%', md: '33.33%' }, px: 2, mb: { xs: 4, md: 0 } }}>
+                <Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 2
+                    }}
+                  >
+                    <step.icon sx={{ fontSize: 24, color: "#2563EB" }} />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      mb: 1,
+                      color: '#111827',
+                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {step.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      color: '#667085',
+                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {step.description}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Grid>
+        </Paper>
+
+        {/* Platform Architecture */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 3,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            Platform architecture
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center'
+            }}
+          >
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: '999px',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#2563EB', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
+                Webapp (React/Vite)
+              </Box>
+            </Box>
+            <Typography sx={{ fontSize: '20px', color: '#98A2B3' }}>→</Typography>
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: '999px',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#2563EB', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
+                API Service (Spring Boot)
+              </Box>
+            </Box>
+            <Typography sx={{ fontSize: '20px', color: '#98A2B3' }}>→</Typography>
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: '999px',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#2563EB', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
+                Document Analysis Service
+              </Box>
+            </Box>
+            <Typography sx={{ fontSize: '20px', color: '#98A2B3' }}>→</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  borderRadius: '999px',
+                  backgroundColor: 'rgba(18, 183, 106, 0.1)',
+                  border: '1px solid rgba(18, 183, 106, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <Storage sx={{ fontSize: 16, color: "#12B76A" }} />
+                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#12B76A', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
+                  PostgreSQL
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  borderRadius: '999px',
+                  backgroundColor: 'rgba(247, 144, 9, 0.1)',
+                  border: '1px solid rgba(247, 144, 9, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <ElectricBolt sx={{ fontSize: 16, color: "#F79009" }} />
+                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#F79009', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
+                  Redis
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Security & Privacy */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 3,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            Security & privacy
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {[
+              'Access controls and authenticated sessions',
+              'Encrypted transport (HTTPS/TLS)',
+              'Audit-friendly document status tracking',
+              'User-controlled signature management'
+            ].map((item, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <CheckCircle sx={{ fontSize: 20, color: "#12B76A", flexShrink: 0, mt: "2px" }} />
+                <Typography
+                  sx={{
+                    fontSize: '14px',
+                    color: '#667085',
+                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                    textAlign: 'left'
+                  }}
+                >
+                  {item}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+
+        {/* CTA */}
+        <Paper
+          sx={{
+            p: 6,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white',
+            textAlign: 'center'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 3,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'center'
+            }}
+          >
+            Start managing documents today
+          </Typography>
+          <Link to="/register" style={{ textDecoration: 'none' }}>
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: '#67728A',
+                color: '#FFFFFF',
+                textTransform: 'none',
+                borderRadius: '10px',
+                px: 4,
+                py: 1.5,
+                fontSize: '14px',
+                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                '&:hover': {
+                  backgroundColor: '#3D3C42'
+                }
+              }}
+            >
+              Create an account
+            </Button>
+          </Link>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
+}
 
 export default About;
