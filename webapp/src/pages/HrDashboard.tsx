@@ -23,6 +23,7 @@ type HrUsersResponse = {
   organizationName?: string | null;
   organization?: { id?: number | null; name?: string | null } | null;
   orgName?: string | null;
+  currentUserIsOwner?: boolean | null;
   users?:
   | Array<{
     id?: string | null;
@@ -150,7 +151,9 @@ const HrDashboard: React.FC = () => {
           else if (it.roles.includes("USER")) usr++;
         }
 
-        setHrCount(hr + 2);
+        const isOwner = Boolean(dto.currentUserIsOwner);
+        const extraHr = isOwner ? 1 : 2;
+        setHrCount(hr + extraHr);
         setUserCount(usr);
       } catch (e: unknown) {
         if (e instanceof DOMException && e.name === "AbortError") return;

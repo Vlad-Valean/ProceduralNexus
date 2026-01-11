@@ -51,14 +51,15 @@ public class HrDashboardService {
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
         Organization org = me.getOrganization();
-        if (org == null) return new HrUsersResponseDto(null, null, List.of());
+        if (org == null) return new HrUsersResponseDto(null, null, List.of(), false);
 
         UUID ownerId = (org.getOwner() != null) ? org.getOwner().getId() : null;
+        boolean currentUserIsOwner = ownerId != null && ownerId.equals(me.getId());
 
         List<Profile> members = profileRepository.findAllByOrganization_Id(org.getId());
 
         List<HrUsersResponseDto.UserRowDto> rows = members.stream()
-                .filter(p -> ownerId == null || !p.getId().equals(ownerId))
+                .filter(p -> ownerId == null || !p.getId().equals(ownerId)) // owner excluded from list
                 .map(p -> new HrUsersResponseDto.UserRowDto(
                         p.getId(),
                         p.getFirstname(),
@@ -67,7 +68,7 @@ public class HrDashboardService {
                 ))
                 .toList();
 
-        return new HrUsersResponseDto(org.getId(), org.getName(), rows);
+        return new HrUsersResponseDto(org.getId(), org.getName(), rows, currentUserIsOwner);
     }
 
     @Transactional

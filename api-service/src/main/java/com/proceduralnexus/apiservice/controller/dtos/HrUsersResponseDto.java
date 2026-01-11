@@ -7,6 +7,7 @@ public class HrUsersResponseDto {
     private Long organizationId;
     private String organizationName;
     private List<UserRowDto> users;
+    private boolean currentUserIsOwner;
 
     public static class UserRowDto {
         private UUID id;
@@ -27,13 +28,15 @@ public class HrUsersResponseDto {
         public String getEmail() { return email; }
     }
 
-    public HrUsersResponseDto(Long organizationId, String organizationName, List<UserRowDto> users) {
+    public HrUsersResponseDto(Long organizationId, String organizationName, List<UserRowDto> users, boolean currentUserIsOwner) {
         this.organizationId = organizationId;
         this.organizationName = organizationName;
         this.users = users;
+        this.currentUserIsOwner = currentUserIsOwner;
     }
 
     public Long getOrganizationId() { return organizationId; }
     public String getOrganizationName() { return organizationName; }
     public List<UserRowDto> getUsers() { return users; }
+    public boolean isCurrentUserIsOwner() { return currentUserIsOwner; }
 }
