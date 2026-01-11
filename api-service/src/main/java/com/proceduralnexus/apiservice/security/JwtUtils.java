@@ -1,5 +1,7 @@
 package com.proceduralnexus.apiservice.security;
 
+import java.util.List;
+
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +16,17 @@ import java.util.Date;
 
 @Component
 public class JwtUtils {
+        public String generateJwtTokenWithUserInfo(String email, List<String> roles, String id) {
+            return Jwts.builder()
+                .setSubject(email)
+                .claim("email", email)
+                .claim("roles", roles)
+                .claim("id", id)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+        }
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${proceduralnexus.app.jwtSecret:SecretKeyMustBeAtLeast256BitsLongSoThisIsJustAPlaceholderForDevelopmentPurposes}")

@@ -35,6 +35,63 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+    @PostMapping("/oauth-token")
+    public ResponseEntity<?> generateOAuthToken(@RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("Email missing"));
+        }
+        try {
+            Profile user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                user = new Profile();
+                user.setEmail(email);
+                user.setEmailVerified(true);
+                user.setFirstname("");
+                user.setLastname("");
+                user.setPassword(""); 
+                Set<Role> roles = new HashSet<>();
+                Role userRole = roleRepository.findByName(RoleName.USER)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                roles.add(userRole);
+                user.setRoles(roles);
+                user = userRepository.save(user);
+            }
+            List<String> roles = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .toList();
+            String token = jwtUtils.generateTokenFromUsername(email);
+            java.util.Map<String, Object> result = new java.util.HashMap<>();
+            result.put("token", token);
+            result.put("email", email);
+            result.put("roles", roles);
+            result.put("id", user.getId().toString());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Could not generate token"));
+        }
+    }
+        @PostMapping("/me")
+        public ResponseEntity<?> getUserInfo(@RequestBody java.util.Map<String, String> body) {
+            String token = body.get("token");
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Token missing"));
+            }
+            try {
+                String email = jwtUtils.getUserNameFromJwtToken(token);
+                Profile user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+                List<String> roles = user.getRoles().stream()
+                    .map(role -> role.getName().name())
+                    .toList();
+                java.util.Map<String, Object> result = new java.util.HashMap<>();
+                result.put("email", user.getEmail());
+                result.put("roles", roles);
+                return ResponseEntity.ok(result);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Invalid token"));
+            }
+        }
     @Autowired
     AuthenticationManager authenticationManager;
 
