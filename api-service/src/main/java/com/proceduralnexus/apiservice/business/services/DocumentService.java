@@ -26,12 +26,15 @@ public class DocumentService implements IDocumentService {
 
     private final DocumentRepository documentRepository;
     private final Path fileStorageLocation;
+    private final EmailService emailService;
 
     public DocumentService(
             DocumentRepository documentRepository,
+            EmailService emailService,
             @Value("${app.documents.storage-path:uploads}") String storagePath
     ) {
         this.documentRepository = documentRepository;
+        this.emailService = emailService;
 
         this.fileStorageLocation = Paths.get(storagePath)
                 .toAbsolutePath()
@@ -94,7 +97,9 @@ public class DocumentService implements IDocumentService {
 
         Document document = new Document();
         document.setName(displayName);
-        document.setFilePath(targetLocation.toString());
+       // document.setFilePath(targetLocation.toString());
+        Path relativePath = Paths.get("uploads").resolve(storedFileName).normalize();
+        document.setFilePath(relativePath.toString().replace("\\", "/"));
         document.setFileSizeInBytes(file.getSize());
         document.setBatchId(batchId);
         document.setUploader(uploader);
@@ -123,11 +128,40 @@ public class DocumentService implements IDocumentService {
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
                 );
 
+        boolean previouslyUnsigned = !document.isSigned();
+        
         if (signed != null) {
             document.setSigned(signed);
         }
 
         Document saved = documentRepository.save(document);
+        
+        // Send email notification when document is signed/approved
+        if (signed != null && signed && previouslyUnsigned) {
+            try {
+                Profile uploader = saved.getUploader();
+                if (uploader != null) {
+                    String userName = uploader.getFirstname() + " " + uploader.getLastname();
+                    emailService.sendDocumentApprovedEmail(uploader.getEmail(), userName, saved.getName());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to send document approved email: " + e.getMessage());
+            }
+        }
+        
+        // Send email notification when document is unsigned/requires changes
+        if (signed != null && !signed && !previouslyUnsigned) {
+            try {
+                Profile uploader = saved.getUploader();
+                if (uploader != null) {
+                    String userName = uploader.getFirstname() + " " + uploader.getLastname();
+                    emailService.sendDocumentRequiresChangesEmail(uploader.getEmail(), userName, saved.getName(), null);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to send document requires changes email: " + e.getMessage());
+            }
+        }
+        
         return toDto(saved);
     }
 
@@ -148,7 +182,11 @@ public class DocumentService implements IDocumentService {
                 );
 
         try {
-            Path filePath = Paths.get(document.getFilePath()).normalize();
+           // Path filePath = Paths.get(document.getFilePath()).normalize();
+            Path stored = Paths.get(document.getFilePath()).normalize();
+            Path filePath = stored.isAbsolute()
+                    ? stored
+                    : Paths.get("").toAbsolutePath().resolve(stored).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;

@@ -1,4 +1,32 @@
-const API_URL = 'http://localhost:8081/auth'; 
+
+const API_URL = 'http://localhost:8080/auth';
+// Request password reset (send email with link)
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await fetch(`${API_URL}/request-password-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || `Failed to request password reset (${res.status})`);
+  }
+  return data.message ?? 'Reset link sent!';
+}
+
+// Confirm password reset (set new password with token)
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<string> {
+  const res = await fetch(`${API_URL}/confirm-password-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || `Failed to reset password (${res.status})`);
+  }
+  return data.message ?? 'Password reset successful!';
+}
 
 export type LoginRequest = {
   email: string;

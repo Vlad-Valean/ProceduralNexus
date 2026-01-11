@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 export async function downloadDocumentWithAuth(
   docId: number,

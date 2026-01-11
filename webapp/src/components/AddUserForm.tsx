@@ -12,7 +12,7 @@ import {
   Alert,
 } from "@mui/material";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 type RoleUi = "user" | "hr";
 
@@ -87,7 +87,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onUserAdded }) => {
         throw new Error(`Add user failed (${res.status}). ${txt}`);
       }
 
-      // succes -> refresh listă sus
       await onUserAdded?.();
 
       setEmail("");

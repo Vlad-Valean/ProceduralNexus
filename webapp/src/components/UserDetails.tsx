@@ -34,7 +34,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import DoNotDisturbOnOutlinedIcon from "@mui/icons-material/DoNotDisturbOnOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 type DocumentType = "CV" | "OTHER";
 
