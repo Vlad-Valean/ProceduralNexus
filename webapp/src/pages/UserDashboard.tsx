@@ -29,7 +29,7 @@ interface Document {
   name: string;
   assignedBy: string;
   due: string;
-  status: 'Pending' | 'In review' | 'Completed';
+  status: 'Pending' | 'Completed';
 }
 
 const mockDocuments: Document[] = [
@@ -46,7 +46,7 @@ const mockDocuments: Document[] = [
     const assignedBys = [
       'HR Team', 'Legal', 'Finance', 'IT', 'Admin'
     ];
-    const statuses: Document['status'][] = ['Pending', 'In review', 'Completed'];
+    const statuses: Document['status'][] = ['Pending', 'Completed'];
     // Distribute values for variety
     return {
       id,
@@ -70,7 +70,6 @@ const recentActivity = [
 
 const statusOptions = [
   { value: 'Pending', label: 'Pending' },
-  { value: 'In review', label: 'In review' },
   { value: 'Completed', label: 'Completed' }
 ];
 
@@ -114,8 +113,6 @@ const UserDashboard: React.FC = () => {
     switch (status) {
       case 'Pending':
         return { bg: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' };
-      case 'In review':
-        return { bg: 'rgba(247, 144, 9, 0.1)', color: '#F79009' };
       case 'Completed':
         return { bg: 'rgba(18, 183, 106, 0.1)', color: '#12B76A' };
     }
@@ -553,7 +550,6 @@ const UserDashboard: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 3 }}>
                 {[
                   { label: 'PENDING', value: '3', color: '#2563EB' },
-                  { label: 'IN REVIEW', value: '1', color: '#F79009' },
                   { label: 'COMPLETED', value: '8', color: '#12B76A' }
                 ].map((stat) => (
                   <Box key={stat.label} sx={{ textAlign: 'center' }}>
