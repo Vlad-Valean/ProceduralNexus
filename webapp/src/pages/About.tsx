@@ -24,7 +24,7 @@ const About: React.FC = () => {
         >
           <Typography
             sx={{
-              fontSize: '20px',
+              fontSize: '24px',
               fontWeight: 600,
               mb: 2,
               color: '#111827',
