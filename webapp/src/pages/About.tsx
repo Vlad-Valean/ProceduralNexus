@@ -1,45 +1,53 @@
 import React from "react";
 import Navbar from "../components/Navbar";
-import { Box, Container, Typography, Button, Paper, Grid } from '@mui/material';
+import { Box, Container, Typography, Button, Paper } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { FileUpload, Search, CheckCircle, Storage, ElectricBolt } from '@mui/icons-material';
 import { Link } from "react-router-dom";
 
 
 const About: React.FC = () => {
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Navbar />
-      <main>
-        <h1>About</h1>
-      </main>
       <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
-        {/* Page Title */}
-        <Typography
-          variant="h1"
+        {/* Page Title in Box */}
+        <Paper
           sx={{
-            fontSize: '32px',
-            lineHeight: '40px',
-            fontWeight: 600,
-            color: '#111827',
-            mb: 2,
-            fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+            p: 4,
+            mb: 4,
+            borderRadius: '12px',
+            border: '1px solid #E6E8EE',
+            boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
+            backgroundColor: 'white'
           }}
         >
-          About ProceduralNexus
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '14px',
-            lineHeight: '20px',
-            color: '#667085',
-            mb: 6,
-            maxWidth: '800px',
-            fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-          }}
-        >
-          ProceduralNexus is a comprehensive document management platform designed to streamline your workflow from upload to signature. 
-          We combine powerful automation, intelligent analysis, and secure e-signature capabilities to help teams work more efficiently.
-        </Typography>
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 2,
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            About ProceduralNexus
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              lineHeight: '20px',
+              color: '#667085',
+              maxWidth: '800px',
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
+            }}
+          >
+            ProceduralNexus is a comprehensive document management platform designed to streamline your workflow from upload to signature. 
+            We combine powerful automation, intelligent analysis, and secure e-signature capabilities to help teams work more efficiently.
+          </Typography>
+        </Paper>
 
         {/* Our Mission */}
         <Paper
@@ -58,7 +66,8 @@ const About: React.FC = () => {
               fontWeight: 600,
               mb: 2,
               color: '#111827',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
             }}
           >
             Our mission
@@ -68,7 +77,8 @@ const About: React.FC = () => {
               fontSize: '14px',
               lineHeight: '20px',
               color: '#667085',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
             }}
           >
             We believe document management should be effortless. Our mission is to eliminate the friction in document workflows 
@@ -94,7 +104,8 @@ const About: React.FC = () => {
               fontWeight: 600,
               mb: 3,
               color: '#111827',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
             }}
           >
             How it works
@@ -117,7 +128,7 @@ const About: React.FC = () => {
                 description: 'Review, approve, and digitally sign documents with legally-binding e-signatures and full audit trails.'
               }
             ].map((step, index) => (
-              <Grid xs={12} md={4} key={index}>
+              <Box key={index} sx={{ flex: { xs: '1 1 100%', md: '1 1 0' }, maxWidth: { xs: '100%', md: '33.33%' }, px: 2, mb: { xs: 4, md: 0 } }}>
                 <Box>
                   <Box
                     sx={{
@@ -139,7 +150,8 @@ const About: React.FC = () => {
                       fontWeight: 600,
                       mb: 1,
                       color: '#111827',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                      textAlign: 'left'
                     }}
                   >
                     {step.title}
@@ -148,13 +160,14 @@ const About: React.FC = () => {
                     sx={{
                       fontSize: '14px',
                       color: '#667085',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                      textAlign: 'left'
                     }}
                   >
                     {step.description}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
             ))}
           </Grid>
         </Paper>
@@ -176,7 +189,8 @@ const About: React.FC = () => {
               fontWeight: 600,
               mb: 3,
               color: '#111827',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
             }}
           >
             Platform architecture
@@ -202,7 +216,7 @@ const About: React.FC = () => {
                 gap: 1
               }}
             >
-              <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#2563EB', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
+              <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#2563EB', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
                 Webapp (React/Vite)
               </Box>
             </Box>
@@ -255,7 +269,7 @@ const About: React.FC = () => {
                 }}
               >
                 <Storage sx={{ fontSize: 16, color: "#12B76A" }} />
-                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#12B76A', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
+                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#12B76A', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
                   PostgreSQL
                 </Box>
               </Box>
@@ -272,7 +286,7 @@ const About: React.FC = () => {
                 }}
               >
                 <ElectricBolt sx={{ fontSize: 16, color: "#F79009" }} />
-                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#F79009', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
+                <Box sx={{ fontSize: '14px', fontWeight: 500, color: '#F79009', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif', textAlign: 'left' }}>
                   Redis
                 </Box>
               </Box>
@@ -297,7 +311,8 @@ const About: React.FC = () => {
               fontWeight: 600,
               mb: 3,
               color: '#111827',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'left'
             }}
           >
             Security & privacy
@@ -315,7 +330,8 @@ const About: React.FC = () => {
                   sx={{
                     fontSize: '14px',
                     color: '#667085',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                    textAlign: 'left'
                   }}
                 >
                   {item}
@@ -342,7 +358,8 @@ const About: React.FC = () => {
               fontWeight: 600,
               mb: 3,
               color: '#111827',
-              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+              fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+              textAlign: 'center'
             }}
           >
             Start managing documents today
@@ -351,8 +368,8 @@ const About: React.FC = () => {
             <Button
               variant="contained"
               sx={{
-                backgroundColor: '#2563EB',
-                color: 'white',
+                backgroundColor: '#67728A',
+                color: '#FFFFFF',
                 textTransform: 'none',
                 borderRadius: '10px',
                 px: 4,
@@ -360,39 +377,15 @@ const About: React.FC = () => {
                 fontSize: '14px',
                 fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
                 '&:hover': {
-                  backgroundColor: '#1D4ED8'
+                  backgroundColor: '#3D3C42'
                 }
               }}
             >
-              Create account
+              Create an account
             </Button>
           </Link>
         </Paper>
       </Container>
-
-      {/* Footer */}
-      <Box
-        sx={{
-          borderTop: '1px solid #E6E8EE',
-          py: 3,
-          mt: 4,
-          backgroundColor: 'white'
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Privacy
-            </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Terms
-            </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#98A2B3', fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif' }}>
-              Contact
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
     </Box>
   );
 }
