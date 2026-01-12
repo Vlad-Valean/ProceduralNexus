@@ -45,7 +45,7 @@ const mockDocuments: Document[] = [
     const assignedBys = [
       'HR Team', 'Legal', 'Finance', 'IT', 'Admin'
     ];
-    const statuses: Document['status'][] = ['Pending', 'Completed'];
+    const statuses: Document['status'][] = ['Unsigned', 'Signed'];
     // Distribute values for variety
     return {
       id,
