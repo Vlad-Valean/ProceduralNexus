@@ -360,18 +360,33 @@ const UserDashboard: React.FC = () => {
                                   height: '24px'
                                 }}
                               />
-                            </TableCell>
-                            <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
+                             <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
                               <Box sx={{ display: 'flex', gap: 1 }}>
-                                <IconButton size="small" sx={{ color: '#667085' }}>
-                                  <Visibility sx={{ fontSize: 16 }} />
+                                <IconButton
+                                  size="small"
+                                  sx={{ color: '#667085' }}
+                                  aria-label={`Sign`}
+                                  onClick={() => {
+                                    // TODO: wire up edit behavior
+                                    console.log('Sign document:', doc.id);
+                                  }}
+                                >
+                                  <Edit sx={{ fontSize: 16 }} />
                                 </IconButton>
-                                <IconButton size="small" sx={{ color: '#667085' }}>
+
+                                <IconButton
+                                  size="small"
+                                  sx={{ color: '#667085' }}
+                                  aria-label={`Download`}
+                                  onClick={() => {
+                                    // TODO: wire up download behavior
+                                    console.log('Download document:', doc.id);
+                                  }}
+                                >
                                   <FileDownload sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </Box>
                             </TableCell>
-                          </TableRow>
                         );
                       })
                     ) : (
