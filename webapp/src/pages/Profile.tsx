@@ -11,10 +11,17 @@ import {
   FormControlLabel,
   Grid,
   MenuItem,
-  Select
+  Select,
+  FormControl
 } from '@mui/material';
 
-
+const timezoneOptions = [
+  { value: 'Europe/Bucharest', label: 'Europe/Bucharest' },
+  { value: 'America/New_York', label: 'America/New York' },
+  { value: 'America/Los_Angeles', label: 'America/Los Angeles' },
+  { value: 'Europe/London', label: 'Europe/London' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo' }
+];
 
 const Profile: React.FC = () => {
   const [useDefaultSignature, setUseDefaultSignature] = useState(true);
@@ -27,11 +34,76 @@ const Profile: React.FC = () => {
     timezone: 'Europe/Bucharest'
   });
 
+  const textFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: 'white',
+      fontSize: '14px',
+      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+      '& fieldset': { borderColor: '#E6E8EE' },
+      '&:hover fieldset': { borderColor: '#67728A' },
+      '&.Mui-focused fieldset': { borderColor: '#67728A' }
+    }
+  };
+
+  const disabledTextFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: '#F8FAFC',
+      fontSize: '14px',
+      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+      '& fieldset': { borderColor: '#E6E8EE' }
+    }
+  };
+
+  const labelSx = {
+    fontSize: '12px',
+    fontWeight: 500,
+    color: '#667085',
+    mb: 0.5,
+    display: 'block',
+    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+  };
+
+  const outlinedButtonSx = {
+    color: '#222',
+    borderColor: '#E6E8EE',
+    textTransform: 'none',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+    boxShadow: 'none !important',
+    outline: 'none !important',
+    '&:hover': {
+      borderColor: '#67728A',
+      backgroundColor: 'rgba(103, 114, 138, 0.04)'
+    },
+    '&:focus': {
+      boxShadow: 'none !important',
+      outline: 'none !important',
+      borderColor: '#67728A'
+    }
+  };
+
+  const primaryButtonSx = {
+    backgroundColor: '#67728A',
+    color: 'white',
+    textTransform: 'none',
+    borderRadius: '10px',
+    px: 3,
+    fontSize: '14px',
+    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+    boxShadow: 'none !important',
+    '&:hover': {
+      backgroundColor: '#5a6276'
+    }
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA' }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Navbar />
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
         {/* Breadcrumb */}
         <Typography
           sx={{
@@ -72,7 +144,7 @@ const Profile: React.FC = () => {
             >
               <Typography
                 sx={{
-                  fontSize: '16px',
+                  fontSize: '20px',
                   fontWeight: 600,
                   mb: 3,
                   color: '#111827',
@@ -85,137 +157,61 @@ const Profile: React.FC = () => {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {/* Full Name */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Full name
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: 'white',
-                        fontSize: '14px',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                      }
-                    }}
+                    autoComplete="off"
+                    sx={textFieldSx}
                   />
                 </Box>
 
                 {/* Email */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Email
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: 'white',
-                        fontSize: '14px',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                      }
-                    }}
+                    autoComplete="off"
+                    sx={textFieldSx}
                   />
                 </Box>
 
                 {/* Organization (Read-only) */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Organization
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.organization}
                     disabled
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: '#F8FAFC',
-                        fontSize: '14px',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                      }
-                    }}
+                    sx={disabledTextFieldSx}
                   />
                 </Box>
 
                 {/* Role (Read-only) */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Role
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.role}
                     disabled
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: '#F8FAFC',
-                        fontSize: '14px',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                      }
-                    }}
+                    sx={disabledTextFieldSx}
                   />
                 </Box>
 
                 {/* Phone */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Phone
                   </Typography>
                   <TextField
@@ -223,86 +219,45 @@ const Profile: React.FC = () => {
                     placeholder="Optional"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: 'white',
-                        fontSize: '14px',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                      }
-                    }}
+                    autoComplete="off"
+                    sx={textFieldSx}
                   />
                 </Box>
 
                 {/* Timezone */}
                 <Box>
-                  <Typography
-                    component="label"
-                    sx={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#667085',
-                      mb: 0.5,
-                      display: 'block',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
+                  <Typography component="label" sx={labelSx}>
                     Timezone
                   </Typography>
-                  <Select
-                    fullWidth
-                    value={formData.timezone}
-                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    sx={{
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
-                    }}
-                  >
-                    <MenuItem value="Europe/Bucharest">Europe/Bucharest</MenuItem>
-                    <MenuItem value="America/New_York">America/New York</MenuItem>
-                    <MenuItem value="America/Los_Angeles">America/Los Angeles</MenuItem>
-                    <MenuItem value="Europe/London">Europe/London</MenuItem>
-                    <MenuItem value="Asia/Tokyo">Asia/Tokyo</MenuItem>
-                  </Select>
+                  <FormControl fullWidth>
+                    <Select
+                      value={formData.timezone}
+                      onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                      sx={{
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E6E8EE' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#67728A' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#67728A' }
+                      }}
+                    >
+                      {timezoneOptions.map((tz) => (
+                        <MenuItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
               </Box>
 
               {/* Action Buttons */}
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    color: '#2563EB',
-                    borderColor: '#E6E8EE',
-                    textTransform: 'none',
-                    borderRadius: '10px',
-                    px: 3,
-                    fontSize: '14px',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                    '&:hover': {
-                      borderColor: '#2563EB',
-                      backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                    }
-                  }}
-                >
+                <Button variant="outlined" sx={{ ...outlinedButtonSx, px: 3 }}>
                   Cancel
                 </Button>
-                <Button
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#2563EB',
-                    color: 'white',
-                    textTransform: 'none',
-                    borderRadius: '10px',
-                    px: 3,
-                    fontSize: '14px',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                    '&:hover': {
-                      backgroundColor: '#1D4ED8'
-                    }
-                  }}
-                >
+                <Button variant="contained" sx={primaryButtonSx}>
                   Save changes
                 </Button>
               </Box>
@@ -324,7 +279,7 @@ const Profile: React.FC = () => {
             >
               <Typography
                 sx={{
-                  fontSize: '16px',
+                  fontSize: '20px',
                   fontWeight: 600,
                   mb: 2,
                   color: '#111827',
@@ -355,46 +310,16 @@ const Profile: React.FC = () => {
                     color: '#111827'
                   }}
                 >
-                  Maria Brown
+                  {formData.fullName}
                 </Typography>
               </Box>
 
               {/* Buttons */}
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  sx={{
-                    color: '#2563EB',
-                    borderColor: '#E6E8EE',
-                    textTransform: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                    '&:hover': {
-                      borderColor: '#2563EB',
-                      backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                    }
-                  }}
-                >
+                <Button variant="outlined" fullWidth sx={outlinedButtonSx}>
                   Draw signature
                 </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  sx={{
-                    color: '#2563EB',
-                    borderColor: '#E6E8EE',
-                    textTransform: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                    '&:hover': {
-                      borderColor: '#2563EB',
-                      backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                    }
-                  }}
-                >
+                <Button variant="outlined" fullWidth sx={outlinedButtonSx}>
                   Upload image
                 </Button>
               </Box>
@@ -422,10 +347,10 @@ const Profile: React.FC = () => {
                       onChange={(e) => setUseDefaultSignature(e.target.checked)}
                       sx={{
                         '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#2563EB'
+                          color: '#67728A'
                         },
                         '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                          backgroundColor: '#2563EB'
+                          backgroundColor: '#67728A'
                         }
                       }}
                     />
@@ -452,12 +377,13 @@ const Profile: React.FC = () => {
                 borderRadius: '12px',
                 border: '1px solid #E6E8EE',
                 boxShadow: '0px 8px 24px rgba(16, 24, 40, 0.08)',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                minHeight: 240
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '16px',
+                  fontSize: '20px',
                   fontWeight: 600,
                   mb: 3,
                   color: '#111827',
@@ -487,22 +413,7 @@ const Profile: React.FC = () => {
                   >
                     Change password
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      color: '#2563EB',
-                      borderColor: '#E6E8EE',
-                      textTransform: 'none',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                      '&:hover': {
-                        borderColor: '#2563EB',
-                        backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                      }
-                    }}
-                  >
+                  <Button variant="outlined" size="small" sx={outlinedButtonSx}>
                     Change
                   </Button>
                 </Box>
@@ -530,12 +441,12 @@ const Profile: React.FC = () => {
                     variant="text"
                     size="small"
                     sx={{
-                      color: '#2563EB',
+                      color: '#67728A',
                       textTransform: 'none',
                       fontSize: '14px',
                       fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
                       '&:hover': {
-                        backgroundColor: 'rgba(37, 99, 235, 0.04)'
+                        backgroundColor: 'rgba(103, 114, 138, 0.04)'
                       }
                     }}
                   >
@@ -572,22 +483,7 @@ const Profile: React.FC = () => {
                       Off
                     </Typography>
                   </Box>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      color: '#2563EB',
-                      borderColor: '#E6E8EE',
-                      textTransform: 'none',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                      '&:hover': {
-                        borderColor: '#2563EB',
-                        backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                      }
-                    }}
-                  >
+                  <Button variant="outlined" size="small" sx={outlinedButtonSx}>
                     Enable
                   </Button>
                 </Box>
