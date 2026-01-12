@@ -9,11 +9,11 @@ import {
   Button,
   Switch,
   FormControlLabel,
-  Grid,
   MenuItem,
   Select,
   FormControl
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 const timezoneOptions = [
   { value: 'Europe/Bucharest', label: 'Europe/Bucharest' },
@@ -68,7 +68,7 @@ const Profile: React.FC = () => {
   const outlinedButtonSx = {
     color: '#222',
     borderColor: '#E6E8EE',
-    textTransform: 'none',
+    textTransform: 'none' as const,
     borderRadius: '10px',
     fontSize: '14px',
     fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
@@ -88,7 +88,7 @@ const Profile: React.FC = () => {
   const primaryButtonSx = {
     backgroundColor: '#67728A',
     color: 'white',
-    textTransform: 'none',
+    textTransform: 'none' as const,
     borderRadius: '10px',
     px: 3,
     fontSize: '14px',
@@ -104,7 +104,6 @@ const Profile: React.FC = () => {
       <Navbar />
 
       <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
-        {/* Breadcrumb */}
         <Typography
           sx={{
             fontSize: '12px',
@@ -116,7 +115,6 @@ const Profile: React.FC = () => {
           Dashboard / Profile
         </Typography>
 
-        {/* Page Title */}
         <Typography
           variant="h2"
           sx={{
@@ -132,7 +130,7 @@ const Profile: React.FC = () => {
 
         <Grid container spacing={3}>
           {/* Left Column - Profile Information */}
-          <Grid item xs={12} md={8}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 0' }, maxWidth: { xs: '100%', md: '66.66%' }, px: 1.5 }}>
             <Paper
               sx={{
                 p: 4,
@@ -155,7 +153,6 @@ const Profile: React.FC = () => {
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* Full Name */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Full name
@@ -169,7 +166,6 @@ const Profile: React.FC = () => {
                   />
                 </Box>
 
-                {/* Email */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Email
@@ -183,7 +179,6 @@ const Profile: React.FC = () => {
                   />
                 </Box>
 
-                {/* Organization (Read-only) */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Organization
@@ -196,7 +191,6 @@ const Profile: React.FC = () => {
                   />
                 </Box>
 
-                {/* Role (Read-only) */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Role
@@ -209,7 +203,6 @@ const Profile: React.FC = () => {
                   />
                 </Box>
 
-                {/* Phone */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Phone
@@ -224,7 +217,6 @@ const Profile: React.FC = () => {
                   />
                 </Box>
 
-                {/* Timezone */}
                 <Box>
                   <Typography component="label" sx={labelSx}>
                     Timezone
@@ -252,7 +244,6 @@ const Profile: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* Action Buttons */}
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
                 <Button variant="outlined" sx={{ ...outlinedButtonSx, px: 3 }}>
                   Cancel
@@ -262,10 +253,10 @@ const Profile: React.FC = () => {
                 </Button>
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
           {/* Right Column */}
-          <Grid item xs={12} md={4}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 0' }, maxWidth: { xs: '100%', md: '33.33%' }, px: 1.5 }}>
             {/* E-signature Card */}
             <Paper
               sx={{
@@ -289,7 +280,6 @@ const Profile: React.FC = () => {
                 E‑signature
               </Typography>
 
-              {/* Signature Preview */}
               <Box
                 sx={{
                   width: '100%',
@@ -314,7 +304,6 @@ const Profile: React.FC = () => {
                 </Typography>
               </Box>
 
-              {/* Buttons */}
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <Button variant="outlined" fullWidth sx={outlinedButtonSx}>
                   Draw signature
@@ -338,7 +327,6 @@ const Profile: React.FC = () => {
                 Clear
               </Button>
 
-              {/* Toggle */}
               <Box sx={{ mt: 2 }}>
                 <FormControlLabel
                   control={
@@ -394,7 +382,6 @@ const Profile: React.FC = () => {
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* Change Password */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -418,7 +405,6 @@ const Profile: React.FC = () => {
                   </Button>
                 </Box>
 
-                {/* Active Sessions */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -454,7 +440,6 @@ const Profile: React.FC = () => {
                   </Button>
                 </Box>
 
-                {/* Two-factor Authentication */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -489,11 +474,11 @@ const Profile: React.FC = () => {
                 </Box>
               </Box>
             </Paper>
-          </Grid>
+          </Box>
         </Grid>
       </Container>
     </Box>
   );
-}
+};
 
 export default Profile;
