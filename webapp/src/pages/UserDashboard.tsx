@@ -21,7 +21,7 @@ import {
   Menu,
   Button
 } from '@mui/material';
-import { Visibility, FileDownload, FilterList, Edit } from '@mui/icons-material';
+import {FileDownload, FilterList, Edit } from '@mui/icons-material';
 import Pagination from '@mui/material/Pagination';
 
 interface Document {
