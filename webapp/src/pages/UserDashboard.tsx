@@ -21,7 +21,7 @@ import {
   Menu,
   Button
 } from '@mui/material';
-import { Visibility, FileDownload, FilterList } from '@mui/icons-material';
+import { Visibility, FileDownload, FilterList, Edit } from '@mui/icons-material';
 import Pagination from '@mui/material/Pagination';
 
 interface Document {
@@ -32,7 +32,6 @@ interface Document {
 }
 
 const mockDocuments: Document[] = [
-  // 100 generated entries
   ...Array.from({ length: 100 }, (_, i) => {
     const id = i + 1;
     const names = [
@@ -42,11 +41,8 @@ const mockDocuments: Document[] = [
       'IT Security Policy', 'Expense reimbursement', 'Travel policy', 'Performance review',
       'Equipment checklist', 'Parking permit', 'Emergency contact form', 'Payroll setup'
     ];
-    const assignedBys = [
-      'HR Team', 'Legal', 'Finance', 'IT', 'Admin'
-    ];
+    const assignedBys = ['HR Team', 'Legal', 'Finance', 'IT', 'Admin'];
     const statuses: Document['status'][] = ['Unsigned', 'Signed'];
-    // Distribute values for variety
     return {
       id,
       name: names[i % names.length] + (id > names.length ? ` #${Math.floor(id / names.length) + 1}` : ''),
@@ -79,7 +75,6 @@ const UserDashboard: React.FC = () => {
 
   const rowsPerPage = 7;
 
-  // Filter and sort documents based on search, status, and date
   const filteredDocuments = React.useMemo(() => {
     let docs = [...mockDocuments];
     if (searchQuery.trim()) {
@@ -94,14 +89,13 @@ const UserDashboard: React.FC = () => {
     if (statusFilter.length > 0) {
       docs = docs.filter(doc => statusFilter.includes(doc.status));
     }
-    docs.sort((a, b) => b.id - a.id); // always newest first
+    docs.sort((a, b) => b.id - a.id);
     return docs;
-  }, [searchQuery, statusFilter, mockDocuments]);
+  }, [searchQuery, statusFilter]);
 
   const totalPages = Math.ceil(filteredDocuments.length / rowsPerPage);
   const paginatedDocuments = filteredDocuments.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-  // Reset to page 1 when search or sort changes
   React.useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
@@ -115,7 +109,6 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  // Sort bar open/close handlers
   const handleSortMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setSortMenuAnchor(event.currentTarget);
   };
@@ -128,7 +121,6 @@ const UserDashboard: React.FC = () => {
       <Navbar />
       <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
-          {/* Left Column - Documents Table */}
           <Box sx={{ flex: 2, minWidth: 0 }}>
             <Paper
               sx={{
@@ -142,7 +134,6 @@ const UserDashboard: React.FC = () => {
                 flexDirection: 'column'
               }}
             >
-              {/* Card Header */}
               <Box sx={{ p: 3, borderBottom: '1px solid #E6E8EE' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography
@@ -157,7 +148,6 @@ const UserDashboard: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* Search and Sort */}
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <TextField
                     size="small"
@@ -226,7 +216,7 @@ const UserDashboard: React.FC = () => {
                                 : [...prev, option.value]
                             );
                           }}
-                          sx={{ pl: 2, minHeight: 28, py: 0.2 }} // Smaller height and padding
+                          sx={{ pl: 2, minHeight: 28, py: 0.2 }}
                         >
                           <Checkbox
                             checked={statusFilter.includes(option.value)}
@@ -235,14 +225,14 @@ const UserDashboard: React.FC = () => {
                               mr: 1,
                               '& .MuiSvgIcon-root': {
                                 fontSize: 18,
-                                color: '#67728A', // Set tick color to match outline
+                                color: '#67728A',
                               },
-                              color: '#67728A', // Set box outline color
+                              color: '#67728A',
                             }}
                           />
                           <ListItemText
                             primary={option.label}
-                            primaryTypographyProps={{ fontSize: '0.92rem' }} // Smaller text
+                            primaryTypographyProps={{ fontSize: '0.92rem' }}
                           />
                         </MenuItem>
                       ))}
@@ -251,7 +241,6 @@ const UserDashboard: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* Table */}
               <TableContainer sx={{ flex: '1 1 auto' }}>
                 <Table>
                   <TableHead>
@@ -324,9 +313,8 @@ const UserDashboard: React.FC = () => {
                               '& td': { py: 1 },
                               '&:hover': { backgroundColor: '#CBD5E0' }
                             }}
-
                           >
-                             <TableCell
+                            <TableCell
                               sx={{
                                 fontSize: '14px',
                                 color: '#111827',
@@ -344,7 +332,7 @@ const UserDashboard: React.FC = () => {
                                 borderBottom: '1px solid #E6E8EE'
                               }}
                             >
-                               {doc.assignedBy}
+                              {doc.assignedBy}
                             </TableCell>
                             <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
                               <Chip
@@ -360,26 +348,24 @@ const UserDashboard: React.FC = () => {
                                   height: '24px'
                                 }}
                               />
-                             <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
+                            </TableCell>
+                            <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
                               <Box sx={{ display: 'flex', gap: 1 }}>
                                 <IconButton
                                   size="small"
                                   sx={{ color: '#667085' }}
-                                  aria-label={`Sign`}
+                                  aria-label="Sign"
                                   onClick={() => {
-                                    // TODO: wire up edit behavior
                                     console.log('Sign document:', doc.id);
                                   }}
                                 >
                                   <Edit sx={{ fontSize: 16 }} />
                                 </IconButton>
-
                                 <IconButton
                                   size="small"
                                   sx={{ color: '#667085' }}
-                                  aria-label={`Download`}
+                                  aria-label="Download"
                                   onClick={() => {
-                                    // TODO: wire up download behavior
                                     console.log('Download document:', doc.id);
                                   }}
                                 >
@@ -387,6 +373,7 @@ const UserDashboard: React.FC = () => {
                                 </IconButton>
                               </Box>
                             </TableCell>
+                          </TableRow>
                         );
                       })
                     ) : (
@@ -407,7 +394,6 @@ const UserDashboard: React.FC = () => {
                 </Table>
               </TableContainer>
 
-              {/* Pagination */}
               <Box
                 sx={{
                   p: 3,
@@ -479,7 +465,6 @@ const UserDashboard: React.FC = () => {
                       "& .Mui-selected:hover": {
                         backgroundColor: "#5a6276 !important",
                       },
-                      // Ensure ellipsis is visible for many pages
                       "& .MuiPaginationItem-ellipsis": {
                         mx: "4px",
                       },
@@ -492,9 +477,7 @@ const UserDashboard: React.FC = () => {
             </Paper>
           </Box>
 
-          {/* Right Column */}
           <Box sx={{ width: '420px', minWidth: '340px' }}>
-            {/* Stats Card */}
             <Paper
               sx={{
                 p: 3,
@@ -563,10 +546,8 @@ const UserDashboard: React.FC = () => {
                   </Box>
                 ))}
               </Box>
-              {/* Continue signing button removed as requested */}
             </Paper>
 
-            {/* Recent Activity */}
             <Paper
               sx={{
                 p: 3,
@@ -630,7 +611,6 @@ const UserDashboard: React.FC = () => {
       </Container>
     </Box>
   );
-}
+};
 
 export default UserDashboard;
-
