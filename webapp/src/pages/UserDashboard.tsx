@@ -21,15 +21,14 @@ import {
   Menu,
   Button
 } from '@mui/material';
-import { Visibility, Edit, DriveFileRenameOutline, FileDownload, FilterList } from '@mui/icons-material';
+import { Visibility, FileDownload, FilterList } from '@mui/icons-material';
 import Pagination from '@mui/material/Pagination';
 
 interface Document {
   id: number;
   name: string;
   assignedBy: string;
-  due: string;
-  status: 'Pending' | 'Completed';
+  status: 'Signed' | 'Unsigned';
 }
 
 const mockDocuments: Document[] = [
@@ -52,7 +51,6 @@ const mockDocuments: Document[] = [
       id,
       name: names[i % names.length] + (id > names.length ? ` #${Math.floor(id / names.length) + 1}` : ''),
       assignedBy: assignedBys[i % assignedBys.length],
-      due: `Mar ${((i % 28) + 1).toString().padStart(2, '0')}`,
       status: statuses[i % statuses.length]
     };
   })
@@ -64,13 +62,13 @@ const recentActivity = [
   { text: 'New document assigned: Bank account form', time: '2025-12-12' },
   { text: 'New document assigned: Bank account form', time: '2025-12-12' },
   { text: 'You signed Offer letter.pdf', time: '2025-12-10' },
-  { text: 'W-9.pdf marked as Completed', time: '2025-12-08' },
+  { text: 'W-9.pdf marked as Signed', time: '2025-12-08' },
   { text: 'You viewed W-9.pdf', time: '2025-12-07' }
 ];
 
 const statusOptions = [
-  { value: 'Pending', label: 'Pending' },
-  { value: 'Completed', label: 'Completed' }
+  { value: 'Signed', label: 'Signed' },
+  { value: 'Unsigned', label: 'Unsigned' }
 ];
 
 const UserDashboard: React.FC = () => {
@@ -90,7 +88,6 @@ const UserDashboard: React.FC = () => {
         doc =>
           doc.name.toLowerCase().includes(q) ||
           doc.assignedBy.toLowerCase().includes(q) ||
-          doc.due.toLowerCase().includes(q) ||
           doc.status.toLowerCase().includes(q)
       );
     }
@@ -111,9 +108,9 @@ const UserDashboard: React.FC = () => {
 
   const getStatusColor = (status: Document['status']) => {
     switch (status) {
-      case 'Pending':
+      case 'Unsigned':
         return { bg: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' };
-      case 'Completed':
+      case 'Signed':
         return { bg: 'rgba(18, 183, 106, 0.1)', color: '#12B76A' };
     }
   };
@@ -296,19 +293,6 @@ const UserDashboard: React.FC = () => {
                           borderBottom: '1px solid #E6E8EE'
                         }}
                       >
-                        Due
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: '#667085',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                          fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                          borderBottom: '1px solid #E6E8EE'
-                        }}
-                      >
                         Status
                       </TableCell>
                       <TableCell
@@ -330,8 +314,6 @@ const UserDashboard: React.FC = () => {
                     {paginatedDocuments.length > 0 ? (
                       paginatedDocuments.map((doc) => {
                         const statusColor = getStatusColor(doc.status);
-                        const isCompleted = doc.status === 'Completed';
-                        const isPending = doc.status === 'Pending';
 
                         return (
                           <TableRow
@@ -342,8 +324,9 @@ const UserDashboard: React.FC = () => {
                               '& td': { py: 1 },
                               '&:hover': { backgroundColor: '#CBD5E0' }
                             }}
+
                           >
-                            <TableCell
+                             <TableCell
                               sx={{
                                 fontSize: '14px',
                                 color: '#111827',
@@ -361,17 +344,7 @@ const UserDashboard: React.FC = () => {
                                 borderBottom: '1px solid #E6E8EE'
                               }}
                             >
-                              {doc.assignedBy}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                fontSize: '14px',
-                                color: '#667085',
-                                fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                                borderBottom: '1px solid #E6E8EE'
-                              }}
-                            >
-                              {doc.due}
+                               {doc.assignedBy}
                             </TableCell>
                             <TableCell sx={{ borderBottom: '1px solid #E6E8EE' }}>
                               <Chip
@@ -393,28 +366,9 @@ const UserDashboard: React.FC = () => {
                                 <IconButton size="small" sx={{ color: '#667085' }}>
                                   <Visibility sx={{ fontSize: 16 }} />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: isCompleted ? '#D0D5DD' : '#667085' }}
-                                  disabled={isCompleted}
-                                >
-                                  <Edit sx={{ fontSize: 16 }} />
+                                <IconButton size="small" sx={{ color: '#667085' }}>
+                                  <FileDownload sx={{ fontSize: 16 }} />
                                 </IconButton>
-                                {isCompleted ? (
-                                  <IconButton size="small" sx={{ color: '#667085' }}>
-                                    <FileDownload sx={{ fontSize: 16 }} />
-                                  </IconButton>
-                                ) : (
-                                  <IconButton
-                                    size="small"
-                                    sx={{
-                                      color: isPending ? '#2563EB' : '#D0D5DD'
-                                    }}
-                                    disabled={!isPending}
-                                  >
-                                    <DriveFileRenameOutline sx={{ fontSize: 16 }} />
-                                  </IconButton>
-                                )}
                               </Box>
                             </TableCell>
                           </TableRow>
@@ -422,7 +376,7 @@ const UserDashboard: React.FC = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} sx={{ py: 6, textAlign: 'center', border: 0 }}>
+                        <TableCell colSpan={4} sx={{ py: 6, textAlign: 'center', border: 0 }}>
                           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                             <Typography sx={{ color: "#b5b7c0", fontWeight: 600, fontSize: "1.15rem" }}>
                               No documents were assigned to you yet.
@@ -549,8 +503,8 @@ const UserDashboard: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 3 }}>
                 {[
-                  { label: 'PENDING', value: '3', color: '#2563EB' },
-                  { label: 'COMPLETED', value: '8', color: '#12B76A' }
+                  { label: 'UNSIGNED', value: '3', color: '#2563EB' },
+                  { label: 'SIGNED', value: '8', color: '#12B76A' }
                 ].map((stat) => (
                   <Box key={stat.label} sx={{ textAlign: 'center' }}>
                     <Box
