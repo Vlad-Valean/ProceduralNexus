@@ -185,7 +185,7 @@ const UserDashboard: React.FC = () => {
       setSnackbarMessage(`Document marked as ${newSignedStatus ? 'Signed' : 'Unsigned'}`);
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
-    } catch (error) {
+    } catch {
       setSnackbarMessage("Failed to update document status");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -196,7 +196,7 @@ const UserDashboard: React.FC = () => {
     if (!token) return;
     try {
         await downloadDocumentWithAuth(doc.id, token, doc.name);
-    } catch (error) {
+    } catch {
         setSnackbarMessage("Download failed");
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
@@ -218,6 +218,7 @@ const UserDashboard: React.FC = () => {
   useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
+
 
   const filteredDocuments = useMemo(() => {
     let docs = [...documents];
