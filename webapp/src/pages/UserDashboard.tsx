@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import {
   Box,
@@ -24,96 +24,93 @@ import {
 import {FileDownload, FilterList, Edit } from '@mui/icons-material';
 import Pagination from '@mui/material/Pagination';
 
-interface Document {
-  id: number;
-  name: string;
-  assignedBy: string;
-  status: 'Signed' | 'Unsigned';
-}
-
-const mockDocuments: Document[] = [
-  ...Array.from({ length: 100 }, (_, i) => {
-    const id = i + 1;
-    const names = [
-      'Employment contract', 'NDA', 'Bank account form', 'W-9', 'Offer letter',
-      'Onboarding checklist', 'Tax form 1099', 'Code of Conduct', 'Benefits enrollment',
-      'Direct deposit form', 'Confidentiality agreement', 'Remote work policy',
-      'IT Security Policy', 'Expense reimbursement', 'Travel policy', 'Performance review',
-      'Equipment checklist', 'Parking permit', 'Emergency contact form', 'Payroll setup'
-    ];
-    const assignedBys = ['HR Team', 'Legal', 'Finance', 'IT', 'Admin'];
-    const statuses: Document['status'][] = ['Unsigned', 'Signed'];
-    return {
-      id,
-      name: names[i % names.length] + (id > names.length ? ` #${Math.floor(id / names.length) + 1}` : ''),
-      assignedBy: assignedBys[i % assignedBys.length],
-      status: statuses[i % statuses.length]
-    };
-  })
-];
-
-const recentActivity = [
-  { text: 'You signed NDA.pdf', time: '2026-1-2' },
-  { text: 'Employment contract moved to In review', time: '2026-1-1' },
-  { text: 'New document assigned: Bank account form', time: '2025-12-12' },
-  { text: 'New document assigned: Bank account form', time: '2025-12-12' },
-  { text: 'You signed Offer letter.pdf', time: '2025-12-10' },
-  { text: 'W-9.pdf marked as Signed', time: '2025-12-08' },
-  { text: 'You viewed W-9.pdf', time: '2025-12-07' }
-];
-
-const statusOptions = [
-  { value: 'Signed', label: 'Signed' },
-  { value: 'Unsigned', label: 'Unsigned' }
-];
-
 const UserDashboard: React.FC = () => {
+  const [documents, setDocuments] = useState<DocumentResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
   const [page, setPage] = useState(1);
 
   const rowsPerPage = 7;
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!userId) {
+        setError('User not logged in');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await documentsApi.getDocuments(userId);
+        setDocuments(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load documents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [userId]);
 
   const filteredDocuments = React.useMemo(() => {
-    let docs = [...mockDocuments];
+    let docs = [...documents];
+    
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      docs = docs.filter(
-        doc =>
-          doc.name.toLowerCase().includes(q) ||
-          doc.assignedBy.toLowerCase().includes(q) ||
-          doc.status.toLowerCase().includes(q)
+      docs = docs.filter(doc =>
+        doc.name.toLowerCase().includes(q) ||
+        doc.uploaderEmail.toLowerCase().includes(q)
       );
     }
+    
     if (statusFilter.length > 0) {
-      docs = docs.filter(doc => statusFilter.includes(doc.status));
+      docs = docs.filter(doc => {
+        const status = doc.signed ? 'Signed' : 'Unsigned';
+        return statusFilter.includes(status);
+      });
     }
-    docs.sort((a, b) => b.id - a.id);
+    
+    docs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
     return docs;
-  }, [searchQuery, statusFilter]);
+  }, [documents, searchQuery, statusFilter]);
 
   const totalPages = Math.ceil(filteredDocuments.length / rowsPerPage);
   const paginatedDocuments = filteredDocuments.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
 
-  const getStatusColor = (status: Document['status']) => {
-    switch (status) {
-      case 'Unsigned':
-        return { bg: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' };
-      case 'Signed':
-        return { bg: 'rgba(18, 183, 106, 0.1)', color: '#12B76A' };
+  const handleDownload = async (docId: number, docName: string) => {
+    try {
+      const blob = await documentsApi.downloadDocument(docId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = docName.endsWith('.pdf') ? docName : `${docName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      alert('Failed to download document');
     }
   };
 
-  const handleSortMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setSortMenuAnchor(event.currentTarget);
-  };
-  const handleSortMenuClose = () => {
-    setSortMenuAnchor(null);
+  const signedCount = documents.filter(d => d.signed).length;
+  const unsignedCount = documents.filter(d => !d.signed).length;
+
+  const getStatusColor = (signed: boolean) => {
+    return signed
+      ? { bg: 'rgba(18, 183, 106, 0.1)', color: '#12B76A' }
+      : { bg: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' };
   };
 
   return (
@@ -305,9 +302,7 @@ const UserDashboard: React.FC = () => {
                         const statusColor = getStatusColor(doc.status);
 
                         return (
-                          <TableRow
-                            key={doc.id}
-                            hover
+                          <TableRow key={doc.id} hover
                             sx={{
                               height: 54,
                               '& td': { py: 1 },
@@ -365,9 +360,7 @@ const UserDashboard: React.FC = () => {
                                   size="small"
                                   sx={{ color: '#667085' }}
                                   aria-label="Download"
-                                  onClick={() => {
-                                    console.log('Download document:', doc.id);
-                                  }}
+                                  onClick={() => handleDownload(doc.id, doc.name)}
                                 >
                                   <FileDownload sx={{ fontSize: 16 }} />
                                 </IconButton>
@@ -501,8 +494,8 @@ const UserDashboard: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 3 }}>
                 {[
-                  { label: 'UNSIGNED', value: '3', color: '#2563EB' },
-                  { label: 'SIGNED', value: '8', color: '#12B76A' }
+                  { label: 'UNSIGNED', value: unsignedCount, color: '#2563EB' },
+                  { label: 'SIGNED', value: signedCount, color: '#12B76A' }
                 ].map((stat) => (
                   <Box key={stat.label} sx={{ textAlign: 'center' }}>
                     <Box
