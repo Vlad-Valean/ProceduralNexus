@@ -66,7 +66,7 @@ type DocumentDto = {
   name?: string | null;
   fileName?: string | null;
   signed?: boolean | null;
-  type?: unknown; // ✅ tratează ca unknown, backend poate trimite string/null/etc
+  type?: unknown; 
 };
 
 const DOCS_PAGE_SIZE = 3;
@@ -112,7 +112,6 @@ const bodyCellSx = {
   textAlign: "left" as const,
 };
 
-// ✅ type guard/converter: unknown -> DocumentType | undefined
 function asDocumentType(v: unknown): DocumentType | undefined {
   if (typeof v !== "string") return undefined;
   const upper = v.toUpperCase();
@@ -316,10 +315,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     const controller = new AbortController();
     fetchUserDocuments(user.id, controller.signal);
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
-  // --- filtering/sorting/paging ---
   const filteredDocs = documents.filter((doc) => {
     if (!search) return true;
     const q = search.toLowerCase();
