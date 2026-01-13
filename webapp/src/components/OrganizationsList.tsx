@@ -51,26 +51,13 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            // do not clear the session here; user remains logged in but is not authorized
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Failed to fetch documents (${res.status})`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then((docs: Document[]) => {
         const userDocs = docs.filter(doc => doc.uploaderEmail === email);
         console.log("Documents uploaded by user:", userDocs);
       })
       .catch(err => {
-        const m = (err as Error).message;
-        if (m !== "Not authenticated" && m !== "Not authorized") {
-          console.error("Failed to fetch documents:", err);
-        }
+        console.error("Failed to fetch documents:", err);
       });
   }, []);
 
@@ -122,16 +109,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Failed to fetch documents (${res.status})`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then((docs: Document[]) => {
         const cvDoc = docs.find(doc => doc.type === "CV");
         if (cvDoc && cvDoc.name) {
@@ -142,12 +120,9 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           setUserCvId("");
         }
       })
-      .catch((err) => {
-        const m = (err as Error).message;
-        if (m !== "Not authenticated" && m !== "Not authorized") {
-          setUserCvName("");
-          setUserCvId("");
-        }
+      .catch(() => {
+        setUserCvName("");
+        setUserCvId("");
       });
   }, [userEmail]);
 
@@ -168,20 +143,9 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            // don't clear session; treat as not authorized for this check
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Profiles fetch failed (${res.status})`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(() => {
-      })
-      .catch(() => {});
+      });
   }, [userEmail]);
 
   useEffect(() => {
@@ -192,16 +156,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Failed to fetch applications (${res.status})`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then((apps: Application[]) => {
         const pendingIds = new Set(
           apps
@@ -211,12 +166,9 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
         setPendingOrgIds(pendingIds);
         if (onPendingOrgIdsChange) onPendingOrgIdsChange(pendingIds);
       })
-      .catch((err) => {
-        const m = (err as Error).message;
-        if (m !== "Not authenticated" && m !== "Not authorized") {
-          setPendingOrgIds(new Set());
-          if (onPendingOrgIdsChange) onPendingOrgIdsChange(new Set());
-        }
+      .catch(() => {
+        setPendingOrgIds(new Set());
+        if (onPendingOrgIdsChange) onPendingOrgIdsChange(new Set());
       });
   }, [userEmail, successOpen, onPendingOrgIdsChange]); 
 
@@ -254,24 +206,12 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           Authorization: `Bearer ${token}`,
         },
       })
-        .then(async (res) => {
-          if (!res.ok) {
-            if (res.status === 401) {
-              throw new Error("Not authorized");
-            }
-            const txt = await res.text().catch(() => "");
-            throw new Error(txt || `Failed to fetch applications (${res.status})`);
-          }
-          return res.json();
-        })
+        .then(res => res.json())
         .then(apps => {
           console.log("All applications for current applicant after submit:", apps);
         })
         .catch(err => {
-          const m = (err as Error).message;
-          if (m !== "Not authenticated" && m !== "Not authorized") {
-            console.log("Failed to fetch applications after submit:", err);
-          }
+          console.log("Failed to fetch applications after submit:", err);
         });
       setSuccessOpen(true);
       handleCloseModal();

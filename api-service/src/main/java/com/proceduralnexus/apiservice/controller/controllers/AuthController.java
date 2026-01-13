@@ -108,9 +108,6 @@ public class AuthController {
     JwtUtils jwtUtils;
 
     @Autowired
-    private com.proceduralnexus.apiservice.business.interfaces.IUserActivityService userActivityService;
-
-    @Autowired
     EmailVerificationService emailVerificationService;
 
     @PostMapping("/login")
@@ -136,17 +133,6 @@ public class AuthController {
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
-
-            // Log login activity for non-admin users
-            boolean isAdmin = userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                try {
-                    userActivityService.logActivity(userDetails.getId(), userDetails.getEmail(), "Login", "User logged in");
-                } catch (Exception e) {
-                    // don't fail login if logging fails
-                    System.err.println("Failed to log user login: " + e.getMessage());
-                }
-            }
 
             return ResponseEntity.ok(new JwtResponse(jwt,
                     userDetails.getId(),

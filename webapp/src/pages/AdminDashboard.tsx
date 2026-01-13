@@ -35,13 +35,7 @@ const AdminDashboard: React.FC = () => {
       const list = await fetchOrganizations(token);
       setOrganizations(list);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to load organizations.";
-      if (msg.includes("(401)")) {
-        // do not clear the user's session; just show a friendly not-authorized message
-        setOrgError("Not authorized (insufficient permissions).");
-      } else {
-        setOrgError(msg);
-      }
+      setOrgError(e instanceof Error ? e.message : "Failed to load organizations.");
       setOrganizations([]);
     } finally {
       setOrgLoading(false);
