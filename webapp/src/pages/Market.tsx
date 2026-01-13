@@ -65,29 +65,21 @@ const Market: React.FC = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(async (res) => {
+      .then((res) => {
         console.log("Response status:", res.status);
-        if (!res.ok) {
-          if (res.status === 401) {
-            // don't clear session on 401 here; user stays logged in but is not authorized for this action
-            setError("Not authorized (insufficient permissions).");
-            setLoading(false);
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Network response was not ok (${res.status})`);
-        }
-        return res.json();
+        return res.json().then((data) => {
+          console.log("Organizations API response:", data);
+          if (!res.ok) throw new Error("Network response was not ok");
+          return data;
+        });
       })
       .then((data) => {
         setOrgs(data);
         setLoading(false);
       })
-      .catch((e) => {
-        if ((e as Error).message !== "Not authenticated") {
-          setError("Could not load organizations.");
-          setLoading(false);
-        }
+      .catch(() => {
+        setError("Could not load organizations.");
+        setLoading(false);
       });
   }, []);
 

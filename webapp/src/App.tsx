@@ -20,14 +20,7 @@ function OAuth2RedirectHandler() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
         })
-          .then(async (res) => {
-            if (!res.ok) {
-              // let catch block handle fallback behavior
-              const txt = await res.text().catch(() => "");
-              throw new Error(txt || `oauth-token failed (${res.status})`);
-            }
-            return res.json().catch(() => ({}));
-          })
+          .then(res => res.json())
           .then(data => {
             if (data.token) {
               localStorage.setItem('token', data.token);

@@ -33,17 +33,7 @@ export default function useNoOrganization(): boolean | null {
     fetch(`${API_BASE_URL}/profiles`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            // do not clear session; treat as unauthorized for this check
-            throw new Error("Not authorized");
-          }
-          const txt = await res.text().catch(() => "");
-          throw new Error(txt || `Profiles fetch failed (${res.status})`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then((profiles: Profile[]) => {
         const profile = profiles.find(p => p.email === userEmail);
         if (profile) {
