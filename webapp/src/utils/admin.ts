@@ -209,7 +209,7 @@ export async function fetchLogsForUser(token: string, userId: string): Promise<U
   try {
     const data: unknown = JSON.parse(text);
     return Array.isArray(data) ? (data as UserActivityRow[]) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
