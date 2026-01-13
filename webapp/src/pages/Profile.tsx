@@ -84,8 +84,15 @@ const Profile: React.FC = () => {
     fontSize: '14px',
     fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
     boxShadow: 'none !important',
+    outline: 'none !important',
     '&:hover': {
-      backgroundColor: '#5a6276'
+      backgroundColor: '#5a6276',
+      outline: 'none !important',
+      boxShadow: 'none !important'
+    },
+    '&:focus': {
+      outline: 'none !important',
+      boxShadow: 'none !important'
     }
   };
 
@@ -116,7 +123,7 @@ const Profile: React.FC = () => {
             >
               <Typography
                 sx={{
-                  fontSize: '20px',
+                  fontSize: '24px',
                   fontWeight: 600,
                   mb: 3,
                   color: '#111827',
@@ -128,7 +135,7 @@ const Profile: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     First name
                   </Typography>
                   <TextField
@@ -136,12 +143,12 @@ const Profile: React.FC = () => {
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     autoComplete="off"
-                    sx={textFieldSx}
+                    sx={{ ...textFieldSx, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
 
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     Last name
                   </Typography>
                   <TextField
@@ -149,43 +156,43 @@ const Profile: React.FC = () => {
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     autoComplete="off"
-                    sx={textFieldSx}
+                    sx={{ ...textFieldSx, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
 
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     Email
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.email}
                     disabled
-                    sx={disabledTextFieldSx}
+                    sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
 
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     Organization
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.organization}
                     disabled
-                    sx={disabledTextFieldSx}
+                    sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
 
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     Role
                   </Typography>
                   <TextField
                     fullWidth
                     value={formData.role}
                     disabled
-                    sx={disabledTextFieldSx}
+                    sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
               </Box>
@@ -216,19 +223,22 @@ const Profile: React.FC = () => {
             >
               <Typography
                 sx={{
-                  fontSize: '20px',
-                  fontWeight: 600,
+                  fontSize: '22px',
+                  fontWeight: 700,
                   mb: 3,
+                  mt: 1,
                   color: '#111827',
-                  fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                  fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                  textAlign: 'center',
+                  letterSpacing: '0.5px'
                 }}
               >
-                CV / Resume
+                Upload your Resume
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Box>
-                  <Typography component="label" sx={labelSx}>
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
                     Document name
                   </Typography>
                   <TextField
@@ -237,19 +247,20 @@ const Profile: React.FC = () => {
                     value={cvData.documentName}
                     onChange={(e) => setCvData({ ...cvData, documentName: e.target.value })}
                     autoComplete="off"
-                    sx={textFieldSx}
+                    sx={{ ...textFieldSx, mt: 1.5, '& input': { textAlign: 'left' } }}
                   />
                 </Box>
 
                 <Box>
-                  <Typography component="label" sx={labelSx}>
-                    Upload CV
+                  <Typography component="label" sx={{ ...labelSx, textAlign: 'left' }}>
+                    Upload resume
                   </Typography>
                   <Box
                     sx={{
                       border: '1px dashed #E6E8EE',
                       borderRadius: '10px',
                       p: 3,
+                      mt: 1.5,
                       textAlign: 'center',
                       backgroundColor: '#FAFAFA',
                       cursor: 'pointer',
@@ -275,7 +286,8 @@ const Profile: React.FC = () => {
                         fontSize: '14px',
                         color: '#111827',
                         fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
-                        mb: 0.5
+                        mb: 0.5,
+                        textAlign: 'center'
                       }}
                     >
                       {cvData.file ? cvData.file.name : 'Click to upload'}
@@ -284,13 +296,22 @@ const Profile: React.FC = () => {
                       sx={{
                         fontSize: '12px',
                         color: '#98A2B3',
-                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
+                        fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif',
+                        textAlign: 'center'
                       }}
                     >
                       PDF, DOC, DOCX (max 5MB)
                     </Typography>
                   </Box>
                 </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                <Button variant="outlined" sx={{ ...outlinedButtonSx, px: 3 }}>
+                  Cancel
+                </Button>
+                <Button variant="contained" sx={primaryButtonSx}>
+                  Save changes
+                </Button>
+              </Box>
               </Box>
             </Paper>
 
@@ -308,7 +329,8 @@ const Profile: React.FC = () => {
                 sx={{
                   fontSize: '20px',
                   fontWeight: 600,
-                  mb: 3,
+                  mb: 5.1,
+                  mt: 1,
                   color: '#111827',
                   fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
                 }}
@@ -326,13 +348,14 @@ const Profile: React.FC = () => {
                 <Typography
                   sx={{
                     fontSize: '14px',
-                    color: '#111827',
+                    fontWeight: 400,
+                    color: '#000000',
                     fontFamily: 'Inter, system-ui, Helvetica, Arial, sans-serif'
                   }}
                 >
-                  Change password
+                  Change your password
                 </Typography>
-                <Button variant="outlined" size="small" sx={outlinedButtonSx}>
+                <Button variant="contained" sx={primaryButtonSx}>
                   Change
                 </Button>
               </Box>
