@@ -168,6 +168,7 @@ export type UserActivityRow = {
   action: string;
   description?: string | null;
   createdAt?: string | null;
+  timestamp?: string | null;
 };
 
 export async function fetchLogs(token: string, q?: string): Promise<UserActivityRow[]> {
@@ -188,7 +189,7 @@ export async function fetchLogs(token: string, q?: string): Promise<UserActivity
   try {
     const data: unknown = JSON.parse(text);
     return Array.isArray(data) ? (data as UserActivityRow[]) : [];
-  } catch (e) {
+  } catch {
     // If parsing fails, return empty list instead of throwing a JSON error.
     return [];
   }

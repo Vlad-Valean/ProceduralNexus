@@ -13,7 +13,7 @@ import {
   Pagination,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import { fetchLogs } from "../utils/admin";
+import { fetchLogs, UserActivityRow } from "../utils/admin";
 
 // Logs fetched from server
 
@@ -50,7 +50,7 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
   const [endTime, setEndTime] = useState<string>("");
   const [page, setPage] = useState(1);
 
-  const [logs, setLogs] = useState<Array<any>>([]);
+  const [logs, setLogs] = useState<UserActivityRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +89,7 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
   };
 
   const filteredLogs = logs.filter((log) => {
-    const logDate = (log.createdAt || log.timestamp || "").replace(" ", "T");
+    const logDate = (log.createdAt || "").replace(" ", "T");
     const start = getDateTime(startDate, startTime);
     const end = getDateTime(endDate, endTime);
 

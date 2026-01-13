@@ -305,7 +305,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       try {
         const { sendLog } = await import("../services/logService");
         sendLog("Upload", `Uploaded document: ${name}`);
-      } catch (e) {
+      } catch {
         // ignore logging failures on client
       }
       setDocumentName("");
