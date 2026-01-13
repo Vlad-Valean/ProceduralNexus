@@ -13,7 +13,8 @@ import {
   Pagination,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import { fetchLogs, UserActivityRow } from "../utils/admin";
+import { fetchLogs } from "../utils/admin";
+import type { UserActivityRow } from "../utils/admin";
 
 // Logs fetched from server
 
