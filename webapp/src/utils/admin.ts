@@ -182,8 +182,16 @@ export async function fetchLogs(token: string, q?: string): Promise<UserActivity
     throw new Error(`Failed to load logs (${res.status})`);
   }
 
-  const data: unknown = await res.json();
-  return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  // Some endpoints may return an empty body (no logs). Safely handle empty or invalid JSON.
+  const text = await res.text().catch(() => "");
+  if (!text || !text.trim()) return [];
+  try {
+    const data: unknown = JSON.parse(text);
+    return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  } catch (e) {
+    // If parsing fails, return empty list instead of throwing a JSON error.
+    return [];
+  }
 }
 
 export async function fetchLogsForUser(token: string, userId: string): Promise<UserActivityRow[]> {
@@ -195,8 +203,14 @@ export async function fetchLogsForUser(token: string, userId: string): Promise<U
     throw new Error(`Failed to load user logs (${res.status})`);
   }
 
-  const data: unknown = await res.json();
-  return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  const text = await res.text().catch(() => "");
+  if (!text || !text.trim()) return [];
+  try {
+    const data: unknown = JSON.parse(text);
+    return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  } catch (e) {
+    return [];
+  }
 }
 
 export function formatDateGB(iso: string | null): string {

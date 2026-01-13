@@ -1,30 +1,20 @@
 package com.proceduralnexus.apiservice.data.entities;
 
-import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
-@Table(name = "user_activity")
+/**
+ * Placeholder POJO for previously used UserActivity entity.
+ * Converted to a regular class (no JPA annotations) to avoid Hibernate schema validation
+ * since logging now uses the existing `log_entry` table / `LogEntry` entity.
+ */
 public class UserActivity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-
-    @Column(name = "user_id", nullable = false)
     private UUID userId;
-
-    @Column(name = "user_email")
     private String userEmail;
-
-    @Column(name = "action", nullable = false)
     private String action;
-
-    @Column(name = "description", length = 1000)
     private String description;
-
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     public UserActivity() { }

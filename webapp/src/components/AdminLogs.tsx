@@ -13,6 +13,7 @@ import {
   Pagination,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { fetchLogs } from "../utils/admin";
 
 // Logs fetched from server
 
@@ -60,13 +61,18 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await (await fetch(`http://localhost:8080/api/admin/logs${logsTarget ? `?q=${encodeURIComponent(logsTarget)}` : ""}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })).json();
+      const data = await fetchLogs(token, logsTarget ?? undefined);
       setLogs(Array.isArray(data) ? data : []);
       setPage(1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("(401)")) {
+        // 401 when fetching logs often means 'not authorized to view logs' for this account.
+        // Do NOT clear the user's session here; just show a friendly message so they can continue using the app.
+        setError("Not authorized to view logs.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
