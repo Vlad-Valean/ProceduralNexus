@@ -30,11 +30,14 @@ public class DocumentController {
 
     private final IDocumentService documentService;
     private final ProfileService profileService;
+    private final com.proceduralnexus.apiservice.business.interfaces.IUserActivityService userActivityService;
 
     public DocumentController(IDocumentService documentService,
-                              ProfileService profileService) {
+                              ProfileService profileService,
+                              com.proceduralnexus.apiservice.business.interfaces.IUserActivityService userActivityService) {
         this.documentService = documentService;
         this.profileService = profileService;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -60,7 +63,17 @@ public class DocumentController {
             @RequestParam(value = "type", required = false) String type
     ) {
         Profile uploader = profileService.findById(uploaderId);
-        return documentService.uploadDocument(file, batchId, uploader, name, type);
+        DocumentResponseDto res = documentService.uploadDocument(file, batchId, uploader, name, type);
+
+        // log upload (skip if uploader has admin role)
+        try {
+            boolean isAdmin = uploader.getRoles().stream().anyMatch(r -> r.getName().name().equals("ADMIN"));
+            if (!isAdmin) {
+                userActivityService.logActivity(uploader.getId(), uploader.getEmail(), "Upload", "Uploaded document: " + name);
+            }
+        } catch (Exception ignored) {}
+
+        return res;
     }
 
     /**
