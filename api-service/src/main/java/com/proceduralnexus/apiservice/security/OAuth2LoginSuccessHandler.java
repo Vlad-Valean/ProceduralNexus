@@ -33,6 +33,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private com.proceduralnexus.apiservice.business.interfaces.IUserActivityService userActivityService;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
@@ -68,6 +71,14 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             profile.getRoles().stream().map(r -> r.getName().name()).toList(),
             profile.getId().toString()
         );
+
+        // Log oauth login for non-admin
+        boolean isAdmin = profile.getRoles().stream().anyMatch(r -> r.getName().name().equals("ADMIN"));
+        if (!isAdmin) {
+            try {
+                userActivityService.logActivity(profile.getId(), profile.getEmail(), "Login", "OAuth2 login");
+            } catch (Exception ignored) {}
+        }
 
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:80/oauth2/redirect")
             .queryParam("token", jwt)

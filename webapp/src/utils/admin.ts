@@ -161,6 +161,59 @@ export async function deleteOrganization(token: string, id: number): Promise<voi
   }
 }
 
+export type UserActivityRow = {
+  id: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  action: string;
+  description?: string | null;
+  createdAt?: string | null;
+  timestamp?: string | null;
+};
+
+export async function fetchLogs(token: string, q?: string): Promise<UserActivityRow[]> {
+  const url = new URL(`${BASE_URL}/api/admin/logs`);
+  if (q) url.searchParams.append("q", q);
+
+  const res = await fetch(url.toString(), {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load logs (${res.status})`);
+  }
+
+  // Some endpoints may return an empty body (no logs). Safely handle empty or invalid JSON.
+  const text = await res.text().catch(() => "");
+  if (!text || !text.trim()) return [];
+  try {
+    const data: unknown = JSON.parse(text);
+    return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  } catch {
+    // If parsing fails, return empty list instead of throwing a JSON error.
+    return [];
+  }
+}
+
+export async function fetchLogsForUser(token: string, userId: string): Promise<UserActivityRow[]> {
+  const res = await fetch(`${BASE_URL}/api/admin/logs/user/${userId}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load user logs (${res.status})`);
+  }
+
+  const text = await res.text().catch(() => "");
+  if (!text || !text.trim()) return [];
+  try {
+    const data: unknown = JSON.parse(text);
+    return Array.isArray(data) ? (data as UserActivityRow[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function formatDateGB(iso: string | null): string {
   if (!iso) return "-";
   const d = new Date(iso);
