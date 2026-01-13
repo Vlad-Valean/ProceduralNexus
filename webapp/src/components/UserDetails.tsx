@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { downloadDocumentWithAuth } from "../utils/download";
 import type { ChangeEvent } from "react";
 import {
@@ -66,7 +66,7 @@ type DocumentDto = {
   name?: string | null;
   fileName?: string | null;
   signed?: boolean | null;
-  type?: unknown; // ✅ tratează ca unknown, backend poate trimite string/null/etc
+  type?: unknown; 
 };
 
 const DOCS_PAGE_SIZE = 3;
@@ -112,7 +112,6 @@ const bodyCellSx = {
   textAlign: "left" as const,
 };
 
-// ✅ type guard/converter: unknown -> DocumentType | undefined
 function asDocumentType(v: unknown): DocumentType | undefined {
   if (typeof v !== "string") return undefined;
   const upper = v.toUpperCase();
@@ -156,7 +155,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
   };
 
   // --- API helpers ---
-  async function fetchUserDocuments(profileId: string, signal?: AbortSignal) {
+  // WRAPPED IN USECALLBACK TO FIX LINT WARNING
+  const fetchUserDocuments = useCallback(async (profileId: string, signal?: AbortSignal) => {
     if (!token) {
       setDocuments([]);
       setDocsError("Not authenticated (missing token).");
@@ -207,7 +207,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     } finally {
       setLoadingDocs(false);
     }
-  }
+  }, [token]);
 
   async function deleteDocument(documentId: number) {
     if (!token) {
@@ -286,8 +286,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       const form = new FormData();
       form.append("file", file);
       form.append("name", documentName.trim());
-      // dacă ai și type opțional, îl poți adăuga aici când vei avea UI:
-      // form.append("type", selectedType ?? "OTHER");
 
       const res = await fetch(`${BASE_URL}/documents/upload?uploaderId=${profileId}`, {
         method: "POST",
@@ -316,10 +314,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
     const controller = new AbortController();
     fetchUserDocuments(user.id, controller.signal);
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]);
+  }, [user.id, fetchUserDocuments]);
 
-  // --- filtering/sorting/paging ---
   const filteredDocs = documents.filter((doc) => {
     if (!search) return true;
     const q = search.toLowerCase();
