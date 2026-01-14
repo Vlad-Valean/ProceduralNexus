@@ -61,4 +61,9 @@ public class UserActivityService implements IUserActivityService {
     public List<LogEntry> searchByEmail(String emailFragment) {
         return logRepo.findByProfile_EmailContainingIgnoreCase(emailFragment);
     }
+
+    @Override
+    public List<LogEntry> getActivitiesForOrganization(Long organizationId) {
+        return logRepo.findByProfile_Organization_Id(organizationId);
+    }
 }

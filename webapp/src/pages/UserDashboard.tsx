@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useUserLogs } from "../hooks/useUserLogs";
+import type { UserLog } from "../hooks/useUserLogs";
 import Navbar from "../components/Navbar";
 import {
   Box,
@@ -55,17 +57,11 @@ const statusOptions = [
   { value: 'Unsigned', label: 'Unsigned' }
 ];
 
-const recentActivity = [
-  { text: 'You signed NDA.pdf', time: '2026-1-2' },
-  { text: 'Employment contract moved to In review', time: '2026-1-1' },
-  { text: 'New document assigned: Bank account form', time: '2025-12-12' },
-  { text: 'New document assigned: Bank account form', time: '2025-12-12' },
-  { text: 'You signed Offer letter.pdf', time: '2025-12-10' },
-  { text: 'W-9.pdf marked as Signed', time: '2025-12-08' },
-  { text: 'You viewed W-9.pdf', time: '2025-12-07' }
-];
-
 const UserDashboard: React.FC = () => {
+  const { fetchUserLogs } = useUserLogs();
+  const [userLogs, setUserLogs] = useState<UserLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  
   const [userId, setUserId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<UserDocument[]>([]);
 
@@ -183,6 +179,14 @@ const UserDashboard: React.FC = () => {
           : d
       ));
 
+      // Log the action
+      try {
+        const { sendLog } = await import("../services/logService");
+        await sendLog("DOCUMENT_SIGNED", `Document ${newSignedStatus ? 'signed' : 'unsigned'}: ${doc.name}`);
+      } catch {
+        // Ignore logging failures
+      }
+
       setSnackbarMessage(`Document marked as ${newSignedStatus ? 'Signed' : 'Unsigned'}`);
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
@@ -197,6 +201,14 @@ const UserDashboard: React.FC = () => {
     if (!token) return;
     try {
       await downloadDocumentWithAuth(doc.id, token, doc.name);
+      
+      // Log the download action
+      try {
+        const { sendLog } = await import("../services/logService");
+        await sendLog("DOCUMENT_DOWNLOADED", `Downloaded document: ${doc.name}`);
+      } catch {
+        // Ignore logging failures
+      }
     } catch {
       setSnackbarMessage("Download failed");
       setSnackbarSeverity("error");
@@ -219,6 +231,21 @@ const UserDashboard: React.FC = () => {
   useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
+
+  // Fetch user logs pentru recent activity
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (!t) return;
+    setLoadingLogs(true);
+    fetchUserLogs(t)
+      .then((logs) => {
+        setUserLogs(
+          logs.filter((l) => ["DOCUMENT_ASSIGNED", "DOCUMENT_VIEWED", "DOCUMENT_DOWNLOADED", "DOCUMENT_SIGNED"].includes(l.action))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        );
+      })
+      .finally(() => setLoadingLogs(false));
+  }, [fetchUserLogs]);
 
   const filteredDocuments = useMemo(() => {
     let docs = [...documents];
@@ -536,16 +563,22 @@ const UserDashboard: React.FC = () => {
                   Recent activity
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {recentActivity.map((activity, index) => (
-                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
-                      <Typography sx={{ fontSize: '14px', color: '#111827', flex: 1 }}>
-                        {activity.text}
-                      </Typography>
-                      <Typography sx={{ fontSize: '12px', color: '#98A2B3', whiteSpace: 'nowrap' }}>
-                        {activity.time}
-                      </Typography>
-                    </Box>
-                  ))}
+                  {loadingLogs ? (
+                    <Typography sx={{ color: '#98A2B3' }}>Loading activity...</Typography>
+                  ) : userLogs.length === 0 ? (
+                    <Typography sx={{ color: '#98A2B3' }}>No recent activity.</Typography>
+                  ) : (
+                    userLogs.map((log) => (
+                      <Box key={log.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+                        <Typography sx={{ fontSize: '14px', color: '#111827', flex: 1 }}>
+                          {formatLogText(log)}
+                        </Typography>
+                        <Typography sx={{ fontSize: '12px', color: '#98A2B3', whiteSpace: 'nowrap' }}>
+                          {new Date(log.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    ))
+                  )}
                 </Box>
               </Paper>
             </div>
@@ -566,5 +599,21 @@ const UserDashboard: React.FC = () => {
     </>
   );
 };
+
+// Helper pentru a formata textul logului pentru UI
+function formatLogText(log: UserLog) {
+  switch (log.action) {
+    case "DOCUMENT_ASSIGNED":
+      return log.description || "Document assigned.";
+    case "DOCUMENT_VIEWED":
+      return log.description || "Document viewed.";
+    case "DOCUMENT_DOWNLOADED":
+      return log.description || "Document downloaded.";
+    case "DOCUMENT_SIGNED":
+      return log.description || "Document signed.";
+    default:
+      return log.description || log.action;
+  }
+}
 
 export default UserDashboard;

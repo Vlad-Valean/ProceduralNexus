@@ -20,6 +20,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 interface AdminLogsProps {
   onBack: () => void;
   logsTarget?: string | null;
+  organizationId?: number | null;
 }
 
 const headCellSx = {
@@ -42,7 +43,7 @@ const LOGS_PAGE_SIZE_ALL = 8;
 const LOGS_PAGE_SIZE_OTHER = 7;
 const ROW_HEIGHT = 36;
 
-const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
+const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget, organizationId }) => {
   const [startDate, setStartDate] = useState<string>("");
   const [startTime, setStartTime] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -71,7 +72,13 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/logs${logsTarget ? `?q=${encodeURIComponent(logsTarget)}` : ""}`, {
+      let url = 'http://localhost:8080/api/admin/logs';
+      if (organizationId) {
+        url = `http://localhost:8080/api/admin/logs/organization/${organizationId}`;
+      } else if (logsTarget) {
+        url = `http://localhost:8080/api/admin/logs?q=${encodeURIComponent(logsTarget)}`;
+      }
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`Failed to fetch logs (${res.status})`);
@@ -88,7 +95,7 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
   useEffect(() => {
     loadLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logsTarget]);
+  }, [logsTarget, organizationId]);
 
   const filteredLogs = logs.filter((log) => {
     const logDate = (log.createdAt || log.timestamp || "").replace(" ", "T");

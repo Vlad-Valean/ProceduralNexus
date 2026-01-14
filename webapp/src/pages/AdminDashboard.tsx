@@ -19,6 +19,7 @@ const AdminDashboard: React.FC = () => {
   const [selectedError, setSelectedError] = useState<string | null>(null);
 
   const [logsTarget, setLogsTarget] = useState<string | null>(null);
+  const [logsOrgId, setLogsOrgId] = useState<number | null>(null);
   const [lastOrganizationId, setLastOrganizationId] = useState<number | null>(null);
 
   const loadOrganizations = async () => {
@@ -67,13 +68,15 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleShowLogs = (target: string | null) => {
+  const handleShowLogs = (target: string | null, organizationId?: number) => {
     setLogsTarget(target);
+    setLogsOrgId(organizationId || null);
     setSelectedOrg(null);
   };
 
   const handleBackFromLogs = async () => {
     setLogsTarget(null);
+    setLogsOrgId(null);
 
     if (lastOrganizationId && token) {
       setSelectedLoading(true);
@@ -95,12 +98,14 @@ const AdminDashboard: React.FC = () => {
     setSelectedOrg(null);
     setLastOrganizationId(null);
     setLogsTarget(null);
+    setLogsOrgId(null);
   };
 
   const handleOrgDeleted = async () => {
     await loadOrganizations();
     setSelectedOrg(null);
     setLogsTarget(null);
+    setLogsOrgId(null);
     setLastOrganizationId(null);
   };
 
@@ -139,7 +144,7 @@ const AdminDashboard: React.FC = () => {
 
             <div style={{ minHeight: 0 }}>
               {logsTarget !== null ? (
-                <AdminLogs logsTarget={logsTarget} onBack={handleBackFromLogs} />
+                <AdminLogs logsTarget={logsTarget} organizationId={logsOrgId} onBack={handleBackFromLogs} />
               ) : selectedOrg ? (
                 <OrganizationDetail
                   organization={selectedOrg}
