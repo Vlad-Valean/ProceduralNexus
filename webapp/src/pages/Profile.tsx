@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import {
   Box,
@@ -10,19 +10,144 @@ import {
 } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
+const BASE_URL = "http://localhost:8080";
+
+interface ProfileResponse {
+  id: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  roles: string[];
+  organizationId: number | null;
+}
+
+interface OrganizationResponse {
+  id: number;
+  name: string;
+}
+
+const fetchWithAuth = async <T,>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API Error: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+
+
 const Profile: React.FC = () => {
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const [organization, setOrganization] = useState<OrganizationResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
-    firstName: 'Maria',
-    lastName: 'Brown',
-    email: 'maria.brown@example.com',
-    organization: 'Acme Corp',
-    role: 'Standard user'
+    firstName: '',
+    lastName: '',
   });
 
   const [cvData, setCvData] = useState({
     documentName: '',
     file: null as File | null
   });
+
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userId) {
+        setError('User not logged in. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const profileData = await fetchWithAuth<ProfileResponse>(`/profiles/${userId}`);
+        setProfile(profileData);
+        setFormData({
+          firstName: profileData.firstname || '',
+          lastName: profileData.lastname || '',
+        });
+
+        if (profileData.organizationId) {
+          try {
+            const orgData = await fetchWithAuth<OrganizationResponse>(
+              `/organizations/${profileData.organizationId}`
+            );
+            setOrganization(orgData);
+          } catch (orgErr) {
+            console.error('Failed to fetch organization:', orgErr);
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
+
+  const handleSave = async () => {
+    if (!userId || !profile) return;
+
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const updated = await fetchWithAuth<ProfileResponse>(`/profiles/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstname: formData.firstName,
+          lastname: formData.lastName,
+        }),
+      });
+      
+      setProfile(updated);
+      setSuccessMessage('Profile updated successfully!');
+      
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (profile) {
+      setFormData({
+        firstName: profile.firstname || '',
+        lastName: profile.lastname || '',
+      });
+    }
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const getRoleDisplay = (roles: string[] | undefined): string => {
+    if (!roles || roles.length === 0) return 'Standard user';
+    if (roles.includes('ADMIN')) return 'Administrator';
+    if (roles.includes('HR')) return 'HR Manager';
+    return 'Standard user';
+  };
 
   const textFieldSx = {
     '& .MuiOutlinedInput-root': {
@@ -166,7 +291,7 @@ const Profile: React.FC = () => {
                   </Typography>
                   <TextField
                     fullWidth
-                    value={formData.email}
+                    value={profile?.email || ''}
                     disabled
                     sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
@@ -178,7 +303,7 @@ const Profile: React.FC = () => {
                   </Typography>
                   <TextField
                     fullWidth
-                    value={formData.organization}
+                    value={organization?.name || 'No organization'}
                     disabled
                     sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
@@ -190,7 +315,7 @@ const Profile: React.FC = () => {
                   </Typography>
                   <TextField
                     fullWidth
-                    value={formData.role}
+                    value={getRoleDisplay(profile?.roles)}
                     disabled
                     sx={{ ...disabledTextFieldSx, '& input': { textAlign: 'left' } }}
                   />
@@ -198,11 +323,21 @@ const Profile: React.FC = () => {
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-                <Button variant="outlined" sx={{ ...outlinedButtonSx, px: 3 }}>
+                <Button 
+                  variant="outlined" 
+                  sx={{ ...outlinedButtonSx, px: 3 }}
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
                   Cancel
                 </Button>
-                <Button variant="contained" sx={primaryButtonSx}>
-                  Save changes
+                <Button 
+                  variant="contained" 
+                  sx={primaryButtonSx}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save changes'}
                 </Button>
               </Box>
             </Paper>
