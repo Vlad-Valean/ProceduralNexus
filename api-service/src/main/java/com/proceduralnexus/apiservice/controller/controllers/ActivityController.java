@@ -27,7 +27,7 @@ public class ActivityController {
     public ResponseEntity<?> createLog(@AuthenticationPrincipal UserDetails userDetails, @RequestBody LogRequest req) {
         if (userDetails == null) return ResponseEntity.status(401).build();
 
-        boolean isAdmin = userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
         if (isAdmin) {
             // Do not record admin actions via this endpoint
             return ResponseEntity.ok().build();
@@ -45,14 +45,14 @@ public class ActivityController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/admin/logs")
     public List<ActivityResponseDto> listAll(@RequestParam(name = "q", required = false) String q) {
         List<LogEntry> entries = (q == null || q.isBlank()) ? activityService.getAllActivities() : activityService.searchByEmail(q);
         return entries.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/admin/logs/user/{userId}")
     public List<ActivityResponseDto> listForUser(@PathVariable UUID userId) {
         List<LogEntry> entries = activityService.getActivitiesForUser(userId);

@@ -172,7 +172,7 @@ public class AuthController {
         user.setLastname(signUpRequest.getLastname());
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setEmailVerified(false); // Email not verified yet
+        user.setEmailVerified(true); // Email not verified yet
 
         Set<String> strRoles = signUpRequest.getRole();
         Set<Role> roles = new HashSet<>();
@@ -211,13 +211,6 @@ public class AuthController {
             activityService.logActivity(savedUser.getId(), savedUser.getEmail(), "REGISTER", "User account created");
         }
 
-        // Send verification email
-        try {
-            emailVerificationService.sendVerificationEmail(savedUser.getId(), savedUser.getEmail());
-        } catch (Exception e) {
-            // Log the error but don't fail registration
-            System.err.println("Failed to send verification email: " + e.getMessage());
-        }
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully! Please check your email to verify your account."));
     }
@@ -234,32 +227,6 @@ public class AuthController {
           }
       }
       return ResponseEntity.ok(new MessageResponse("Log out successful!"));
-    }
-
-    @GetMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
-        EmailVerificationService.VerificationResult result = emailVerificationService.verifyEmail(token);
-        
-        if (result.isSuccess()) {
-            return ResponseEntity.ok(new MessageResponse(result.getMessage()));
-        } else {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse(result.getMessage()));
-        }
-    }
-
-    @PostMapping("/resend-verification")
-    public ResponseEntity<?> resendVerificationEmail(@RequestParam String email) {
-        boolean sent = emailVerificationService.resendVerificationEmail(email);
-        
-        if (sent) {
-            return ResponseEntity.ok(new MessageResponse("Verification email sent successfully. Please check your inbox."));
-        } else {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Unable to send verification email. Email may not exist or is already verified."));
-        }
     }
         @Autowired
         PasswordResetService passwordResetService;
