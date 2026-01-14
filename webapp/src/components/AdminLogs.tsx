@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Paper,
   Button,
@@ -14,113 +14,8 @@ import {
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
-const MOCK_LOGS = [
-  {
-    timestamp: "2024-05-01 10:15:00",
-    user: "alice@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-01 10:17:23",
-    user: "bob@example.com",
-    action: "Upload",
-    description: "Uploaded document contract.pdf.",
-  },
-  {
-    timestamp: "2024-05-01 10:20:10",
-    user: "carol@example.com",
-    action: "Download",
-    description: "Downloaded file resume.pdf.",
-  },
-  {
-    timestamp: "2024-05-01 11:00:00",
-    user: "alice@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-02 09:00:00",
-    user: "bob@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  { timestamp: "2024-05-02 09:05:00", user: "dave@example.com", action: "Delete", description: "Deleted file old_contract.pdf." },
-  { timestamp: "2024-05-02 09:10:00", user: "eve@example.com", action: "Edit", description: "Edited profile information." },
-  { timestamp: "2024-05-02 09:15:00", user: "frank@example.com", action: "Share", description: "Shared document NDA.pdf." },
-  {
-    timestamp: "2024-05-02 09:20:00",
-    user: "grace@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-02 09:25:00",
-    user: "heidi@example.com",
-    action: "Upload",
-    description: "Uploaded document invoice.pdf.",
-  },
-  {
-    timestamp: "2024-05-02 09:30:00",
-    user: "ivan@example.com",
-    action: "Download",
-    description: "Downloaded file offer.pdf.",
-  },
-  {
-    timestamp: "2024-05-02 09:35:00",
-    user: "judy@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-03 08:00:00",
-    user: "alice@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-03 08:05:00",
-    user: "bob@example.com",
-    action: "Edit",
-    description: "Changed password.",
-  },
-  {
-    timestamp: "2024-05-03 08:10:00",
-    user: "carol@example.com",
-    action: "Upload",
-    description: "Uploaded document report.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:15:00",
-    user: "dave@example.com",
-    action: "Download",
-    description: "Downloaded file summary.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:20:00",
-    user: "eve@example.com",
-    action: "Logout",
-    description: "User logged out.",
-  },
-  {
-    timestamp: "2024-05-03 08:25:00",
-    user: "frank@example.com",
-    action: "Share",
-    description: "Shared document roadmap.pdf.",
-  },
-  {
-    timestamp: "2024-05-03 08:30:00",
-    user: "grace@example.com",
-    action: "Login",
-    description: "User logged in successfully.",
-  },
-  {
-    timestamp: "2024-05-03 08:35:00",
-    user: "heidi@example.com",
-    action: "Edit",
-    description: "Updated contact details.",
-  },
-];
+// Logs are fetched from the server (admin-only endpoint)
+
 
 interface AdminLogsProps {
   onBack: () => void;
@@ -159,8 +54,37 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
     return time ? `${date}T${time}` : `${date}T00:00`;
   };
 
-  const filteredLogs = MOCK_LOGS.filter((log) => {
-    const logDate = log.timestamp.replace(" ", "T");
+  const [logs, setLogs] = useState<Array<any>>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const token = useMemo(() => localStorage.getItem("token") || "", []);
+
+  const loadLogs = async () => {
+    if (!token) return setError("Not authenticated (missing token).");
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/logs${logsTarget ? `?q=${encodeURIComponent(logsTarget)}` : ""}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`Failed to fetch logs (${res.status})`);
+      const data = await res.json();
+      setLogs(Array.isArray(data) ? data : []);
+      setPage(1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logsTarget]);
+
+  const filteredLogs = logs.filter((log) => {
+    const logDate = (log.createdAt || log.timestamp || "").replace(" ", "T");
     const start = getDateTime(startDate, startTime);
     const end = getDateTime(endDate, endTime);
 
@@ -409,14 +333,26 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {hasResults ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ ...bodyCellSx, textAlign: "center" }}>
+                    <Typography sx={{ color: "#67728A", fontWeight: 500 }}>Loading logs…</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ ...bodyCellSx, textAlign: "center" }}>
+                    <Typography sx={{ color: "#e25555", fontWeight: 500 }}>{error}</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : hasResults ? (
                 <>
                   {logsToShow.map((log, idx) => (
                     <TableRow key={idx} sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.timestamp}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#67728A" }}>{log.user}</TableCell>
+                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.createdAt ? new Date(log.createdAt).toLocaleString() : "-"}</TableCell>
+                      <TableCell sx={{ ...bodyCellSx, color: "#67728A" }}>{log.userEmail ?? "-"}</TableCell>
                       <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.action}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.description}</TableCell>
+                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.description ?? ""}</TableCell>
                     </TableRow>
                   ))}
                   {emptyRows > 0 &&
