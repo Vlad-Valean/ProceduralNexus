@@ -54,7 +54,14 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
     return time ? `${date}T${time}` : `${date}T00:00`;
   };
 
-  const [logs, setLogs] = useState<Array<any>>([]);
+  interface LogEntry {
+    createdAt?: string;
+    timestamp?: string;
+    userEmail?: string;
+    action?: string;
+    description?: string;
+  }
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const token = useMemo(() => localStorage.getItem("token") || "", []);
@@ -71,7 +78,8 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
       const data = await res.json();
       setLogs(Array.isArray(data) ? data : []);
       setPage(1);
-    } catch {
+    } catch (err) {
+      setError("Failed to fetch logs.");
     } finally {
       setLoading(false);
     }
