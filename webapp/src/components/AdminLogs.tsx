@@ -78,7 +78,7 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget }) => {
       const data = await res.json();
       setLogs(Array.isArray(data) ? data : []);
       setPage(1);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch logs.");
     } finally {
       setLoading(false);
