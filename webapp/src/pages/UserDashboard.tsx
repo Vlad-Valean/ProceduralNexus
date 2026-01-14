@@ -68,7 +68,7 @@ const recentActivity = [
 const UserDashboard: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<UserDocument[]>([]);
-  
+
   const [loadingProfile, setLoadingProfile] = useState<boolean>(true);
   const [loadingDocs, setLoadingDocs] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -104,7 +104,6 @@ const UserDashboard: React.FC = () => {
       }
 
       const profiles: ProfileDto[] = await res.json();
-      
       const foundProfile = profiles.find(p => p.email?.toLowerCase() === userEmail.toLowerCase());
 
       if (foundProfile) {
@@ -139,10 +138,12 @@ const UserDashboard: React.FC = () => {
         }
 
         const data: DocumentDto[] = await res.json();
-        
-        const mappedDocs: UserDocument[] = data.map((d) => ({
+
+        const dataWithoutCv = data.filter(d => (d.type ?? "").toUpperCase() !== "CV");
+
+        const mappedDocs: UserDocument[] = dataWithoutCv.map((d) => ({
           id: d.id,
-          name: d.name || d.fileName || "Unnamed Document", 
+          name: d.name || d.fileName || "Unnamed Document",
           status: d.signed ? 'Signed' : 'Unsigned'
         }));
 
@@ -176,9 +177,9 @@ const UserDashboard: React.FC = () => {
 
       if (!res.ok) throw new Error("Failed to update status");
 
-      setDocuments(prev => prev.map(d => 
-        d.id === doc.id 
-          ? { ...d, status: newSignedStatus ? 'Signed' : 'Unsigned' } 
+      setDocuments(prev => prev.map(d =>
+        d.id === doc.id
+          ? { ...d, status: newSignedStatus ? 'Signed' : 'Unsigned' }
           : d
       ));
 
@@ -195,11 +196,11 @@ const UserDashboard: React.FC = () => {
   const handleDownload = useCallback(async (doc: UserDocument) => {
     if (!token) return;
     try {
-        await downloadDocumentWithAuth(doc.id, token, doc.name);
+      await downloadDocumentWithAuth(doc.id, token, doc.name);
     } catch {
-        setSnackbarMessage("Download failed");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+      setSnackbarMessage("Download failed");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   }, [token]);
 
@@ -218,7 +219,6 @@ const UserDashboard: React.FC = () => {
   useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
-
 
   const filteredDocuments = useMemo(() => {
     let docs = [...documents];
@@ -246,7 +246,7 @@ const UserDashboard: React.FC = () => {
   const paginatedDocuments = filteredDocuments.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   const getStatusColor = (status: UserDocument['status']) => {
-    return status === 'Signed' 
+    return status === 'Signed'
       ? { bg: 'rgba(18, 183, 106, 0.1)', color: '#12B76A' }
       : { bg: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' };
   };
@@ -287,7 +287,7 @@ const UserDashboard: React.FC = () => {
                   flexDirection: 'column'
                 }}
               >
-                 {/* Header & Filters */}
+                {/* Header & Filters */}
                 <Box sx={{ p: 3, borderBottom: '1px solid #E6E8EE' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography
@@ -384,14 +384,14 @@ const UserDashboard: React.FC = () => {
                     </TableHead>
                     <TableBody>
                       {isGlobalLoading || loadingDocs ? (
-                          <TableRow>
-                              <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', border: 0 }}>
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                                    <CircularProgress />
-                                    {isGlobalLoading && <Typography variant="caption">Identifying user...</Typography>}
-                                  </Box>
-                              </TableCell>
-                          </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', border: 0 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                              <CircularProgress />
+                              {isGlobalLoading && <Typography variant="caption">Identifying user...</Typography>}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
                       ) : paginatedDocuments.length > 0 ? (
                         paginatedDocuments.map((doc) => {
                           const statusColor = getStatusColor(doc.status);

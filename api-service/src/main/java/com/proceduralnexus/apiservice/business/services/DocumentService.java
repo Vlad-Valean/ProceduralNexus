@@ -25,8 +25,13 @@ import java.util.stream.Collectors;
 public class DocumentService implements IDocumentService {
 
     private final DocumentRepository documentRepository;
-    private final Path fileStorageLocation;
     private final EmailService emailService;
+
+    private final Path appRoot;
+
+    private final Path fileStorageLocation;
+
+    private static final String UPLOADS_DIR_NAME = "uploads";
 
     public DocumentService(
             DocumentRepository documentRepository,
@@ -36,15 +41,33 @@ public class DocumentService implements IDocumentService {
         this.documentRepository = documentRepository;
         this.emailService = emailService;
 
-        this.fileStorageLocation = Paths.get(storagePath)
-                .toAbsolutePath()
-                .normalize();
+        this.appRoot = resolveApiServiceRoot();
+
+        Path configured = Paths.get(storagePath);
+        this.fileStorageLocation = configured.isAbsolute()
+                ? configured.normalize()
+                : this.appRoot.resolve(configured).normalize();
 
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (IOException ex) {
             throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
         }
+    }
+
+    private Path resolveApiServiceRoot() {
+        Path wd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+
+        if (wd.getFileName() != null && "api-service".equalsIgnoreCase(wd.getFileName().toString())) {
+            return wd;
+        }
+
+        Path candidate = wd.resolve("api-service");
+        if (Files.exists(candidate) && Files.isDirectory(candidate)) {
+            return candidate.normalize();
+        }
+
+        return wd;
     }
 
     @Override
@@ -55,7 +78,7 @@ public class DocumentService implements IDocumentService {
             String name,
             String type
     ) {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file is empty");
         }
 
@@ -83,7 +106,8 @@ public class DocumentService implements IDocumentService {
         }
 
         String storedFileName = UUID.randomUUID() + "_" + originalFileName;
-        Path targetLocation = this.fileStorageLocation.resolve(storedFileName);
+
+        Path targetLocation = this.fileStorageLocation.resolve(storedFileName).normalize();
 
         try {
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
@@ -95,11 +119,15 @@ public class DocumentService implements IDocumentService {
             );
         }
 
+        String relativePath = Paths.get(UPLOADS_DIR_NAME)
+                .resolve(storedFileName)
+                .normalize()
+                .toString()
+                .replace("\\", "/");
+
         Document document = new Document();
         document.setName(displayName);
-       // document.setFilePath(targetLocation.toString());
-        Path relativePath = Paths.get("uploads").resolve(storedFileName).normalize();
-        document.setFilePath(relativePath.toString().replace("\\", "/"));
+        document.setFilePath(relativePath);
         document.setFileSizeInBytes(file.getSize());
         document.setBatchId(batchId);
         document.setUploader(uploader);
@@ -107,6 +135,9 @@ public class DocumentService implements IDocumentService {
         document.setType(docType);
 
         Document saved = documentRepository.save(document);
+
+        System.out.println("Storing file to: " + targetLocation);
+        System.out.println("DB path: " + relativePath);
         return toDto(saved);
     }
 
@@ -124,19 +155,16 @@ public class DocumentService implements IDocumentService {
     @Override
     public DocumentResponseDto patchDocumentSigned(Long id, Boolean signed) {
         Document document = documentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
         boolean previouslyUnsigned = !document.isSigned();
-        
+
         if (signed != null) {
             document.setSigned(signed);
         }
 
         Document saved = documentRepository.save(document);
-        
-        // Send email notification when document is signed/approved
+
         if (signed != null && signed && previouslyUnsigned) {
             try {
                 Profile uploader = saved.getUploader();
@@ -148,8 +176,7 @@ public class DocumentService implements IDocumentService {
                 System.err.println("Failed to send document approved email: " + e.getMessage());
             }
         }
-        
-        // Send email notification when document is unsigned/requires changes
+
         if (signed != null && !signed && !previouslyUnsigned) {
             try {
                 Profile uploader = saved.getUploader();
@@ -161,33 +188,36 @@ public class DocumentService implements IDocumentService {
                 System.err.println("Failed to send document requires changes email: " + e.getMessage());
             }
         }
-        
+
         return toDto(saved);
     }
 
     @Override
     public DocumentResponseDto getDocumentMetadata(Long id) {
         Document document = documentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
         return toDto(document);
     }
 
     @Override
     public Resource loadDocumentFile(Long id) {
         Document document = documentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
         try {
-           // Path filePath = Paths.get(document.getFilePath()).normalize();
-            Path stored = Paths.get(document.getFilePath()).normalize();
-            Path filePath = stored.isAbsolute()
-                    ? stored
-                    : Paths.get("").toAbsolutePath().resolve(stored).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
+            String storedPath = document.getFilePath();
+            if (storedPath == null || storedPath.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File path missing");
+            }
+
+            Path p = Paths.get(storedPath).normalize();
+
+            Path absolutePath = p.isAbsolute()
+                    ? p
+                    : appRoot.resolve(p).normalize();
+
+            Resource resource = new UrlResource(absolutePath.toUri());
+
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
@@ -201,9 +231,19 @@ public class DocumentService implements IDocumentService {
     @Override
     public void deleteDocument(Long id) {
         Document document = documentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        try {
+            String storedPath = document.getFilePath();
+            if (storedPath != null && !storedPath.isBlank()) {
+                Path p = Paths.get(storedPath).normalize();
+                Path absolutePath = p.isAbsolute() ? p : appRoot.resolve(p).normalize();
+                Files.deleteIfExists(absolutePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Could not delete file from disk: " + e.getMessage());
+        }
+
         documentRepository.delete(document);
     }
 
@@ -226,12 +266,11 @@ public class DocumentService implements IDocumentService {
 
         return dto;
     }
+
     @Override
     public DocumentResponseDto signDocument(Long id) {
         Document document = documentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
         document.setSigned(true);
         Document saved = documentRepository.save(document);
         return toDto(saved);
