@@ -306,13 +306,13 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onBackToStats, onRemove
       try {
         const { sendLog } = await import("../services/logService");
         sendLog("Upload", `Uploaded document: ${documentName.trim()}`);
-      } catch (e) {
+      } catch{
         // ignore logging failures
       }
 
       await fetchUserDocuments(profileId);
-    } catch (e: unknown) {
-      openSnackbar(e instanceof Error ? e.message : "Upload failed.", "error");
+    } catch {
+      openSnackbar("Failed to upload document.", "error");
     } finally {
       setUploading(false);
     }
