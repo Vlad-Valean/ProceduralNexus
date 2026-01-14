@@ -110,20 +110,23 @@ public class AuthController {
     @Autowired
     EmailVerificationService emailVerificationService;
 
+    @Autowired
+    com.proceduralnexus.apiservice.business.interfaces.IUserActivityService activityService;
+
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
             // Check if email is verified
             Profile user = userRepository.findByEmail(loginRequest.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (!user.isEmailVerified()) {
-                return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(new MessageResponse("Please verify your email address before logging in. Check your inbox for the verification link."));
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new MessageResponse("Please verify your email address before logging in. Check your inbox for the verification link."));
             }
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -131,17 +134,27 @@ public class AuthController {
 
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             List<String> roles = userDetails.getAuthorities().stream()
-                    .map(item -> item.getAuthority())
-                    .collect(Collectors.toList());
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+            // Log login action for USER și HR (nu ADMIN)
+            boolean isAdmin = false;
+            Role adminRole = roleRepository.findByName(RoleName.ADMIN).orElse(null);
+            if (adminRole != null) {
+                isAdmin = user.getRoles().stream().anyMatch(r -> r.getId().equals(adminRole.getId()));
+            }
+            if (!isAdmin) {
+                activityService.logActivity(userDetails.getId(), userDetails.getEmail(), "LOGIN", "User logged in");
+            }
 
             return ResponseEntity.ok(new JwtResponse(jwt,
-                    userDetails.getId(),
-                    userDetails.getEmail(),
-                    roles));
+                userDetails.getId(),
+                userDetails.getEmail(),
+                roles));
         } catch (AuthenticationException e) {
             return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(new MessageResponse("Invalid email or password"));
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new MessageResponse("Invalid email or password"));
         }
     }
 
@@ -159,7 +172,7 @@ public class AuthController {
         user.setLastname(signUpRequest.getLastname());
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setEmailVerified(false); // Email not verified yet
+        user.setEmailVerified(true); // Email not verified yet
 
         Set<String> strRoles = signUpRequest.getRole();
         Set<Role> roles = new HashSet<>();
@@ -175,13 +188,11 @@ public class AuthController {
                         Role adminRole = roleRepository.findByName(RoleName.ADMIN)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(adminRole);
-
                         break;
                     case "hr":
                         Role modRole = roleRepository.findByName(RoleName.HR)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(modRole);
-
                         break;
                     default:
                         Role userRole = roleRepository.findByName(RoleName.USER)
@@ -194,49 +205,31 @@ public class AuthController {
         user.setRoles(roles);
         Profile savedUser = userRepository.save(user);
 
-        // Send verification email
-        try {
-            emailVerificationService.sendVerificationEmail(savedUser.getId(), savedUser.getEmail());
-        } catch (Exception e) {
-            // Log the error but don't fail registration
-            System.err.println("Failed to send verification email: " + e.getMessage());
+        // Log account creation for USER and HR (not ADMIN)
+        boolean isAdmin = savedUser.getRoles().stream().anyMatch(r -> r.getName().name().equals("ADMIN"));
+        if (!isAdmin) {
+            activityService.logActivity(savedUser.getId(), savedUser.getEmail(), "REGISTER", "User account created");
         }
+
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully! Please check your email to verify your account."));
     }
     
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser() {
+      // Log logout for USER and HR (not ADMIN)
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null && auth.getPrincipal() instanceof UserDetailsImpl userDetails) {
+          List<String> roles = userDetails.getAuthorities().stream().map(a -> a.getAuthority()).toList();
+          boolean isAdmin = roles.contains("ADMIN");
+          if (!isAdmin) {
+              activityService.logActivity(userDetails.getId(), userDetails.getEmail(), "LOGOUT", "User logged out");
+          }
+      }
       return ResponseEntity.ok(new MessageResponse("Log out successful!"));
     }
-
-    @GetMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
-        EmailVerificationService.VerificationResult result = emailVerificationService.verifyEmail(token);
-        
-        if (result.isSuccess()) {
-            return ResponseEntity.ok(new MessageResponse(result.getMessage()));
-        } else {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse(result.getMessage()));
-        }
-    }
-
-    @PostMapping("/resend-verification")
-    public ResponseEntity<?> resendVerificationEmail(@RequestParam String email) {
-        boolean sent = emailVerificationService.resendVerificationEmail(email);
-        
-        if (sent) {
-            return ResponseEntity.ok(new MessageResponse("Verification email sent successfully. Please check your inbox."));
-        } else {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Unable to send verification email. Email may not exist or is already verified."));
-        }
-    }
         @Autowired
-    PasswordResetService passwordResetService;
+        PasswordResetService passwordResetService;
     // Request password reset (send email)
     @PostMapping("/request-password-reset")
     public ResponseEntity<?> requestPasswordReset(@RequestBody java.util.Map<String, String> body) {
