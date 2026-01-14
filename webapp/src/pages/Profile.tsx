@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
+
 const BASE_URL = "http://localhost:8080";
 
 interface ProfileResponse {
@@ -231,7 +232,7 @@ const Profile: React.FC = () => {
       <Box sx={{ minHeight: '100vh' }}>
         <Navbar />
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress sx={{ color: '#67728A' }} />
+          <Typography>Loading...</Typography>
         </Box>
       </Box>
     );
@@ -242,18 +243,14 @@ const Profile: React.FC = () => {
       <Navbar />
 
       <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
-        {/* Error Alert */}
+        {/* Error */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
+          <Typography sx={{ color: 'red', mb: 2 }}>{error}</Typography>
         )}
 
-        {/* Success Alert */}
+        {/* Success */}
         {successMessage && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}>
-            {successMessage}
-          </Alert>
+          <Typography sx={{ color: 'green', mb: 2 }}>{successMessage}</Typography>
         )}
 
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
