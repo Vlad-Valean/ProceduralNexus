@@ -1,5 +1,8 @@
 package com.proceduralnexus.apiservice.controller.controllers;
-
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.proceduralnexus.apiservice.business.interfaces.IUserActivityService;
+import com.proceduralnexus.apiservice.controller.dtos.ActivityResponseDto;
+import com.proceduralnexus.apiservice.data.entities.LogEntry;
 import com.proceduralnexus.apiservice.business.interfaces.IDocumentService;
 import com.proceduralnexus.apiservice.business.services.ProfileService;
 import com.proceduralnexus.apiservice.controller.dtos.DocumentPatchRequest;
@@ -28,14 +31,68 @@ import java.util.UUID;
 @Tag(name = "Documents", description = "Endpoints for uploading, downloading and managing documents")
 public class DocumentController {
 
-    private final IDocumentService documentService;
-    private final ProfileService profileService;
+        private final IDocumentService documentService;
+        private final ProfileService profileService;
+        private final IUserActivityService userActivityService;
 
-    public DocumentController(IDocumentService documentService,
-                              ProfileService profileService) {
-        this.documentService = documentService;
-        this.profileService = profileService;
-    }
+        public DocumentController(IDocumentService documentService,
+                                                          ProfileService profileService,
+                                                          IUserActivityService userActivityService) {
+                this.documentService = documentService;
+                this.profileService = profileService;
+                this.userActivityService = userActivityService;
+        }
+        /**
+         * GET /api/user/logs
+         * Returneaza logurile userului curent autentificat.
+         */
+
+                /**
+         * GET /api/admin/user-logs/{userId}
+         * Returneaza logurile unui user (vizibil doar pentru admin)
+         */
+        @PreAuthorize("hasAuthority('ADMIN')")
+        @GetMapping("/api/admin/user-logs/{userId}")
+        @Operation(summary = "Admin: user logs", description = "Returneaza logurile unui user specificat (doar admin)")
+        public List<ActivityResponseDto> getUserLogsForAdmin(@PathVariable UUID userId) {
+                List<LogEntry> entries = userActivityService.getActivitiesForUser(userId);
+                return entries.stream().map(e -> {
+                        ActivityResponseDto d = new ActivityResponseDto();
+                        d.setId(e.getId());
+                        d.setAction(e.getAction());
+                        d.setDescription(e.getDetails());
+                        d.setCreatedAt(e.getLoggedAt());
+                        if (e.getProfile() != null) {
+                                d.setUserEmail(e.getProfile().getEmail());
+                                d.setUserId(e.getProfile().getId() != null ? e.getProfile().getId().toString() : null);
+                        }
+                        return d;
+                }).toList();
+        }
+        @GetMapping("/api/user/logs")
+        @Operation(summary = "User logs", description = "Returneaza logurile userului curent autentificat.")
+        public List<ActivityResponseDto> getUserLogs(@AuthenticationPrincipal UserDetails userDetails) {
+                if (userDetails == null) return List.of();
+                UUID userId = null;
+                try {
+                        var impl = (com.proceduralnexus.apiservice.security.UserDetailsImpl) userDetails;
+                        userId = impl.getId();
+                } catch (Exception ignored) {}
+                if (userId == null) return List.of();
+                List<LogEntry> entries = userActivityService.getActivitiesForUser(userId);
+                return entries.stream().map(e -> {
+                        ActivityResponseDto d = new ActivityResponseDto();
+                        d.setId(e.getId());
+                        d.setAction(e.getAction());
+                        d.setDescription(e.getDetails());
+                        d.setCreatedAt(e.getLoggedAt());
+                        if (e.getProfile() != null) {
+                                d.setUserEmail(e.getProfile().getEmail());
+                                d.setUserId(e.getProfile().getId() != null ? e.getProfile().getId().toString() : null);
+                        }
+                        return d;
+                }).toList();
+        }
 
     /**
      * POST /documents/upload
@@ -52,16 +109,18 @@ public class DocumentController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Upload document",
             description = "Uploads a file and stores its metadata in the database.")
-    public DocumentResponseDto uploadDocument(
-            @RequestPart("file") MultipartFile file,
-            @RequestParam("name") String name,
-            @RequestParam(value = "batchId", required = false) String batchId,
-            @RequestParam("uploaderId") UUID uploaderId,
-            @RequestParam(value = "type", required = false) String type
-    ) {
-        Profile uploader = profileService.findById(uploaderId);
-        return documentService.uploadDocument(file, batchId, uploader, name, type);
-    }
+        public DocumentResponseDto uploadDocument(
+                        @RequestPart("file") MultipartFile file,
+                        @RequestParam("name") String name,
+                        @RequestParam(value = "batchId", required = false) String batchId,
+                        @RequestParam("uploaderId") UUID uploaderId,
+                        @RequestParam(value = "type", required = false) String type
+        ) {
+                Profile uploader = profileService.findById(uploaderId);
+                // Log document assignment (pentru assignment, nu upload propriu-zis)
+                userActivityService.logActivity(uploaderId, uploader.getEmail(), "DOCUMENT_ASSIGNED", "Document assigned: " + name);
+                return documentService.uploadDocument(file, batchId, uploader, name, type);
+        }
 
     /**
      * GET /documents

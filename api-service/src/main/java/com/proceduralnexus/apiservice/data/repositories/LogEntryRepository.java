@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface LogEntryRepository extends JpaRepository<LogEntry, Long> {
     List<LogEntry> findByProfile_Id(UUID profileId);
     List<LogEntry> findByProfile_EmailContainingIgnoreCase(String emailFragment);
+    List<LogEntry> findByProfile_Organization_Id(Long organizationId);
 }

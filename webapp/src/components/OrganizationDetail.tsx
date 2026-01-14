@@ -35,7 +35,7 @@ type OrganizationDetailProps = {
   loading?: boolean;
   error?: string | null;
 
-  onShowLogs: (target: string | null) => void;
+  onShowLogs: (target: string | null, organizationId?: number) => void;
   onBack: () => void;
 
   onDeleted?: () => void;
@@ -226,7 +226,7 @@ const OrganizationDetail: React.FC<OrganizationDetailProps> = ({
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            onShowLogs(organization.name);
+            onShowLogs(organization.name, organization.id);
           }}
           style={{
             color: "#586AA2",

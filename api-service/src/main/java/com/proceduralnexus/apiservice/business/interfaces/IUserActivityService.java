@@ -9,4 +9,5 @@ public interface IUserActivityService {
     List<LogEntry> getAllActivities();
     List<LogEntry> getActivitiesForUser(UUID userId);
     List<LogEntry> searchByEmail(String emailFragment);
+    List<LogEntry> getActivitiesForOrganization(Long organizationId);
 }

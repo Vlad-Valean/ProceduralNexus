@@ -59,6 +59,13 @@ public class ActivityController {
         return entries.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping("/admin/logs/organization/{organizationId}")
+    public List<ActivityResponseDto> listForOrganization(@PathVariable Long organizationId) {
+        List<LogEntry> entries = activityService.getActivitiesForOrganization(organizationId);
+        return entries.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     private ActivityResponseDto toDto(LogEntry e) {
         ActivityResponseDto d = new ActivityResponseDto();
         d.setId(e.getId());
