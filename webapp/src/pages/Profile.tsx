@@ -226,11 +226,36 @@ const Profile: React.FC = () => {
     setCvData({ ...cvData, file });
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh' }}>
+        <Navbar />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <CircularProgress sx={{ color: '#67728A' }} />
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Navbar />
 
       <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Success Alert */}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
+
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
           {/* Left Column - Profile Information */}
           <Box sx={{ flex: 2, minWidth: 0 }}>
