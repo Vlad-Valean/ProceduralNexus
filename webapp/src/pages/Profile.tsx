@@ -68,7 +68,6 @@ const Profile: React.FC = () => {
     role: "",
   });
 
-
   const [cvLoading, setCvLoading] = useState<boolean>(false);
   const [cvSaving, setCvSaving] = useState<boolean>(false);
   const [cvError, setCvError] = useState<string | null>(null);
@@ -82,7 +81,7 @@ const Profile: React.FC = () => {
 
   const [initialCvData, setInitialCvData] = useState({
     documentName: "",
-    fileName: "", 
+    fileName: "",
   });
 
   const textFieldSx = {
@@ -166,16 +165,57 @@ const Profile: React.FC = () => {
     (cvData.file ? cvData.file.name : "") !== initialCvData.fileName;
 
   useEffect(() => {
+    const loadCvForUser = async (uploaderId: string) => {
+      try {
+        setCvLoading(true);
+        setCvError(null);
+
+        const docsRes = await fetch(
+          `${API_BASE}/documents?uploaderId=${encodeURIComponent(uploaderId)}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          }
+        );
+
+        if (!docsRes.ok) {
+          const text = await docsRes.text().catch(() => "");
+          throw new Error(
+            `GET /documents failed: ${docsRes.status} ${docsRes.statusText}${text ? ` - ${text}` : ""}`
+          );
+        }
+
+        const docs = (await docsRes.json()) as DocumentDto[];
+        const cv = docs.find((d) => (d.type ?? "").toUpperCase() === "CV") ?? null;
+
+        setExistingCv(cv);
+
+        if (cv) {
+          setCvData({ documentName: cv.name ?? "", file: null });
+          setInitialCvData({ documentName: cv.name ?? "", fileName: "" });
+        } else {
+          setCvData({ documentName: "", file: null });
+          setInitialCvData({ documentName: "", fileName: "" });
+        }
+      } catch (err: unknown) {
+        setCvError(err instanceof Error ? err.message : "Failed to load CV.");
+      } finally {
+        setCvLoading(false);
+      }
+    };
+
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
 
         if (!userEmail) {
-          throw new Error("Nu exista userEmail in localStorage (ex: dupa login).");
+          throw new Error("Missing userEmail in localStorage.");
         }
 
-        // GET /profiles
         const profilesRes = await fetch(`${API_BASE}/profiles`, {
           method: "GET",
           headers: {
@@ -197,12 +237,11 @@ const Profile: React.FC = () => {
         );
 
         if (!me) {
-          throw new Error(`Nu am gasit profil pentru email: ${userEmail}`);
+          throw new Error(`Profile not found for email: ${userEmail}`);
         }
 
         setProfileId(me.id);
 
-        // GET /organizations/{id}
         let orgName = "";
         if (me.organizationId !== null && me.organizationId !== undefined) {
           const orgRes = await fetch(`${API_BASE}/organizations/${me.organizationId}`, {
@@ -238,49 +277,10 @@ const Profile: React.FC = () => {
         setInitialFormData(loadedProfile);
 
         await loadCvForUser(me.id);
-      } catch (e: any) {
-        setError(e?.message ?? "Eroare la incarcarea profilului.");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load profile.");
       } finally {
         setLoading(false);
-      }
-    };
-
-    const loadCvForUser = async (uploaderId: string) => {
-      try {
-        setCvLoading(true);
-        setCvError(null);
-
-        const docsRes = await fetch(`${API_BASE}/documents?uploaderId=${encodeURIComponent(uploaderId)}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-
-        if (!docsRes.ok) {
-          const text = await docsRes.text().catch(() => "");
-          throw new Error(
-            `GET /documents failed: ${docsRes.status} ${docsRes.statusText}${text ? ` - ${text}` : ""}`
-          );
-        }
-
-        const docs = (await docsRes.json()) as DocumentDto[];
-        const cv = docs.find((d) => (d.type ?? "").toUpperCase() === "CV") ?? null;
-
-        setExistingCv(cv);
-
-        if (cv) {
-          setCvData({ documentName: cv.name ?? "", file: null });
-          setInitialCvData({ documentName: cv.name ?? "", fileName: "" });
-        } else {
-          setCvData({ documentName: "", file: null });
-          setInitialCvData({ documentName: "", fileName: "" });
-        }
-      } catch (e: any) {
-        setCvError(e?.message ?? "Eroare la incarcarea CV-ului.");
-      } finally {
-        setCvLoading(false);
       }
     };
 
@@ -328,8 +328,8 @@ const Profile: React.FC = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
       }));
-    } catch (e: any) {
-      setError(e?.message ?? "Eroare la salvare.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save profile.");
     } finally {
       setSaving(false);
     }
@@ -364,12 +364,8 @@ const Profile: React.FC = () => {
       const docName = cvData.documentName.trim();
       const file = cvData.file;
 
-      if (!file) {
-        throw new Error("Selecteaza un fisier ca sa incarci CV-ul.");
-      }
-      if (!docName) {
-        throw new Error("Completeaza Document name.");
-      }
+      if (!file) throw new Error("Please select a file to upload your CV.");
+      if (!docName) throw new Error("Please enter a document name.");
 
       if (existingCv?.id) {
         const delRes = await fetch(`${API_BASE}/documents/${existingCv.id}`, {
@@ -387,7 +383,6 @@ const Profile: React.FC = () => {
         }
       }
 
-      //POST /documents/upload cu type=CV
       const form = new FormData();
       form.append("file", file);
 
@@ -421,8 +416,8 @@ const Profile: React.FC = () => {
       if (input) input.value = "";
 
       setInitialCvData({ documentName: savedCv.name ?? docName, fileName: "" });
-    } catch (e: any) {
-      setCvError(e?.message ?? "Eroare la salvarea CV-ului.");
+    } catch (err: unknown) {
+      setCvError(err instanceof Error ? err.message : "Failed to save CV.");
     } finally {
       setCvSaving(false);
     }
@@ -441,7 +436,9 @@ const Profile: React.FC = () => {
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`Download failed: ${res.status} ${res.statusText}${text ? ` - ${text}` : ""}`);
+        throw new Error(
+          `Download failed: ${res.status} ${res.statusText}${text ? ` - ${text}` : ""}`
+        );
       }
 
       const blob = await res.blob();
@@ -449,13 +446,16 @@ const Profile: React.FC = () => {
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = (existingCv.name?.toLowerCase().endsWith(".pdf") ? existingCv.name : `${existingCv.name}.pdf`) || "cv.pdf";
+      a.download =
+        (existingCv.name?.toLowerCase().endsWith(".pdf")
+          ? existingCv.name
+          : `${existingCv.name}.pdf`) || "cv.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setCvError(e?.message ?? "Nu am putut descarca CV-ul.");
+    } catch (err: unknown) {
+      setCvError(err instanceof Error ? err.message : "Failed to download CV.");
     }
   };
 
@@ -599,7 +599,6 @@ const Profile: React.FC = () => {
               gap: 3,
             }}
           >
-            {/* CV Upload Card */}
             <Paper
               sx={{
                 p: 3,
@@ -624,7 +623,6 @@ const Profile: React.FC = () => {
                 Upload your Resume
               </Typography>
 
-              {/* status / errors for CV */}
               {cvLoading && (
                 <Typography sx={{ fontSize: "13px", color: "#667085", mb: 2, textAlign: "center" }}>
                   Loading CV...
@@ -651,9 +649,7 @@ const Profile: React.FC = () => {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontSize: "12px", color: "#667085" }}>
-                      Current CV
-                    </Typography>
+                    <Typography sx={{ fontSize: "12px", color: "#667085" }}>Current CV</Typography>
                     <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#111827" }} noWrap>
                       {existingCv.name}
                     </Typography>
@@ -718,15 +714,7 @@ const Profile: React.FC = () => {
                     />
                     <CloudUploadOutlinedIcon sx={{ fontSize: 40, color: "#67728A", mb: 1 }} />
 
-                    <Typography
-                      sx={{
-                        fontSize: "14px",
-                        color: "#111827",
-                        fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
-                        mb: 0.5,
-                        textAlign: "center",
-                      }}
-                    >
+                    <Typography sx={{ fontSize: "14px", color: "#111827", mb: 0.5, textAlign: "center" }}>
                       {cvData.file
                         ? cvData.file.name
                         : existingCv
@@ -734,14 +722,7 @@ const Profile: React.FC = () => {
                           : "Click to upload"}
                     </Typography>
 
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        color: "#98A2B3",
-                        fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
-                        textAlign: "center",
-                      }}
-                    >
+                    <Typography sx={{ fontSize: "12px", color: "#98A2B3", textAlign: "center" }}>
                       PDF, DOC, DOCX (max 5MB)
                     </Typography>
                   </Box>
