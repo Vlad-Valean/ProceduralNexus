@@ -1,5 +1,19 @@
+import React from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-// OAuth2 Redirect Handler
+import { ChatFab } from "./components/chatbot";
+import Login from './pages/Login';
+import Register from './pages/Register';
+import HrDashboard from './pages/HrDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import Home from './pages/Home';
+import About from './pages/About';
+import Market from './pages/Market';
+import UserDashboard from './pages/UserDashboard';
+import Profile from './pages/Profile';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import './App.css';
+import useNoOrganization from './hooks/useNoOrganization';
+
 function OAuth2RedirectHandler() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,20 +86,6 @@ function OAuth2RedirectHandler() {
   return <div>Signing in with Google...</div>;
 }
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import HrDashboard from './pages/HrDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import Home from './pages/Home';
-import About from './pages/About';
-import Market from './pages/Market';
-import UserDashboard from './pages/UserDashboard';
-import Profile from './pages/Profile';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import './App.css';
-import React from 'react';
-import useNoOrganization from './hooks/useNoOrganization';
-
 function getUserRoles(): string[] {
   try {
     const roles = localStorage.getItem("userRoles");
@@ -125,6 +125,7 @@ function RequireNoOrganization({ children }: { children: React.ReactElement }) {
 function App() {
   
   return (
+    <>
     <Routes>
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       <Route path="/" element={<Home />} />
@@ -160,6 +161,8 @@ function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <ChatFab />
+    </>
   );
 }
 
