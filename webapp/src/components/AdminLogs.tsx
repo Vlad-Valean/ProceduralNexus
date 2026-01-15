@@ -29,7 +29,10 @@ const headCellSx = {
   color: "#B5B7C0",
   borderBottom: "1px solid #e3e8f2",
   textAlign: "left" as const,
-  fontSize: "0.8rem",
+  fontSize: "0.75rem",
+  whiteSpace: "nowrap" as const,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
 const bodyCellSx = {
@@ -340,10 +343,10 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget, organizationI
           >
             <TableHead>
               <TableRow sx={{ "& th": { py: 0.8 } }}>
-                <TableCell sx={{ ...headCellSx, width: "22%" }}>Timestamp</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "28%" }}>User mail</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "20%" }}>Action</TableCell>
-                <TableCell sx={{ ...headCellSx, width: "30%" }}>Action description</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "20%" }}>Timestamp</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "25%" }}>User mail</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "22%" }}>Action</TableCell>
+                <TableCell sx={{ ...headCellSx, width: "33%" }}>Action description</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -363,10 +366,50 @@ const AdminLogs: React.FC<AdminLogsProps> = ({ onBack, logsTarget, organizationI
                 <>
                   {logsToShow.map((log, idx) => (
                     <TableRow key={idx} sx={{ height: ROW_HEIGHT, "& td": { py: 0.8 } }}>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.createdAt ? new Date(log.createdAt).toLocaleString() : "-"}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#67728A" }}>{log.userEmail ?? "-"}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.action}</TableCell>
-                      <TableCell sx={{ ...bodyCellSx, color: "#222" }}>{log.description ?? ""}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          ...bodyCellSx, 
+                          color: "#222",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString() : "-"}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          ...bodyCellSx, 
+                          color: "#67728A",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
+                        {log.userEmail ?? "-"}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          ...bodyCellSx, 
+                          color: "#222",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
+                        {log.action}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          ...bodyCellSx, 
+                          color: "#222",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
+                        {log.description ?? ""}</TableCell>
                     </TableRow>
                   ))}
                   {emptyRows > 0 &&

@@ -481,11 +481,14 @@ const Profile: React.FC = () => {
             >
               <Typography
                 sx={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  mb: 2,
+                  fontSize: "22px",
+                  fontWeight: 700,
+                  mb: 1,
+                  mt: 1,
                   color: "#111827",
                   fontFamily: "Inter, system-ui, Helvetica, Arial, sans-serif",
+                  textAlign: "center",
+                  letterSpacing: "0.5px",
                 }}
               >
                 Profile information
