@@ -46,6 +46,14 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    networks:
+      - proceduralnexus-net
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
 volumes:
   db_data:
 

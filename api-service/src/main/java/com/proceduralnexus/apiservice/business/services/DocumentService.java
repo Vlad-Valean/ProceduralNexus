@@ -229,6 +229,12 @@ public class DocumentService implements IDocumentService {
     }
 
     @Override
+    public byte[] loadDocumentContent(Long id) throws IOException {
+        Resource resource = loadDocumentFile(id);
+        return resource.getInputStream().readAllBytes();
+    }
+
+    @Override
     public void deleteDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));

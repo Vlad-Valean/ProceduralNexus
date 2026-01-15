@@ -1,4 +1,5 @@
 package com.proceduralnexus.apiservice.controller.controllers;
+import com.proceduralnexus.apiservice.controller.dtos.DocumentContentDto;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.proceduralnexus.apiservice.business.interfaces.IUserActivityService;
 import com.proceduralnexus.apiservice.controller.dtos.ActivityResponseDto;
@@ -21,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -161,6 +163,16 @@ public class DocumentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + filename + "\"; filename*=UTF-8''" + encodeRFC5987(filename))
                 .body(file);
+    }
+
+    @GetMapping("/{id}/download")
+    @Operation(
+            summary = "Download document content",
+            description = "Returns the binary content of the document with the given ID for service-to-service communication."
+    )
+    public ResponseEntity<DocumentContentDto> downloadDocumentContent(@PathVariable Long id) throws IOException {
+        byte[] content = documentService.loadDocumentContent(id);
+        return ResponseEntity.ok(new DocumentContentDto(content));
     }
 
     /**

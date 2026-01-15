@@ -1,7 +1,7 @@
 # This script starts all services for the ProceduralNexus application.
 # It first starts the infrastructure and then the application services.
 
-Write-Host "Starting infrastructure services (Postgres, pgAdmin, Redis)..."
+Write-Host "Starting infrastructure services (Postgres, pgAdmin, Redis, Ollama)..."
 docker compose -f docker-compose.infra.yml up -d --wait
 
 Write-Host "Starting application services..."
