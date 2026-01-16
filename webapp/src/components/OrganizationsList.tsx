@@ -476,7 +476,6 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({
           <div style={{ color: "#374151", fontSize: "0.98rem", marginBottom: 5 }}>
             <span style={{ fontWeight: 500, display: "block", marginBottom: 6 }}>Document to be submitted:</span>
             <span style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
-              {/* Only the icon and name are clickable */}
               <button
                 type="button"
                 disabled={!userCvId}

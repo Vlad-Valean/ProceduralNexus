@@ -39,8 +39,6 @@ public class Organization {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    // Getters and Setters
-
     public Long getId() {
         return id;
     }

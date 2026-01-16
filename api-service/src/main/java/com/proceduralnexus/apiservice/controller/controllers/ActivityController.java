@@ -29,12 +29,9 @@ public class ActivityController {
 
         boolean isAdmin = userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
         if (isAdmin) {
-            // Do not record admin actions via this endpoint
             return ResponseEntity.ok().build();
         }
 
-        // userDetails.getUsername() should return email
-        // Try to parse user id from principal if available (custom UserDetailsImpl)
         UUID userId = null;
         try {
             var impl = (com.proceduralnexus.apiservice.security.UserDetailsImpl) userDetails;

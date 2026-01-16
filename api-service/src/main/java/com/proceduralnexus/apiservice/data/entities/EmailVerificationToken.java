@@ -27,7 +27,6 @@ public class EmailVerificationToken {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    // Constructors
     public EmailVerificationToken() {
         this.createdAt = Instant.now();
     }
@@ -40,7 +39,6 @@ public class EmailVerificationToken {
         this.createdAt = Instant.now();
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -89,7 +87,6 @@ public class EmailVerificationToken {
         this.createdAt = createdAt;
     }
 
-    // Helper methods
     public boolean isExpired() {
         return Instant.now().isAfter(this.expiresAt);
     }

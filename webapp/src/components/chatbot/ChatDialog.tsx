@@ -18,7 +18,6 @@ export function ChatDialog({ open, onClose }: { open: boolean; onClose: () => vo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Scroll to bottom when messages or botTyping changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, botTyping]);
@@ -99,7 +98,6 @@ export function ChatDialog({ open, onClose }: { open: boolean; onClose: () => vo
         fontSize: 13,
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -113,7 +111,6 @@ export function ChatDialog({ open, onClose }: { open: boolean; onClose: () => vo
         }}
       >
         <button
-          // Remove onClick={onClose} from the avatar button
           style={{
             width: 26,
             height: 26,
@@ -201,7 +198,6 @@ export function ChatDialog({ open, onClose }: { open: boolean; onClose: () => vo
           <span style={{ fontWeight: 700, fontSize: 18 }}>&times;</span>
         </button>
       </div>
-      {/* End Header */}
       <div
         style={{
           padding: 10,

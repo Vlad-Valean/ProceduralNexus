@@ -34,7 +34,6 @@ public class UserActivityService implements IUserActivityService {
         }
 
         if (profile == null) {
-            // Cannot attach to profile; ignore logging
             return null;
         }
 

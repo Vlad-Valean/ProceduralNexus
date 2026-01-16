@@ -34,10 +34,6 @@ public class ProfileController {
         this.profileService = profileService;
     }
 
-    /**
-     * GET /profiles
-     * Optional filters: firstname, lastname, email
-     */
     @GetMapping
     @Operation(
             summary = "List profiles",
@@ -47,9 +43,6 @@ public class ProfileController {
         return profileService.getProfiles();
     }
 
-    /**
-     * GET /profiles/{id}
-     */
     @GetMapping("/{id}")
     @Operation(
             summary = "Get profile by ID",
@@ -59,10 +52,6 @@ public class ProfileController {
         return profileService.getProfile(id);
     }
 
-    /**
-     * PUT /profiles/{id}
-     * Body: ProfileUpdateDto (firstname, lastname, email, emailVerified)
-     */
     @PutMapping("/{id}")
     @Operation(
             summary = "Update profile",
@@ -81,10 +70,6 @@ public class ProfileController {
         return profileService.patchProfile(id, req);
     }
 
-
-    /**
-     * DELETE /profiles/{id}
-     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -95,10 +80,6 @@ public class ProfileController {
         profileService.deleteProfile(id);
     }
 
-    /**
-     * POST /profiles/change-password
-     * Change password for the currently authenticated user
-     */
     @PostMapping("/change-password")
     @Operation(
             summary = "Change password",

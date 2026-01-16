@@ -142,7 +142,6 @@ public class ProfileService implements IProfileService {
                     .orElseThrow(() ->
                             new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
             
-            // Check if organization is actually changing
             if (profile.getOrganization() == null || 
                 !profile.getOrganization().getId().equals(org.getId())) {
                 organizationChanged = true;
@@ -178,7 +177,6 @@ public class ProfileService implements IProfileService {
 
         Profile saved = profileRepository.save(profile);
 
-        // Send organization addition email if organization was added
         if (organizationChanged && newOrganization != null) {
             try {
                 String userName = saved.getFirstname() + " " + saved.getLastname();
@@ -199,16 +197,13 @@ public class ProfileService implements IProfileService {
         Profile profile = profileRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
 
-        // Verify current password
         if (!passwordEncoder.matches(currentPassword, profile.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
         }
 
-        // Update password
         profile.setPassword(passwordEncoder.encode(newPassword));
         profileRepository.save(profile);
 
-        // Send password changed notification email
         try {
             String userName = profile.getFirstname() + " " + profile.getLastname();
             emailService.sendPasswordChangedEmail(profile.getEmail(), userName);

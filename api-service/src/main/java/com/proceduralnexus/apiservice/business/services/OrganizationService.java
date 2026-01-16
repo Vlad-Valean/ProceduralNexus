@@ -68,7 +68,6 @@ public class OrganizationService implements IOrganizationService {
         owner.setOrganization(saved);
         profileRepository.save(owner);
 
-        // Send organization created email to owner
         try {
             String ownerName = owner.getFirstname() + " " + owner.getLastname();
             emailService.sendOrganizationCreatedEmail(owner.getEmail(), ownerName, saved.getName());

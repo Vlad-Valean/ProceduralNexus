@@ -29,8 +29,6 @@ public class ESign {
     @Column(name = "signed_at", updatable = false, nullable = false)
     private Instant signedAt;
 
-    // Getters and Setters
-
     public Long getId() {
         return id;
     }

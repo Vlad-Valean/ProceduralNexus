@@ -17,8 +17,6 @@ public class OrganizationResponseDto {
     private Instant createdAt;
     private Instant updatedAt;
 
-    // getters & setters
-
     public Long getId() {
         return id;
     }
