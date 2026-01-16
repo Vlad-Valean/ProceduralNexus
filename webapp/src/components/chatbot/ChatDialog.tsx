@@ -23,19 +23,61 @@ export function ChatDialog({ open, onClose }: { open: boolean; onClose: () => vo
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, botTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages((msgs) => [...msgs, { text: input, from: "user" }]);
+    const question = input.trim();
+    setMessages((msgs) => [...msgs, { text: question, from: "user" }]);
     setInput("");
     setBotTyping(true);
-    setTimeout(() => {
-      setMessages((msgs) => [
-        ...msgs,
-        { text: "I'm just a demo bot. You said: " + input, from: "bot" },
-      ]);
-      setBotTyping(false);
-    }, 500);
-  };
+
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 240000); // 4-minute timeout
+    
+          try {
+            const storedUser = localStorage.getItem("user");
+            let token = "";
+            if (storedUser) {
+              const parsed = JSON.parse(storedUser);
+              token = parsed.accessToken;
+            }
+    
+            const res = await fetch("/analysis/analysis/ask", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({ question }),
+              signal: controller.signal, // Pass the signal to the fetch request
+            });
+    
+            clearTimeout(id); // Clear the timeout if the fetch completes in time
+    
+            if (!res.ok) {
+              throw new Error("Failed to get response");
+            }
+    
+            const text = await res.text();
+            setMessages((msgs) => [
+              ...msgs,
+              { text: text, from: "bot" },
+            ]);
+          } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') {
+              setMessages((msgs) => [
+                ...msgs,
+                { text: "The request timed out. Please try again later.", from: "bot" },
+              ]);
+            } else {
+              console.error(err);
+              setMessages((msgs) => [
+                ...msgs,
+                { text: "Sorry, I'm having trouble connecting to the server.", from: "bot" },
+              ]);
+            }
+          } finally {
+            setBotTyping(false);
+          }  };
 
   if (!open) return null;
 

@@ -63,13 +63,14 @@ public class DocumentAnalysisController {
         return Mono.fromCallable(() -> {
             System.out.println("DEBUG: Searching for similar documents for query: " + questionDto.question());
             List<Document> similarDocuments = vectorStore.similaritySearch(questionDto.question());
-            System.out.println("DEBUG: Found " + similarDocuments.size() + " similar documents.");
+            System.out.println("DEBUG: Found " + similarDocuments.size() + " similar documents for query: " + questionDto.question());
 
             String documents = similarDocuments.stream()
                     .map(Document::getContent)
                     .collect(Collectors.joining("\n"));
             
             System.out.println("DEBUG: Total context length: " + documents.length());
+            System.out.println("DEBUG: Context provided to AI (first 500 chars): " + documents.substring(0, Math.min(documents.length(), 500)) + (documents.length() > 500 ? "..." : ""));
 
             SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemPrompt);
             Message systemMessage = systemPromptTemplate.createMessage(Map.of("documents", documents));
