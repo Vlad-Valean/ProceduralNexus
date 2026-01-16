@@ -41,9 +41,14 @@ services:
     depends_on:
       redis-stack:
         condition: service_healthy
+      ollama:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
     environment:
       - SPRING_DATA_REDIS_HOST=redis-stack
       - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama:11434
       - SERVER_PORT=8081
     restart: on-failure
     healthcheck:

@@ -46,8 +46,40 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    networks:
+      - proceduralnexus-net
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: "ollama list || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama-init:
+    image: ollama/ollama:latest
+    networks:
+      - proceduralnexus-net
+    container_name: ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    command:
+      - "-c"
+      - "ollama pull mistral"
+    restart: on-failure
+
 volumes:
   db_data:
+  ollama_data:
 
 networks:
   proceduralnexus-net:
