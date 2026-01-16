@@ -43,6 +43,8 @@ services:
         condition: service_healthy
       ollama:
         condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
     environment:
       - SPRING_DATA_REDIS_HOST=redis-stack
       - SPRING_DATA_REDIS_PORT=6379
