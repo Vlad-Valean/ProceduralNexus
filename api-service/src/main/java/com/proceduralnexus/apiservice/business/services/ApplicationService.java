@@ -133,7 +133,6 @@ public class ApplicationService {
 
         applicationRepository.delete(app);
 
-        // Send acceptance email notification
         try {
             String userName = applicant.getFirstname() + " " + applicant.getLastname();
             emailService.sendApplicationAcceptedEmail(applicant.getEmail(), userName, organization.getName());
@@ -159,7 +158,6 @@ public class ApplicationService {
         
         applicationRepository.delete(app);
 
-        // Send rejection email notification
         try {
             String userName = applicant.getFirstname() + " " + applicant.getLastname();
             emailService.sendApplicationRejectedEmail(applicant.getEmail(), userName, organization.getName(), null);
@@ -178,7 +176,6 @@ public class ApplicationService {
         dto.setApplicantFirstname(p.getFirstname());
         dto.setApplicantLastname(p.getLastname());
 
-        // Add organizationId to the response
         if (app.getOrganization() != null) {
             dto.setOrganizationId(app.getOrganization().getId());
         }

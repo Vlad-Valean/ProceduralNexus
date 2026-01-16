@@ -47,8 +47,6 @@ const Home: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <Navbar />
-
-      {/* Hero Section - Full viewport height, centered, single white container */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: 2, mt: 5, mb: 6 }}>
         <Paper
           sx={{
@@ -67,7 +65,6 @@ const Home: React.FC = () => {
             my: 0,
           }}
         >
-          {/* Left Column - Text */}
           <Box
             sx={{
               flex: 1,
@@ -168,7 +165,6 @@ const Home: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Right Column - Preview Card */}
           <Box
             sx={{
               flex: 1,
@@ -207,7 +203,6 @@ const Home: React.FC = () => {
         </Paper>
       </Box>
 
-      {/* Features Section - Single white container */}
       <Container maxWidth="lg" sx={{ mb: 8 }} ref={featuresRef}>
         <Paper
           sx={{

@@ -300,7 +300,7 @@ const UserDashboard: React.FC = () => {
               alignItems: "stretch",
             }}
           >
-            {/* Left Column: Documents List */}
+
             <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
               <Paper
                 sx={{
@@ -314,7 +314,6 @@ const UserDashboard: React.FC = () => {
                   flexDirection: 'column'
                 }}
               >
-                {/* Header & Filters */}
                 <Box sx={{ p: 3, borderBottom: '1px solid #E6E8EE' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography
@@ -399,7 +398,6 @@ const UserDashboard: React.FC = () => {
                   </Box>
                 </Box>
 
-                {/* Table Content */}
                 <TableContainer sx={{ flex: '1 1 auto' }}>
                   <Table>
                     <TableHead>
@@ -478,7 +476,6 @@ const UserDashboard: React.FC = () => {
                   </Table>
                 </TableContainer>
 
-                {/* Footer / Pagination */}
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
                   <Typography sx={{ color: "#B5B7C0", fontWeight: 500, fontSize: "0.75rem" }}>
                     {filteredDocuments.length === 0
@@ -500,9 +497,7 @@ const UserDashboard: React.FC = () => {
               </Paper>
             </div>
 
-            {/* Right Column: Stats & Activity */}
             <div style={{ minHeight: 0, display: "flex", flexDirection: "column", gap: 22 }}>
-              {/* Stats Card */}
               <Paper
                 sx={{
                   p: 3,
@@ -548,7 +543,6 @@ const UserDashboard: React.FC = () => {
                 </Box>
               </Paper>
 
-              {/* Recent Activity Card */}
               <Paper
                 sx={{
                   p: 3,

@@ -15,14 +15,10 @@ import java.util.UUID;
 @Service
 public class EmailVerificationService {
 
-    // Email verification logic removed as requested
     public VerificationResult verifyEmail(String token) {
         return new VerificationResult(true, "Email verification logic removed");
     }
 
-    /**
-     * Result class for verification operations
-     */
     public static class VerificationResult {
         private final boolean success;
         private final String message;

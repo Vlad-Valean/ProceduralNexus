@@ -21,9 +21,6 @@ public class EmailService {
     @Value("${app.base.url}")
     private String baseUrl;
 
-    /**
-     * Send email verification link to user
-     */
     public void sendVerificationEmail(String toEmail, String token) {
         String subject = "[ProceduralNexus] Verify your account";
         String verificationUrl = baseUrl + "/verify-email?token=" + token;
@@ -69,9 +66,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send document request notification
-     */
     public void sendDocumentRequestEmail(String toEmail, String userName, String organizationName, String documentType) {
         String subject = "[ProceduralNexus] Additional document required";
         
@@ -96,9 +90,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send application accepted notification
-     */
     public void sendApplicationAcceptedEmail(String toEmail, String userName, String organizationName) {
         String subject = "[ProceduralNexus] Application accepted";
         
@@ -122,9 +113,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send application rejected notification
-     */
     public void sendApplicationRejectedEmail(String toEmail, String userName, String organizationName, String reason) {
         String subject = "[ProceduralNexus] Application rejected";
         
@@ -149,9 +137,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send document approved notification
-     */
     public void sendDocumentApprovedEmail(String toEmail, String userName, String documentName) {
         String subject = "[ProceduralNexus] Document approved";
         
@@ -174,9 +159,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send document requires changes notification
-     */
     public void sendDocumentRequiresChangesEmail(String toEmail, String userName, String documentName, String feedback) {
         String subject = "[ProceduralNexus] Document requires changes";
         
@@ -203,9 +185,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send organization addition notification
-     */
     public void sendOrganizationAdditionEmail(String toEmail, String userName, String organizationName, String role) {
         String subject = "[ProceduralNexus] Added to organization";
         
@@ -268,9 +247,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send password changed notification
-     */
     public void sendPasswordChangedEmail(String toEmail, String userName) {
         String subject = "[ProceduralNexus] Password changed";
         
@@ -294,9 +270,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Send organization creation notification to owner
-     */
     public void sendOrganizationCreatedEmail(String toEmail, String ownerName, String organizationName) {
         String subject = "[ProceduralNexus] Organization created";
         
@@ -320,9 +293,6 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
-    /**
-     * Core method to send HTML emails
-     */
     private void sendEmail(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

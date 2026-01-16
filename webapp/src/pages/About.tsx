@@ -13,7 +13,6 @@ const About: React.FC = () => {
     <Box sx={{ minHeight: "100vh" }}>
       <Navbar />
       <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
-        {/* Page Title in Box */}
         <Paper
           sx={{
             p: 4,
@@ -52,7 +51,6 @@ const About: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* Our Mission */}
         <Paper
           sx={{
             p: 4,
@@ -91,7 +89,6 @@ const About: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* How it works */}
         <Paper
           sx={{
             p: 4,
@@ -187,7 +184,6 @@ const About: React.FC = () => {
           </Grid>
         </Paper>
 
-        {/* Platform Architecture */}
         <Paper
           sx={{
             p: 4,
@@ -355,7 +351,6 @@ const About: React.FC = () => {
           </Box>
         </Paper>
 
-        {/* Security & Privacy */}
         <Paper
           sx={{
             p: 4,
@@ -403,7 +398,6 @@ const About: React.FC = () => {
           </Box>
         </Paper>
 
-        {/* CTA - DOAR daca NU e conectat */}
         {!isAuthenticated && (
           <Paper
             sx={{

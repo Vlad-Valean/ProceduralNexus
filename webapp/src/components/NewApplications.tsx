@@ -389,7 +389,6 @@ const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => 
                     </TableCell>
 
                     <TableCell sx={{ ...bodyCellSx, whiteSpace: "nowrap" }}>
-                      {/* Download */}
                       <Tooltip title="Download file" arrow>
                         <span>
                           <IconButton
@@ -422,7 +421,6 @@ const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => 
                       </Tooltip>
 
 
-                      {/* Accept */}
                       <Tooltip title="Accept application" arrow>
                         <IconButton
                           size="small"
@@ -434,7 +432,6 @@ const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => 
                         </IconButton>
                       </Tooltip>
 
-                      {/* Reject */}
                       <Tooltip title="Reject application" arrow>
                         <IconButton
                           size="small"
@@ -455,7 +452,7 @@ const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => 
                     sx={{
                       ...bodyCellSx,
                       textAlign: "center",
-                      borderBottom: "none", // Remove bottom border for no results row
+                      borderBottom: "none",
                     }}
                   >
                     <Typography sx={{ color: "#b5b7c0", fontWeight: 500, fontSize: "0.9rem" }}>
@@ -467,8 +464,7 @@ const NewApplications: React.FC<Props> = ({ onBack, onApplicationAccepted }) => 
             </TableBody>
           </Table>
         </Box>
-
-        {/* Fixed pagination at the bottom of the container */}
+        
         <Box
           sx={{
             position: "absolute",

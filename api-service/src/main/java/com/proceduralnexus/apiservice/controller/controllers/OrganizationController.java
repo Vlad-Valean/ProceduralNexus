@@ -37,9 +37,6 @@ public class OrganizationController {
         this.profileService = profileService;
     }
 
-    /**
-     * GET /organizations
-     */
     @GetMapping
     @Operation(
             summary = "List organizations",
@@ -49,9 +46,6 @@ public class OrganizationController {
         return organizationService.getOrganizations();
     }
 
-    /**
-     * GET /organizations/{id}
-     */
     @GetMapping("/{id}")
     @Operation(
             summary = "Get organization by ID",
@@ -81,12 +75,6 @@ public class OrganizationController {
         return organizationService.createOrganization(request, owner);
     }
 
-
-    /**
-     * PUT /organizations/{id}
-     * Body: OrganizationUpdateDto (name)
-     * Only owner or admin can update
-     */
     @PutMapping("/{id}")
     @Operation(
             summary = "Update organization",
@@ -107,9 +95,6 @@ public class OrganizationController {
         return organizationService.updateOrganization(id, request, currentUser, isAdmin);
     }
 
-    /**
-     * GET /organizations/{id}/members
-     */
     @GetMapping("/{id}/members")
     @Operation(
             summary = "List organization members",
@@ -119,9 +104,6 @@ public class OrganizationController {
         return organizationService.getOrganizationMembers(id);
     }
 
-    /**
-     * DELETE /organizations/{id}
-     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(

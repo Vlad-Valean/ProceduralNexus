@@ -465,7 +465,6 @@ const Profile: React.FC = () => {
 
       <Container maxWidth={false} sx={{ mt: 4, mb: 8, px: { xs: 1, sm: 4, md: 8 } }}>
         <Box sx={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
-          {/* Left Column - Profile Information */}
           <Box sx={{ flex: 2, minWidth: 0 }}>
             <Paper
               sx={{
@@ -592,7 +591,6 @@ const Profile: React.FC = () => {
             </Paper>
           </Box>
 
-          {/* Right Column - CV only */}
           <Box
             sx={{
               width: "420px",

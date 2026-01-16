@@ -27,8 +27,6 @@ public class LogEntry {
     @Column(name = "logged_at", nullable = false, updatable = false)
     private Instant loggedAt;
 
-    // Getters and Setters
-
     public Long getId() {
         return id;
     }

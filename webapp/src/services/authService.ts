@@ -1,6 +1,5 @@
 
 const API_URL = 'http://localhost:8080/auth';
-// Request password reset (send email with link)
 export async function requestPasswordReset(email: string): Promise<string> {
   const res = await fetch(`${API_URL}/request-password-reset`, {
     method: 'POST',
@@ -14,7 +13,6 @@ export async function requestPasswordReset(email: string): Promise<string> {
   return data.message ?? 'Reset link sent!';
 }
 
-// Confirm password reset (set new password with token)
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<string> {
   const res = await fetch(`${API_URL}/confirm-password-reset`, {
     method: 'POST',
